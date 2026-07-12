@@ -6,7 +6,7 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 homepage.workspace = true
-readme.workspace = true
+readme = "README.md"
 keywords.workspace = true
 categories.workspace = true
 documentation = "https://docs.rs/boson-core"
@@ -24,8 +24,6 @@ thiserror = { workspace = true }
 uuid = { workspace = true }
 
 [dev-dependencies]
-boson-backend-mem = { workspace = true }
-boson-runtime = { workspace = true }
 tokio = { workspace = true }
 
 [lints]

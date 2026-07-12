@@ -8,6 +8,8 @@ publish = false
 
 [dependencies]
 anyhow = "1"
+axum = { workspace = true }
+boson-axum = { workspace = true }
 boson-backend-mem = { workspace = true }
 boson-backend-postgres = { workspace = true }
 boson-backend-redis = { workspace = true }
@@ -15,13 +17,17 @@ boson-backend-nats = { workspace = true }
 boson-backend-scylla = { workspace = true }
 boson-backend-sqlite = { workspace = true }
 boson-core = { workspace = true }
+boson-macros = { workspace = true }
 boson-runtime = { workspace = true }
 boson-telemetry = { workspace = true }
+http-body-util = { workspace = true }
 paste = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true }
+tower = { workspace = true }
+uuid = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

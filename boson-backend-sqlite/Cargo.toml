@@ -6,7 +6,7 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 homepage.workspace = true
-readme.workspace = true
+readme = "README.md"
 keywords.workspace = true
 categories.workspace = true
 documentation = "https://docs.rs/boson-backend-sqlite"
@@ -24,12 +24,6 @@ sqlx = { workspace = true, features = ["sqlite"] }
 
 [package.metadata.cargo-machete]
 ignored = ["async-trait", "chrono"]
-
-[dev-dependencies]
-boson-testkit = { workspace = true }
-serde_json = { workspace = true }
-tempfile = { workspace = true }
-tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 
 [lints]
 workspace = true

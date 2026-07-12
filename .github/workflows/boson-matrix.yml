@@ -59,7 +59,7 @@ jobs:
       - name: boson-backend-mem contract tests
         run: |
           export CARGO_TARGET_DIR=target-boson-mem
-          cargo test -p boson-backend-mem
+          cargo test -p boson-testkit --test backend_mem_contract
 
   backend-sqlite:
     runs-on: ubuntu-latest
@@ -70,7 +70,7 @@ jobs:
       - name: boson-backend-sqlite contract tests
         run: |
           export CARGO_TARGET_DIR=target-boson-sqlite
-          cargo test -p boson-backend-sqlite
+          cargo test -p boson-testkit --test backend_sqlite_contract
 
   backend-sql-common:
     runs-on: ubuntu-latest
@@ -103,7 +103,9 @@ jobs:
       - name: boson-runtime tests
         run: |
           export CARGO_TARGET_DIR=target-boson-runtime
-          cargo test -p boson-runtime
+          cargo test -p boson-testkit --test runtime_mem
+          cargo test -p boson-testkit --test runtime_macro_inventory
+          cargo test -p boson-testkit --test runtime_signature_mismatch
       - name: boson-macros tests
         run: |
           export CARGO_TARGET_DIR=target-boson-macros
@@ -171,23 +173,23 @@ jobs:
       - name: boson-backend-postgres contract
         run: |
           export CARGO_TARGET_DIR=target-boson-postgres
-          cargo test -p boson-backend-postgres -- --include-ignored
+          cargo test -p boson-testkit --test backend_postgres_contract -- --include-ignored
       - name: boson-backend-redis contract
         run: |
           export CARGO_TARGET_DIR=target-boson-redis
-          cargo test -p boson-backend-redis -- --ignored --test-threads=1
+          cargo test -p boson-testkit --test backend_redis_contract -- --ignored --test-threads=1
       - name: boson-backend-nats KV contract
         run: |
           export CARGO_TARGET_DIR=target-boson-nats
-          cargo test -p boson-backend-nats --test nats_queue_backend -- --ignored --test-threads=1
+          cargo test -p boson-testkit --test backend_nats_contract -- --ignored --test-threads=1
       - name: boson-backend-nats workqueue stream
         run: |
           export CARGO_TARGET_DIR=target-boson-nats-wq
-          cargo test -p boson-backend-nats --test nats_workqueue_stream -- --ignored --test-threads=1
+          cargo test -p boson-testkit --test backend_nats_workqueue_stream -- --ignored --test-threads=1
       - name: boson-backend-nats workqueue dual
         run: |
           export CARGO_TARGET_DIR=target-boson-nats-dual
-          cargo test -p boson-backend-nats --test nats_workqueue_dual -- --ignored --test-threads=1
+          cargo test -p boson-testkit --test backend_nats_workqueue_dual -- --ignored --test-threads=1
       - name: boson-backend-scylla contract (optional)
         env:
           BOSON_TEST_SCYLLA_CONTACT_POINTS: ${{ secrets.BOSON_TEST_SCYLLA_CONTACT_POINTS }}
@@ -197,7 +199,7 @@ jobs:
             exit 0
           fi
           export CARGO_TARGET_DIR=target-boson-scylla
-          cargo test -p boson-backend-scylla -- --ignored --test-threads=1
+          cargo test -p boson-testkit --test backend_scylla_contract -- --ignored --test-threads=1
       - name: boson-e2e full matrix
         run: |
           export CARGO_TARGET_DIR=target-boson-e2e
@@ -212,7 +214,7 @@ jobs:
       - name: boson-axum HTTP API tests
         run: |
           export CARGO_TARGET_DIR=target-boson-axum
-          cargo test -p boson-axum
+          cargo test -p boson-testkit --test axum_http_api
 
   coverage:
     runs-on: ubuntu-latest

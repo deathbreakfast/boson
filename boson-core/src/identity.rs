@@ -79,7 +79,7 @@ pub trait ExecutionContext: Send {
 /// Most apps start with [`JsonExecutionContextFactory`]. Custom factories validate `actor_json` and
 /// attach sessions or permissions — see [Custom factory sketch](crate::identity#custom-factory-sketch).
 ///
-/// ```rust,no_run
+/// ```ignore
 /// use std::sync::Arc;
 ///
 /// use boson_backend_mem::MemQueueBackend;
@@ -117,7 +117,7 @@ pub trait ExecutionContextFactory: Send + Sync {
 ///
 /// Pass to [`BosonBuilder::execution_context_factory`](https://docs.rs/boson-runtime/latest/boson_runtime/struct.BosonBuilder.html#method.execution_context_factory) at worker boot:
 ///
-/// ```rust,no_run
+/// ```ignore
 /// use std::sync::Arc;
 ///
 /// use boson_backend_mem::MemQueueBackend;

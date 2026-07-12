@@ -277,17 +277,11 @@ name = "boson-axum"
 version = "0.1.0"
 dependencies = [
  "axum",
- "boson-backend-mem",
  "boson-core",
  "boson-runtime",
- "boson-telemetry",
- "boson-testkit",
  "chrono",
- "http-body-util",
  "serde",
  "serde_json",
- "tokio",
- "tower",
 ]
 
 [[package]]
@@ -296,10 +290,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "boson-core",
- "boson-testkit",
  "chrono",
- "serde_json",
- "tokio",
  "uuid",
 ]
 
@@ -310,7 +301,6 @@ dependencies = [
  "async-nats",
  "async-trait",
  "boson-core",
- "boson-testkit",
  "bytes",
  "chrono",
  "futures",
@@ -327,11 +317,8 @@ dependencies = [
  "async-trait",
  "boson-backend-sql-common",
  "boson-core",
- "boson-testkit",
  "chrono",
- "serde_json",
  "sqlx",
- "tokio",
  "uuid",
 ]
 
@@ -341,12 +328,10 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "boson-core",
- "boson-testkit",
  "chrono",
  "redis",
  "serde",
  "serde_json",
- "tokio",
  "uuid",
 ]
 
@@ -356,7 +341,6 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "boson-core",
- "boson-testkit",
  "chrono",
  "futures",
  "scylla",
@@ -387,12 +371,8 @@ dependencies = [
  "async-trait",
  "boson-backend-sql-common",
  "boson-core",
- "boson-testkit",
  "chrono",
- "serde_json",
  "sqlx",
- "tempfile",
- "tokio",
 ]
 
 [[package]]
@@ -422,8 +402,6 @@ name = "boson-core"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "boson-backend-mem",
- "boson-runtime",
  "chrono",
  "serde",
  "serde_json",
@@ -457,7 +435,6 @@ name = "boson-runtime"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "boson-backend-mem",
  "boson-core",
  "boson-macros",
  "boson-telemetry",
@@ -480,6 +457,8 @@ name = "boson-testkit"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "axum",
+ "boson-axum",
  "boson-backend-mem",
  "boson-backend-nats",
  "boson-backend-postgres",
@@ -487,13 +466,17 @@ dependencies = [
  "boson-backend-scylla",
  "boson-backend-sqlite",
  "boson-core",
+ "boson-macros",
  "boson-runtime",
  "boson-telemetry",
+ "http-body-util",
  "paste",
  "serde",
  "serde_json",
  "tempfile",
  "tokio",
+ "tower",
+ "uuid",
 ]
 
 [[package]]

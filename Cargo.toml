@@ -26,7 +26,6 @@ license = "MIT"
 authors = ["Sean O'Rourke"]
 repository = "https://github.com/unified-field-dev/boson"
 homepage = "https://github.com/unified-field-dev/boson"
-readme = "README.md"
 keywords = ["async", "jobs", "queue", "workers", "background"]
 categories = ["asynchronous", "concurrency"]
 
