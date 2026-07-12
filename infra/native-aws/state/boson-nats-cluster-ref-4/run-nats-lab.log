@@ -1,0 +1,5 @@
+========== Phase G: BE4 JetStream cluster (K pools, single client) ==========
+=== bm-be4 backend=nats report=bm-be4-cluster-k4-c256-nats-isolated-lab-off-aws-c6i-large --pool-count 4 --pool-layout distinct --client-count 256 --storage-topology nats-cluster ===
+wrote /home/ec2-user/boson-bench/reports/bm-be4-cluster-k4-c256-nats-isolated-lab-off-aws-c6i-large.json
+DONE phase=cluster-shard reports=1
+bm-be4-cluster-k4-c256-nats-isolated-lab-off-aws-c6i-large.json

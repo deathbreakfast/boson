@@ -1,0 +1,35 @@
+[package]
+name = "boson-backend-sqlite"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+documentation = "https://docs.rs/boson-backend-sqlite"
+description = "SQLite QueueBackend adapter for Boson"
+
+[package.metadata.docs.rs]
+all-features = true
+
+[dependencies]
+async-trait = { workspace = true }
+boson-backend-sql-common = { workspace = true }
+boson-core = { workspace = true }
+chrono = { workspace = true }
+sqlx = { workspace = true, features = ["sqlite"] }
+
+[package.metadata.cargo-machete]
+ignored = ["async-trait", "chrono"]
+
+[dev-dependencies]
+boson-testkit = { workspace = true }
+serde_json = { workspace = true }
+tempfile = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+[lints]
+workspace = true

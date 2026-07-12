@@ -1,0 +1,32 @@
+[package]
+name = "boson-backend-sql-common"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+documentation = "https://docs.rs/boson-backend-sql-common"
+description = "Shared SQL QueueBackend for SQLite and PostgreSQL"
+
+[package.metadata.docs.rs]
+all-features = true
+
+[dependencies]
+async-trait = { workspace = true }
+boson-core = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true, features = ["sqlite", "postgres", "chrono"] }
+uuid = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+[lints]
+workspace = true

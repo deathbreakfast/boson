@@ -1,0 +1,9 @@
+# Single-node Scylla lab: 1 bench + 1 Scylla on t3.medium
+name: boson-scylla-1
+roles:
+  bench:
+    count: 1
+    instance_type: t3.medium
+  scylla:
+    count: 1
+    instance_type: t3.medium

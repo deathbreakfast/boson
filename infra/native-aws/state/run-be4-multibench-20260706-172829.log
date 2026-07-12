@@ -1,0 +1,5 @@
+========== Boson BE4 multi-bench fleet sweep ==========
+launched bench-0=i-0a06f9900024f5bfa (c6i.large)
+launched bench-1=i-051d945bc09e5525c (c6i.large)
+
+aws: [ERROR]: An error occurred (VcpuLimitExceeded) when calling the RunInstances operation: You have requested more vCPU capacity than your current vCPU limit of 16 allows for the instance bucket that the specified instance type belongs to. Please visit http://aws.amazon.com/contact-us/ec2-request to request an adjustment to this limit.

@@ -1,0 +1,9 @@
+# Track T: 1 bench + 2 Scylla nodes on t3.medium
+name: boson-scylla-2n
+roles:
+  bench:
+    count: 1
+    instance_type: t3.medium
+  scylla:
+    count: 2
+    instance_type: t3.medium

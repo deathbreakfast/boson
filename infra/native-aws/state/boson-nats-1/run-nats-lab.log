@@ -1,0 +1,8 @@
+========== Phase F2: BD2 skip claim KV A/B @ W* ==========
+=== bm-bd2 backend=nats report=bm-bd2-skipkv0-b1-w16-nats-isolated-lab-off-aws-c6i-large --worker-count 16 --worker-poll-ms 0 --pool-count 1 --pool-layout shared ===
+wrote /home/ec2-user/boson-bench/reports/bm-bd2-skipkv0-b1-w16-nats-isolated-lab-off-aws-c6i-large.json
+=== bm-bd2 backend=nats report=bm-bd2-skipkv1-b1-w16-nats-isolated-lab-off-aws-c6i-large --worker-count 16 --worker-poll-ms 0 --pool-count 1 --pool-layout shared ===
+wrote /home/ec2-user/boson-bench/reports/bm-bd2-skipkv1-b1-w16-nats-isolated-lab-off-aws-c6i-large.json
+DONE phase=drain-skip-claim-kv reports=2
+bm-bd2-skipkv0-b1-w16-nats-isolated-lab-off-aws-c6i-large.json
+bm-bd2-skipkv1-b1-w16-nats-isolated-lab-off-aws-c6i-large.json

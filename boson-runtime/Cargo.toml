@@ -1,0 +1,34 @@
+[package]
+name = "boson-runtime"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+documentation = "https://docs.rs/boson-runtime"
+description = "Boson worker engine, builder, and enqueue orchestration"
+
+[package.metadata.docs.rs]
+all-features = true
+
+[dependencies]
+async-trait = { workspace = true }
+boson-core = { workspace = true }
+boson-telemetry = { workspace = true }
+chrono = { workspace = true }
+quark = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+
+[dev-dependencies]
+boson-backend-mem = { workspace = true }
+boson-macros = { workspace = true }
+serde = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+[lints]
+workspace = true

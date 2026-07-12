@@ -1,0 +1,19 @@
+# Boson workspace quality gates
+#
+# Verify with Sentrux MCP: scan → health → check_rules
+# Local Rust gates: cargo clippy/doc/test (see per-crate QUALITY.md)
+
+[project]
+name = "boson"
+profile = "monorepo-pragmatic"
+
+[thresholds]
+min_quality_signal = 7268
+max_cross_module_edges = 53
+max_file_lines = 500
+max_cycles = 0
+max_coupling_score = 8.0
+min_test_coverage_line = 0.0
+
+[revisit]
+trigger = "Raise min_quality_signal toward 8500 as modularity and equality improve."

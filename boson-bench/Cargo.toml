@@ -1,0 +1,34 @@
+[package]
+name = "boson-bench"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Synthetic Boson benchmarks (BM-B*)"
+publish = false
+
+[[bin]]
+name = "boson-bench"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+axum = { workspace = true }
+boson-axum = { workspace = true }
+boson-backend-mem = { workspace = true }
+boson-core = { workspace = true }
+boson-runtime = { workspace = true }
+boson-telemetry = { workspace = true }
+boson-testkit = { workspace = true }
+clap = { version = "4", features = ["derive"] }
+http-body-util = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+sysinfo = "0.33"
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "time"] }
+tower = { workspace = true }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+tempfile = "3"

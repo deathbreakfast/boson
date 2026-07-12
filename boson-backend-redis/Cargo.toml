@@ -1,0 +1,33 @@
+[package]
+name = "boson-backend-redis"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+documentation = "https://docs.rs/boson-backend-redis"
+description = "Redis QueueBackend adapter for Boson (ZSET ready queue + JSON job bodies)"
+
+[package.metadata.docs.rs]
+all-features = true
+
+[dependencies]
+async-trait = { workspace = true }
+boson-core = { workspace = true }
+chrono = { workspace = true }
+redis = { version = "0.27", features = ["tokio-comp", "connection-manager"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+boson-testkit = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+uuid = { workspace = true }
+
+[lints]
+workspace = true

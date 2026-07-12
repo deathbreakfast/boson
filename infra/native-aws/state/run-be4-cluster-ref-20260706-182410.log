@@ -1,0 +1,7 @@
+========== Boson BE4 cluster reference (K=4, single bench) ==========
+launched bench=i-07ad61829e14c1f5c (c6i.large)
+launched nats-0=i-08261e55091b3b8b7 (t3.medium)
+launched nats-1=i-009302d444a34809e (t3.medium)
+launched nats-2=i-02a17f0cf58d9621d (t3.medium)
+launched nats-3=i-080f71a7f6082425b (t3.medium)
+manifest=/home/seanorourke/boson/infra/native-aws/manifests/boson-nats-cluster-ref-4.json fleet_size=4 hardware=aws-c6i-large

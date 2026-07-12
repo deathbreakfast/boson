@@ -1,0 +1,68 @@
+[package]
+name = "boson"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+documentation = "https://docs.rs/boson"
+description = "Public Boson facade — async work engine"
+
+[package.metadata.docs.rs]
+all-features = true
+
+[lib]
+name = "boson"
+path = "src/lib.rs"
+
+[dependencies]
+boson-core = { workspace = true }
+boson-macros = { workspace = true }
+boson-runtime = { workspace = true }
+boson-telemetry = { workspace = true }
+quark = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+boson-axum = { workspace = true, optional = true }
+boson-backend-mem = { workspace = true, optional = true }
+boson-backend-sqlite = { workspace = true, optional = true }
+boson-backend-postgres = { workspace = true, optional = true }
+
+[features]
+default = []
+mem = ["dep:boson-backend-mem"]
+sqlite = ["dep:boson-backend-sqlite"]
+postgres = ["dep:boson-backend-postgres"]
+telemetry-console = []
+axum = ["dep:boson-axum"]
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+anyhow = { workspace = true }
+serde_json = { workspace = true }
+axum = { workspace = true }
+tower = { workspace = true }
+http-body-util = { workspace = true }
+
+[[example]]
+name = "task_macro"
+required-features = ["mem"]
+
+[[example]]
+name = "minimal_enqueue"
+required-features = ["mem"]
+
+[[example]]
+name = "idempotency_and_rate_limit"
+required-features = ["mem"]
+
+[[example]]
+name = "axum_admin"
+required-features = ["mem", "axum"]
+
+[lints]
+workspace = true

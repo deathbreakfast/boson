@@ -1,0 +1,5 @@
+========== Phase D2: BD2 broker fleet drain (pool routing) ==========
+=== bm-bd2 backend=redis report=bm-bd2-fleet-n1-k1-w32-c10000-redis-isolated-lab-off-aws-c6i-large --worker-count 32 --worker-poll-ms 0 --pool-count 1 --pool-layout distinct --prefill-count 10000 ===
+wrote /home/ec2-user/boson-bench/reports/bm-bd2-fleet-n1-k1-w32-c10000-redis-isolated-lab-off-aws-c6i-large.json
+DONE phase=drain-fleet-shard reports=1
+bm-bd2-fleet-n1-k1-w32-c10000-redis-isolated-lab-off-aws-c6i-large.json

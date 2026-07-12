@@ -1,0 +1,36 @@
+[package]
+name = "boson-axum"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+documentation = "https://docs.rs/boson-axum"
+description = "HTTP admin API for Boson under /api/boson"
+
+[package.metadata.docs.rs]
+all-features = true
+
+[dependencies]
+axum = { workspace = true }
+boson-core = { workspace = true }
+boson-runtime = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+boson-backend-mem = { workspace = true }
+boson-telemetry = { workspace = true }
+boson-testkit = { workspace = true }
+http-body-util = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+tower = { workspace = true }
+
+[lints]
+workspace = true

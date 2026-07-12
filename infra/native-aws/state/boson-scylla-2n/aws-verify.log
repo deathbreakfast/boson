@@ -1,0 +1,53 @@
+CONTRACT=target-boson-scylla/debug/deps/scylla_queue_backend-3d8ca23021b5c438
+SCENARIOS=target-boson-scylla/debug/deps/scenarios_full-82a97e635f85d1ec
+CONTACT=172.31.44.92:9042,172.31.38.97:9042
+=== CONTRACT ===
+
+running 11 tests
+test contract_enqueue_inserts_and_lists ... ok
+test contract_expired_lease_pairs ... ok
+test contract_extend_lease_refreshes_ttl ... ok
+test contract_global_router_resolves ... ok
+test contract_idempotency_reuses_nonterminal ... ok
+test contract_lease_contention ... ok
+test contract_max_enqueue_per_second ... ok
+test contract_max_in_flight_rate_limit ... ok
+test contract_pool_priority_order ... ok
+test contract_run_lifecycle ... ok
+test contract_try_claim_atomic ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 19.56s
+
+=== CATALOG ===
+
+running 26 tests
+test cancel_missing_job_scylla ... ok
+test cancel_queued_job_scylla ... ok
+test enqueue_and_drain_console_scylla ... ok
+test enqueue_and_drain_scylla ... ok
+test enqueue_and_drain_split_scylla ... ok
+test enqueue_only_scylla ... ok
+test enqueue_unknown_task_scylla ... ok
+test get_job_not_found_scylla ... ok
+test handler_failure_terminal_scylla ... ok
+test idempotency_after_terminal_scylla ... ok
+test idempotency_none_allows_dup_scylla ... ok
+test idempotency_reuse_while_queued_scylla ... ok
+test idempotency_smoke_scylla ... ok
+test lease_contention_drain_scylla ... ok
+test list_and_count_jobs_scylla ... ok
+test multi_job_drain_scylla ... ok
+test multi_job_drain_split_scylla ... ok
+test pool_priority_drain_scylla ... ok
+test rate_limit_eps_scylla ... ok
+test rate_limit_in_flight_scylla ... ok
+test restart_runtime_drain_scylla ... ok
+test restart_runtime_drain_split_scylla ... ok
+test retry_exhaustion_scylla ... ok
+test retry_then_success_scylla ... ok
+test run_lifecycle_scylla ... ok
+test task_config_rate_limit_scylla ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 78 filtered out; finished in 59.74s
+
+AWS_E2E_OK

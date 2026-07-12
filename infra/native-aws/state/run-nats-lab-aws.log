@@ -1,0 +1,18 @@
+>>> run nats lab bench=44.255.211.122 broker=172.31.39.235 url=nats://172.31.39.235:4222
+Warning: Permanently added '44.255.211.122' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.255.211.122' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.255.211.122' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.255.211.122' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.255.211.122' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.255.211.122' (ED25519) to the list of known hosts.
+started pid=27934
+campaign started; polling...
+  state=running
+  state=running
+  state=running
+  state=running
+  state=running
+  state=running
+  state=done
+Warning: Permanently added '44.255.211.122' (ED25519) to the list of known hosts.
+campaign complete

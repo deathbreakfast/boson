@@ -1,0 +1,27 @@
+{
+  "topology": "boson-redis-1",
+  "broker": "redis",
+  "campaign": "boson-tier3-redis-20260712",
+  "region": "us-west-2",
+  "instance_type": "c7i.xlarge",
+  "bench_instance_type": "c7i.xlarge",
+  "broker_instance_type": "t3.medium",
+  "hardware": "aws-c7i-xlarge",
+  "created_at": "2026-07-12T19:22:30.248086Z",
+  "instances": [
+    {
+      "role": "bench",
+      "instance_id": "i-0755e49ac74795dc4",
+      "instance_type": "c7i.xlarge",
+      "public_ip": "35.94.217.1",
+      "private_ip": "172.31.56.186"
+    },
+    {
+      "role": "redis",
+      "instance_id": "i-0538309bce2780b06",
+      "instance_type": "t3.medium",
+      "public_ip": "35.92.220.112",
+      "private_ip": "172.31.38.47"
+    }
+  ]
+}

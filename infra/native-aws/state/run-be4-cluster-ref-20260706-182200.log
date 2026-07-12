@@ -1,0 +1,8 @@
+========== Boson BE4 cluster reference (K=4, single bench) ==========
+launched bench=i-056f6c731b3adbffa (c6i.large)
+launched nats-0=i-038661627dc3eb473 (t3.medium)
+launched nats-1=i-0c74fbdd4f26b5e9e (t3.medium)
+launched nats-2=i-07fb014263503459e (t3.medium)
+launched nats-3=i-0b8381f0432142d54 (t3.medium)
+manifest=/home/seanorourke/boson/infra/native-aws/manifests/boson-nats-cluster-ref-4.json fleet_size=4 hardware=aws-c6i-large
+infra/native-aws/broker-fleet/run-be4-cluster-ref-aws.sh: line 53: unexpected EOF while looking for matching `"'

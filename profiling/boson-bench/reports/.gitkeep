@@ -1,0 +1,6 @@
+# Report JSON artifacts for boson-bench campaigns (AWS only).
+#
+# Filename pattern: {experiment}-{backend}-{topology}-{telemetry}-{hardware}.json
+#
+# Example:
+#   bm-b0-mem-isolated-lab-off-aws-t3-medium.json

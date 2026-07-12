@@ -1,0 +1,33 @@
+{
+  "campaign": "boson-scylla-e2e-verify",
+  "instances": [
+    {
+      "role": "builder",
+      "index": 0,
+      "instance_id": "i-03f47bfba3b3f70c2",
+      "public_ip": "54.187.116.172",
+      "private_ip": "172.31.35.148"
+    },
+    {
+      "role": "bench",
+      "index": 0,
+      "instance_id": "i-06d9c6fe2ab2ccd97",
+      "public_ip": "35.88.62.51",
+      "private_ip": "172.31.39.85"
+    },
+    {
+      "role": "scylla",
+      "index": 1,
+      "instance_id": "i-008b4ae6db3dbc030",
+      "public_ip": "35.95.67.114",
+      "private_ip": "172.31.38.97"
+    },
+    {
+      "role": "scylla",
+      "index": 0,
+      "instance_id": "i-0493f6a7b6a05b0fb",
+      "public_ip": "44.248.10.193",
+      "private_ip": "172.31.44.92"
+    }
+  ]
+}

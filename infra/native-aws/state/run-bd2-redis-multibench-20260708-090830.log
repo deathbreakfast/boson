@@ -1,0 +1,45 @@
+========== Boson BD2 Redis multi-bench fleet sweep (D3) ==========
+launched bench-0=i-02d24f74f8dd27e4a (c6i.large)
+launched bench-1=i-0de15c76411efe11c (c6i.large)
+launched bench-2=i-0837401d3ad9ec128 (c6i.large)
+
+aws: [ERROR]: An error occurred (VcpuLimitExceeded) when calling the RunInstances operation: You have requested more vCPU capacity than your current vCPU limit of 16 allows for the instance bucket that the specified instance type belongs to. Please visit http://aws.amazon.com/contact-us/ec2-request to request an adjustment to this limit.
+Terminating remaining boson-bench instances: i-0de15c76411efe11c	i-0837401d3ad9ec128	i-02d24f74f8dd27e4a
+{
+    "TerminatingInstances": [
+        {
+            "InstanceId": "i-0de15c76411efe11c",
+            "CurrentState": {
+                "Code": 32,
+                "Name": "shutting-down"
+            },
+            "PreviousState": {
+                "Code": 16,
+                "Name": "running"
+            }
+        },
+        {
+            "InstanceId": "i-02d24f74f8dd27e4a",
+            "CurrentState": {
+                "Code": 32,
+                "Name": "shutting-down"
+            },
+            "PreviousState": {
+                "Code": 16,
+                "Name": "running"
+            }
+        },
+        {
+            "InstanceId": "i-0837401d3ad9ec128",
+            "CurrentState": {
+                "Code": 32,
+                "Name": "shutting-down"
+            },
+            "PreviousState": {
+                "Code": 16,
+                "Name": "running"
+            }
+        }
+    ]
+}
+teardown complete

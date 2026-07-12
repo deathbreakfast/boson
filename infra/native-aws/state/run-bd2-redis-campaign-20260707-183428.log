@@ -1,0 +1,80 @@
+========== Phase D Redis replay ==========
+launched bench=i-0f5b0efaca531c6a3 (c6i.large) redis=i-0df1ad411c7379420 (t3.medium) hardware=aws-c6i-large
+bench 44.234.105.44 (172.31.53.67) redis 44.247.49.79 (172.31.47.112)
+manifest=/home/seanorourke/boson/infra/native-aws/manifests/boson-redis-1.json
+>>> cross-build boson-bench (one-shot docker)
+building boson-bench in amazonlinux:2023 docker -> /home/seanorourke/boson/target/al2023/boson-bench
+info: downloading installer
+warn: It looks like you have an existing rustup settings file at:
+warn: /opt/rustup/settings.toml
+warn: Rustup will install the default toolchain as specified in the settings file,
+warn: instead of the one inferred from the default host triple.
+info: profile set to default
+info: default host triple is x86_64-unknown-linux-gnu
+info: syncing channel updates for stable-x86_64-unknown-linux-gnu
+info: latest update on 2026-06-30 for version 1.96.1 (31fca3adb 2026-06-26)
+info: downloading 6 components
+
+info: default toolchain set to stable-x86_64-unknown-linux-gnu
+  stable-x86_64-unknown-linux-gnu installed - rustc 1.96.1 (31fca3adb 2026-06-26)
+
+
+Rust is installed now. Great!
+
+To get started you need Cargo's bin directory (/opt/cargo/bin) in your PATH
+environment variable. This has not been done automatically.
+
+To configure your current shell, you need to source
+the corresponding env file under /opt/cargo.
+
+This is usually done by running one of the following (note the leading DOT):
+. "/opt/cargo/env"            # For sh/bash/zsh/ash/dash/pdksh
+source "/opt/cargo/env.fish"  # For fish
+source "/opt/cargo/env.nu"  # For nushell
+source "/opt/cargo/env.tcsh"  # For tcsh
+. "/opt/cargo/env.ps1"        # For pwsh
+source "/opt/cargo/env.xsh"   # For xonsh
+CARGO_BUILD_JOBS=16
+    Finished `release` profile [optimized] target(s) in 0.44s
+Built /home/seanorourke/boson/target/al2023/boson-bench (83a2be66d956593d6f4c80c38d846b35033ba663-3355063c)
+>>> deploy binary to bench 44.234.105.44
+Warning: Permanently added '44.234.105.44' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.234.105.44' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.234.105.44' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.234.105.44' (ED25519) to the list of known hosts.
+deploy gate ok: bm-be1 bm-bd1 registered
+deployed 83a2be66d956593d6f4c80c38d846b35033ba663-3355063c to 44.234.105.44
+>>> tier3-capacity redis phase=drain-worker bench=44.234.105.44 broker=172.31.47.112 url=redis://172.31.47.112:6379
+Warning: Permanently added '44.234.105.44' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.234.105.44' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.234.105.44' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.234.105.44' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.234.105.44' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.234.105.44' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.234.105.44' (ED25519) to the list of known hosts.
+started pid=2160
+campaign started; polling (deadline 7200s)...
+  state=running elapsed=5s
+  state=running elapsed=27s
+  state=running elapsed=51s
+  state=running elapsed=75s
+  state=running elapsed=97s
+  state=running elapsed=121s
+  state=running elapsed=145s
+  state=running elapsed=166s
+  state=running elapsed=190s
+  state=running elapsed=214s
+  state=running elapsed=235s
+  state=running elapsed=259s
+  state=running elapsed=283s
+  state=running elapsed=305s
+  state=running elapsed=328s
+  state=running elapsed=354s
+  state=running elapsed=379s
+  state=running elapsed=401s
+  state=running elapsed=426s
+  state=running elapsed=450s
+  state=running elapsed=474s
+  state=dead elapsed=500s
+Warning: Permanently added '44.234.105.44' (ED25519) to the list of known hosts.
+campaign failed (state=dead)

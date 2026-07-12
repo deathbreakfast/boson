@@ -1,0 +1,179 @@
+
+running 26 tests
+test cancel_missing_job_scylla ... ok
+test cancel_queued_job_scylla ... ok
+test enqueue_and_drain_console_scylla ... FAILED
+test enqueue_and_drain_scylla ... FAILED
+test enqueue_and_drain_split_scylla ... FAILED
+test enqueue_only_scylla ... ok
+test enqueue_unknown_task_scylla ... ok
+test get_job_not_found_scylla ... ok
+test handler_failure_terminal_scylla ... FAILED
+test idempotency_after_terminal_scylla ... FAILED
+test idempotency_none_allows_dup_scylla ... ok
+test idempotency_reuse_while_queued_scylla ... FAILED
+test idempotency_smoke_scylla ... FAILED
+test lease_contention_drain_scylla ... FAILED
+test list_and_count_jobs_scylla ... ok
+test multi_job_drain_scylla ... FAILED
+test multi_job_drain_split_scylla ... FAILED
+test pool_priority_drain_scylla ... FAILED
+test rate_limit_eps_scylla ... ok
+test rate_limit_in_flight_scylla ... ok
+test restart_runtime_drain_scylla ... FAILED
+test restart_runtime_drain_split_scylla ... FAILED
+test retry_exhaustion_scylla ... FAILED
+test retry_then_success_scylla ... FAILED
+test run_lifecycle_scylla ... FAILED
+test task_config_rate_limit_scylla ... ok
+
+failures:
+
+---- enqueue_and_drain_console_scylla stdout ----
+
+thread 'enqueue_and_drain_console_scylla' (2808) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario enqueue_and_drain_console/scylla failed: Some("AssertJobStatus: expected Success, got Queued for job d834cfc9-4253-4f89-8b93-8eb06918af91")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- enqueue_and_drain_scylla stdout ----
+
+thread 'enqueue_and_drain_scylla' (2812) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario enqueue_and_drain/scylla failed: Some("AssertJobStatus: expected Success, got Queued for job 7f99c861-5ee8-4f86-a153-f2eb1c8da8c2")
+
+---- enqueue_and_drain_split_scylla stdout ----
+
+thread 'enqueue_and_drain_split_scylla' (2816) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario enqueue_and_drain_split/scylla failed: Some("AssertJobStatus: expected Success, got Queued for job 3351b70f-be8b-4cb5-ac4c-626398abae28")
+
+---- handler_failure_terminal_scylla stdout ----
+
+thread 'handler_failure_terminal_scylla' (2832) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario handler_failure_terminal/scylla failed: Some("AssertJobStatus: expected Failed, got Queued for job 142515ac-9355-40ad-a8e7-f3d1044a1472")
+
+---- idempotency_after_terminal_scylla stdout ----
+
+thread 'idempotency_after_terminal_scylla' (2836) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario idempotency_after_terminal/scylla failed: Some("AssertJobStatus: expected Success, got Queued for job fa4a758f-4827-4e30-91a6-2f89a870242f")
+
+---- idempotency_reuse_while_queued_scylla stdout ----
+
+thread 'idempotency_reuse_while_queued_scylla' (2844) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario idempotency_reuse_while_queued/scylla failed: Some("AssertSameJobId: expected same id, got d70b6af7-d8a6-4b2a-bed8-9cadabda6204 and a74a80f0-56b7-4cf9-b6cf-18c5745b7b5e")
+
+---- idempotency_smoke_scylla stdout ----
+
+thread 'idempotency_smoke_scylla' (2848) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario idempotency_smoke/scylla failed: Some("AssertSameJobId: expected same id, got d7e3d15c-64b9-48de-ba66-a4b3533d3d37 and 268d4d99-1575-4f3e-9b6e-f1554feb0edd")
+
+---- lease_contention_drain_scylla stdout ----
+
+thread 'lease_contention_drain_scylla' (2852) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario lease_contention_drain/scylla failed: Some("SimulateLeaseContention: worker-b claimed lease while worker-a holds it")
+
+---- multi_job_drain_scylla stdout ----
+
+thread 'multi_job_drain_scylla' (2860) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario multi_job_drain/scylla failed: Some("AssertHandlerHits: task counting expected 5 hits, got 0")
+
+---- multi_job_drain_split_scylla stdout ----
+
+thread 'multi_job_drain_split_scylla' (2864) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario multi_job_drain_split/scylla failed: Some("AssertHandlerHits: task counting expected 16 hits, got 1")
+
+---- pool_priority_drain_scylla stdout ----
+
+thread 'pool_priority_drain_scylla' (2868) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario pool_priority_drain/scylla failed: Some("AssertHandlerHits: task counting expected 1 hits, got 0")
+
+---- restart_runtime_drain_scylla stdout ----
+
+thread 'restart_runtime_drain_scylla' (2880) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario restart_runtime_drain/scylla failed: Some("AssertJobStatus: expected Success, got Queued for job 6e82490b-e27b-445e-b9b8-002d33c12b93")
+
+---- restart_runtime_drain_split_scylla stdout ----
+
+thread 'restart_runtime_drain_split_scylla' (2884) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario restart_runtime_drain_split/scylla failed: Some("AssertJobStatus: expected Success, got Queued for job dcc156ad-e081-47c5-9c78-94c3ec33b6fa")
+
+---- retry_exhaustion_scylla stdout ----
+
+thread 'retry_exhaustion_scylla' (2888) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario retry_exhaustion/scylla failed: Some("AssertJobStatus: expected Failed, got Queued for job 270ecbe1-9e0e-464b-8ccf-e624a7d727ce")
+
+---- retry_then_success_scylla stdout ----
+
+thread 'retry_then_success_scylla' (2892) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario retry_then_success/scylla failed: Some("RetryBackoff: job did not reach Success")
+
+---- run_lifecycle_scylla stdout ----
+
+thread 'run_lifecycle_scylla' (2896) panicked at boson-testkit/src/scenario/catalog.rs:393:5:
+scenario run_lifecycle/scylla failed: Some("AssertJobStatus: expected Success, got Queued for job c7133932-0744-4338-bfa3-14929d69cccf")
+
+
+failures:
+    enqueue_and_drain_console_scylla
+    enqueue_and_drain_scylla
+    enqueue_and_drain_split_scylla
+    handler_failure_terminal_scylla
+    idempotency_after_terminal_scylla
+    idempotency_reuse_while_queued_scylla
+    idempotency_smoke_scylla
+    lease_contention_drain_scylla
+    multi_job_drain_scylla
+    multi_job_drain_split_scylla
+    pool_priority_drain_scylla
+    restart_runtime_drain_scylla
+    restart_runtime_drain_split_scylla
+    retry_exhaustion_scylla
+    retry_then_success_scylla
+    run_lifecycle_scylla
+
+test result: FAILED. 10 passed; 16 failed; 0 ignored; 0 measured; 78 filtered out; finished in 56.81s
+
+test cancel_missing_job_scylla ... ok
+test cancel_queued_job_scylla ... ok
+test enqueue_and_drain_console_scylla ... FAILED
+test enqueue_and_drain_scylla ... FAILED
+test enqueue_and_drain_split_scylla ... FAILED
+test enqueue_only_scylla ... ok
+test enqueue_unknown_task_scylla ... ok
+test get_job_not_found_scylla ... ok
+test handler_failure_terminal_scylla ... FAILED
+test idempotency_after_terminal_scylla ... FAILED
+test idempotency_none_allows_dup_scylla ... ok
+test idempotency_reuse_while_queued_scylla ... FAILED
+test idempotency_smoke_scylla ... FAILED
+test lease_contention_drain_scylla ... FAILED
+test list_and_count_jobs_scylla ... ok
+test multi_job_drain_scylla ... FAILED
+test multi_job_drain_split_scylla ... FAILED
+test pool_priority_drain_scylla ... FAILED
+test rate_limit_eps_scylla ... ok
+test rate_limit_in_flight_scylla ... ok
+test restart_runtime_drain_scylla ... FAILED
+test restart_runtime_drain_split_scylla ... FAILED
+test retry_exhaustion_scylla ... FAILED
+test retry_then_success_scylla ... FAILED
+test run_lifecycle_scylla ... FAILED
+test task_config_rate_limit_scylla ... ok
+failures:
+---- enqueue_and_drain_console_scylla stdout ----
+---- enqueue_and_drain_scylla stdout ----
+---- enqueue_and_drain_split_scylla stdout ----
+---- handler_failure_terminal_scylla stdout ----
+---- idempotency_after_terminal_scylla stdout ----
+---- idempotency_reuse_while_queued_scylla stdout ----
+---- idempotency_smoke_scylla stdout ----
+---- lease_contention_drain_scylla stdout ----
+---- multi_job_drain_scylla stdout ----
+---- multi_job_drain_split_scylla stdout ----
+---- pool_priority_drain_scylla stdout ----
+---- restart_runtime_drain_scylla stdout ----
+---- restart_runtime_drain_split_scylla stdout ----
+---- retry_exhaustion_scylla stdout ----
+---- retry_then_success_scylla stdout ----
+---- run_lifecycle_scylla stdout ----
+failures:
+test result: FAILED. 10 passed; 16 failed; 0 ignored; 0 measured; 78 filtered out; finished in 56.81s
+EXIT=101

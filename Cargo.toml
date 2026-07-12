@@ -1,0 +1,78 @@
+[workspace]
+resolver = "2"
+members = [
+    "boson",
+    "boson-macros",
+    "boson-core",
+    "boson-telemetry",
+    "boson-backend-mem",
+    "boson-backend-sql-common",
+    "boson-backend-sqlite",
+    "boson-backend-postgres",
+    "boson-backend-scylla",
+    "boson-backend-redis",
+    "boson-backend-nats",
+    "boson-runtime",
+    "boson-axum",
+    "boson-testkit",
+    "boson-e2e",
+    "boson-bench",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Sean O'Rourke"]
+repository = "https://github.com/unified-field-dev/boson"
+homepage = "https://github.com/unified-field-dev/boson"
+readme = "README.md"
+keywords = ["async", "jobs", "queue", "workers", "background"]
+categories = ["asynchronous", "concurrency"]
+
+[workspace.dependencies]
+anyhow = "1"
+async-trait = "0.1"
+axum = "0.8"
+boson-axum = { path = "boson-axum", version = "0.1.0" }
+boson-backend-mem = { path = "boson-backend-mem", version = "0.1.0" }
+boson-backend-sql-common = { path = "boson-backend-sql-common", version = "0.1.0" }
+boson-backend-sqlite = { path = "boson-backend-sqlite", version = "0.1.0" }
+boson-backend-postgres = { path = "boson-backend-postgres", version = "0.1.0" }
+boson-backend-redis = { path = "boson-backend-redis", version = "0.1.0" }
+boson-backend-nats = { path = "boson-backend-nats", version = "0.1.0" }
+boson-backend-scylla = { path = "boson-backend-scylla", version = "0.1.0" }
+boson-core = { path = "boson-core", version = "0.1.0" }
+scylla = "1.7"
+boson-macros = { path = "boson-macros", version = "0.1.0" }
+boson-e2e = { path = "boson-e2e", version = "0.1.0" }
+boson-bench = { path = "boson-bench", version = "0.1.0" }
+boson-runtime = { path = "boson-runtime", version = "0.1.0" }
+boson-telemetry = { path = "boson-telemetry", version = "0.1.0" }
+boson-testkit = { path = "boson-testkit", version = "0.1.0" }
+chrono = { version = "0.4", features = ["serde"] }
+quark = { package = "uf-quark", version = "0.1.1" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["rt", "macros", "sync", "time"] }
+tower = { version = "0.5", features = ["util"] }
+http-body-util = "0.1"
+uuid = { version = "1.11", features = ["v4"] }
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "macros", "chrono", "json"] }
+tempfile = "3"
+paste = "1"
+
+[workspace.lints.rust]
+missing_docs = "deny"
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+too_many_arguments = "deny"
+too_many_lines = "warn"
+cognitive_complexity = "warn"
+redundant_field_names = { level = "allow", priority = 1 }
+unnested_or_patterns = "deny"

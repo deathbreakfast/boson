@@ -1,0 +1,20 @@
+[package]
+name = "boson-e2e"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Matrix-driven Boson correctness integration tests"
+publish = false
+
+[dependencies]
+boson-testkit = { workspace = true }
+
+[dev-dependencies]
+boson-core = { workspace = true }
+boson-testkit = { workspace = true }
+paste = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+[lints]
+workspace = true

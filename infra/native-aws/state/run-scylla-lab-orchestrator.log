@@ -1,0 +1,12 @@
+>>> deploy to bench=16.148.67.111 contact=172.31.46.202:9042
+Warning: Permanently added '16.148.67.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '16.148.67.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '16.148.67.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '16.148.67.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '16.148.67.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '16.148.67.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '16.148.67.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '16.148.67.111' (ED25519) to the list of known hosts.
+started pid=27942
+campaign started; polling...
+  state=running

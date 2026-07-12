@@ -1,0 +1,46 @@
+building boson-bench in amazonlinux:2023 docker -> /home/seanorourke/boson/target/al2023/boson-bench
+Unable to find image 'amazonlinux:2023' locally
+2023: Pulling from library/amazonlinux
+43a4ccfcda54: Pulling fs layer
+43a4ccfcda54: Download complete
+43a4ccfcda54: Pull complete
+Digest: sha256:32f61af6a24e178e8142fb7b0079f4af3a5cda6816cd53d2c611a921ef029ca0
+Status: Downloaded newer image for amazonlinux:2023
+info: downloading installer
+warn: It looks like you have an existing rustup settings file at:
+warn: /opt/rustup/settings.toml
+warn: Rustup will install the default toolchain as specified in the settings file,
+warn: instead of the one inferred from the default host triple.
+info: profile set to default
+info: default host triple is x86_64-unknown-linux-gnu
+info: syncing channel updates for stable-x86_64-unknown-linux-gnu
+info: latest update on 2026-06-30 for version 1.96.1 (31fca3adb 2026-06-26)
+info: downloading 6 components
+
+info: default toolchain set to stable-x86_64-unknown-linux-gnu
+  stable-x86_64-unknown-linux-gnu installed - rustc 1.96.1 (31fca3adb 2026-06-26)
+
+
+Rust is installed now. Great!
+
+To get started you need Cargo's bin directory (/opt/cargo/bin) in your PATH
+environment variable. This has not been done automatically.
+
+To configure your current shell, you need to source
+the corresponding env file under /opt/cargo.
+
+This is usually done by running one of the following (note the leading DOT):
+. "/opt/cargo/env"            # For sh/bash/zsh/ash/dash/pdksh
+source "/opt/cargo/env.fish"  # For fish
+source "/opt/cargo/env.nu"  # For nushell
+source "/opt/cargo/env.tcsh"  # For tcsh
+. "/opt/cargo/env.ps1"        # For pwsh
+source "/opt/cargo/env.xsh"   # For xonsh
+CARGO_BUILD_JOBS=16
+   Compiling boson-runtime v0.1.5 (/work/boson-runtime)
+   Compiling boson-backend-scylla v0.1.5 (/work/boson-backend-scylla)
+   Compiling boson-axum v0.1.5 (/work/boson-axum)
+   Compiling boson-testkit v0.1.5 (/work/boson-testkit)
+   Compiling boson-bench v0.1.5 (/work/boson-bench)
+    Finished `release` profile [optimized] target(s) in 29.98s
+Built /home/seanorourke/boson/target/al2023/boson-bench (616f393faa14c6ea6de4e084d840c976f003aba4-fa120b3e)

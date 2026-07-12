@@ -1,0 +1,4 @@
+               total        used        free      shared  buff/cache   available
+Mem:            3839         265        2792           0         781        3332
+CONTAINER ID   NAME          CPU %     MEM USAGE / LIMIT    MEM %     NET I/O           BLOCK I/O   PIDS
+48c0d880c431   boson-redis   4.91%     5.805MiB / 3.75GiB   0.15%     4.31MB / 1.66MB   0B / 0B     6

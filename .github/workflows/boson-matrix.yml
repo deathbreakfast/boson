@@ -1,0 +1,304 @@
+name: boson-matrix
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_BUILD_JOBS: 1
+  RUST_BACKTRACE: 1
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo check (boson facade)
+        run: cargo check -p boson --features mem
+
+  deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo clippy (workspace)
+        run: |
+          export CARGO_TARGET_DIR=target-boson-extract
+          cargo clippy --workspace --all-targets -- -D warnings
+
+  testkit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: boson-testkit tests
+        run: |
+          export CARGO_TARGET_DIR=target-boson-extract
+          cargo test -p boson-testkit
+
+  backend-mem:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: boson-backend-mem contract tests
+        run: |
+          export CARGO_TARGET_DIR=target-boson-mem
+          cargo test -p boson-backend-mem
+
+  backend-sqlite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: boson-backend-sqlite contract tests
+        run: |
+          export CARGO_TARGET_DIR=target-boson-sqlite
+          cargo test -p boson-backend-sqlite
+
+  backend-sql-common:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: boson-backend-sql-common tests
+        run: |
+          export CARGO_TARGET_DIR=target-boson-sql-common
+          cargo test -p boson-backend-sql-common
+
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: boson-core unit tests
+        run: |
+          export CARGO_TARGET_DIR=target-boson-core
+          cargo test -p boson-core
+
+  runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: boson-runtime tests
+        run: |
+          export CARGO_TARGET_DIR=target-boson-runtime
+          cargo test -p boson-runtime
+      - name: boson-macros tests
+        run: |
+          export CARGO_TARGET_DIR=target-boson-macros
+          cargo test -p boson-macros
+
+  telemetry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: boson-telemetry tests
+        run: |
+          export CARGO_TARGET_DIR=target-boson-telemetry
+          cargo test -p boson-telemetry
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: boson
+          POSTGRES_PASSWORD: bench
+          POSTGRES_DB: boson_bench
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U boson -d boson_bench"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      BOSON_TEST_POSTGRES_URL: postgres://boson:bench@127.0.0.1:5433/boson_bench
+      BOSON_TEST_REDIS_URL: redis://127.0.0.1:6379
+      BOSON_TEST_NATS_URL: nats://127.0.0.1:4222
+      BOSON_NATS_STREAM_REPLICAS: "1"
+      BOSON_NATS_QUEUE_MODE: workqueue
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start NATS JetStream
+        run: |
+          docker run -d --name boson-nats -p 4222:4222 -p 8222:8222 nats:2.10 -js -m 8222
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8222/healthz >/dev/null; then
+              echo "NATS ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "NATS failed to become healthy" >&2
+          docker logs boson-nats >&2 || true
+          exit 1
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: boson-backend-postgres contract
+        run: |
+          export CARGO_TARGET_DIR=target-boson-postgres
+          cargo test -p boson-backend-postgres -- --include-ignored
+      - name: boson-backend-redis contract
+        run: |
+          export CARGO_TARGET_DIR=target-boson-redis
+          cargo test -p boson-backend-redis -- --ignored --test-threads=1
+      - name: boson-backend-nats KV contract
+        run: |
+          export CARGO_TARGET_DIR=target-boson-nats
+          cargo test -p boson-backend-nats --test nats_queue_backend -- --ignored --test-threads=1
+      - name: boson-backend-nats workqueue stream
+        run: |
+          export CARGO_TARGET_DIR=target-boson-nats-wq
+          cargo test -p boson-backend-nats --test nats_workqueue_stream -- --ignored --test-threads=1
+      - name: boson-backend-nats workqueue dual
+        run: |
+          export CARGO_TARGET_DIR=target-boson-nats-dual
+          cargo test -p boson-backend-nats --test nats_workqueue_dual -- --ignored --test-threads=1
+      - name: boson-backend-scylla contract (optional)
+        env:
+          BOSON_TEST_SCYLLA_CONTACT_POINTS: ${{ secrets.BOSON_TEST_SCYLLA_CONTACT_POINTS }}
+        run: |
+          if [ -z "${BOSON_TEST_SCYLLA_CONTACT_POINTS}" ]; then
+            echo "BOSON_TEST_SCYLLA_CONTACT_POINTS unset; skipping Scylla contract"
+            exit 0
+          fi
+          export CARGO_TARGET_DIR=target-boson-scylla
+          cargo test -p boson-backend-scylla -- --ignored --test-threads=1
+      - name: boson-e2e full matrix
+        run: |
+          export CARGO_TARGET_DIR=target-boson-e2e
+          cargo test -p boson-e2e -- --include-ignored --test-threads=1
+
+  axum:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: boson-axum HTTP API tests
+        run: |
+          export CARGO_TARGET_DIR=target-boson-axum
+          cargo test -p boson-axum
+
+  coverage:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+      - name: Line coverage report (workspace, mem tier)
+        run: |
+          export CARGO_TARGET_DIR=target-boson-cov
+          cargo llvm-cov --workspace --exclude boson-e2e --exclude boson-bench --features mem --summary-only
+          cargo llvm-cov --workspace --exclude boson-e2e --exclude boson-bench --features mem --lcov --output-path lcov.info
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: lcov.info
+
+  bench-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: BM-B0/BM-B1 smoke runs
+        run: |
+          export CARGO_TARGET_DIR=target-boson-bench
+          cargo run -p boson-bench -- experiments
+          cargo run -p boson-bench -- run --experiment bm-b0 --backend mem --topology isolated-lab --telemetry off --ops 1000
+          cargo run -p boson-bench -- run --experiment bm-b1 --backend mem --topology isolated-lab --telemetry off
+
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: minimal_enqueue example
+        run: cargo run -p boson --example minimal_enqueue --features mem
+      - name: task_macro example
+        run: cargo run -p boson --example task_macro --features mem
+      - name: idempotency_and_rate_limit example
+        run: cargo run -p boson --example idempotency_and_rate_limit --features mem
+      - name: axum_admin example
+        run: cargo run -p boson --example axum_admin --features mem,axum
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo doc (deny warnings, workspace)
+        run: |
+          export CARGO_TARGET_DIR=target-boson-extract
+          RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+      - name: cargo test --doc (core crates)
+        run: |
+          export CARGO_TARGET_DIR=target-boson-extract
+          cargo test --doc -p boson-core
+          cargo test --doc -p boson-runtime
+          cargo test --doc -p boson-backend-mem
+          cargo test --doc -p boson --features mem
+          cargo test --doc -p boson-telemetry
+
+  sentrux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Sentrux quality gate
+        run: |
+          if command -v sentrux >/dev/null 2>&1; then
+            sentrux scan
+            SIGNAL=$(sentrux health 2>&1 | grep -oP 'quality_signal[":\s]+\K[0-9]+' | head -1 || echo "0")
+            MIN=7331
+            if [ -n "$SIGNAL" ] && [ "$SIGNAL" -lt "$MIN" ]; then
+              echo "quality_signal $SIGNAL below baseline $MIN"
+              exit 1
+            fi
+            sentrux check_rules
+          else
+            echo "sentrux not installed; skipping quality gate"
+          fi

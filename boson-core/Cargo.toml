@@ -1,0 +1,32 @@
+[package]
+name = "boson-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+documentation = "https://docs.rs/boson-core"
+description = "Portable Boson types, QueueBackend port, and identity hooks"
+
+[package.metadata.docs.rs]
+all-features = true
+
+[dependencies]
+async-trait = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+boson-backend-mem = { workspace = true }
+boson-runtime = { workspace = true }
+tokio = { workspace = true }
+
+[lints]
+workspace = true

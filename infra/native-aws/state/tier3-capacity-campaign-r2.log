@@ -1,0 +1,801 @@
+========== Tier 3 redis on aws-t3-medium ==========
+launched bench=i-0041c5b9976473002 redis=i-07e13e480dd98e2ae
+bench 54.188.214.132 (172.31.32.123) redis 44.251.178.21 (172.31.32.39)
+manifest=/home/seanorourke/boson/infra/native-aws/manifests/boson-redis-1.json
+>>> docker on bench (54.188.214.132)
+Warning: Permanently added '54.188.214.132' (ED25519) to the list of known hosts.
+Waiting for process with pid 1763 to finish.
+Amazon Linux 2023 Kernel Livepatch repository   436 kB/s |  55 kB     00:00    
+Dependencies resolved.
+================================================================================
+ Package                  Arch     Version                  Repository     Size
+================================================================================
+Installing:
+ docker                   x86_64   25.0.16-1.amzn2023.0.2   amazonlinux    46 M
+Installing dependencies:
+ container-selinux        noarch   4:2.245.0-1.amzn2023     amazonlinux    58 k
+ containerd               x86_64   2.2.4-1.amzn2023.0.3     amazonlinux    24 M
+ iptables-libs            x86_64   1.8.8-3.amzn2023.0.2     amazonlinux   401 k
+ iptables-nft             x86_64   1.8.8-3.amzn2023.0.2     amazonlinux   183 k
+ libcgroup                x86_64   3.0-1.amzn2023.0.1       amazonlinux    75 k
+ libnetfilter_conntrack   x86_64   1.0.8-2.amzn2023.0.2     amazonlinux    58 k
+ libnfnetlink             x86_64   1.0.1-19.amzn2023.0.2    amazonlinux    30 k
+ libnftnl                 x86_64   1.2.2-2.amzn2023.0.2     amazonlinux    84 k
+ pigz                     x86_64   2.5-1.amzn2023.0.4       amazonlinux    83 k
+ runc                     x86_64   1.3.5-1.amzn2023.0.2     amazonlinux   3.9 M
+
+Transaction Summary
+================================================================================
+Install  11 Packages
+
+Total download size: 76 M
+Installed size: 284 M
+Downloading Packages:
+(1/11): container-selinux-2.245.0-1.amzn2023.no 1.3 MB/s |  58 kB     00:00    
+(2/11): iptables-libs-1.8.8-3.amzn2023.0.2.x86_  12 MB/s | 401 kB     00:00    
+(3/11): iptables-nft-1.8.8-3.amzn2023.0.2.x86_6 5.4 MB/s | 183 kB     00:00    
+(4/11): libcgroup-3.0-1.amzn2023.0.1.x86_64.rpm 3.0 MB/s |  75 kB     00:00    
+(5/11): libnetfilter_conntrack-1.0.8-2.amzn2023 2.1 MB/s |  58 kB     00:00    
+(6/11): libnfnetlink-1.0.1-19.amzn2023.0.2.x86_ 1.1 MB/s |  30 kB     00:00    
+(7/11): libnftnl-1.2.2-2.amzn2023.0.2.x86_64.rp 4.1 MB/s |  84 kB     00:00    
+(8/11): pigz-2.5-1.amzn2023.0.4.x86_64.rpm      3.1 MB/s |  83 kB     00:00    
+(9/11): containerd-2.2.4-1.amzn2023.0.3.x86_64.  66 MB/s |  24 MB     00:00    
+(10/11): runc-1.3.5-1.amzn2023.0.2.x86_64.rpm    24 MB/s | 3.9 MB     00:00    
+(11/11): docker-25.0.16-1.amzn2023.0.2.x86_64.r  68 MB/s |  46 MB     00:00    
+--------------------------------------------------------------------------------
+Total                                           105 MB/s |  76 MB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Installing       : runc-1.3.5-1.amzn2023.0.2.x86_64                      1/11 
+  Installing       : containerd-2.2.4-1.amzn2023.0.3.x86_64                2/11 
+  Running scriptlet: containerd-2.2.4-1.amzn2023.0.3.x86_64                2/11 
+  Installing       : pigz-2.5-1.amzn2023.0.4.x86_64                        3/11 
+  Installing       : libnftnl-1.2.2-2.amzn2023.0.2.x86_64                  4/11 
+  Installing       : libnfnetlink-1.0.1-19.amzn2023.0.2.x86_64             5/11 
+  Installing       : libnetfilter_conntrack-1.0.8-2.amzn2023.0.2.x86_64    6/11 
+  Installing       : iptables-libs-1.8.8-3.amzn2023.0.2.x86_64             7/11 
+  Installing       : iptables-nft-1.8.8-3.amzn2023.0.2.x86_64              8/11 
+  Running scriptlet: iptables-nft-1.8.8-3.amzn2023.0.2.x86_64              8/11 
+  Installing       : libcgroup-3.0-1.amzn2023.0.1.x86_64                   9/11 
+  Running scriptlet: container-selinux-4:2.245.0-1.amzn2023.noarch        10/11 
+  Installing       : container-selinux-4:2.245.0-1.amzn2023.noarch        10/11 
+  Running scriptlet: container-selinux-4:2.245.0-1.amzn2023.noarch        10/11 
+  Running scriptlet: docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+  Installing       : docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+  Running scriptlet: docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+Created symlink /etc/systemd/system/sockets.target.wants/docker.socket → /usr/lib/systemd/system/docker.socket.
+
+  Running scriptlet: container-selinux-4:2.245.0-1.amzn2023.noarch        11/11 
+  Running scriptlet: docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+  Verifying        : container-selinux-4:2.245.0-1.amzn2023.noarch         1/11 
+  Verifying        : containerd-2.2.4-1.amzn2023.0.3.x86_64                2/11 
+  Verifying        : docker-25.0.16-1.amzn2023.0.2.x86_64                  3/11 
+  Verifying        : iptables-libs-1.8.8-3.amzn2023.0.2.x86_64             4/11 
+  Verifying        : iptables-nft-1.8.8-3.amzn2023.0.2.x86_64              5/11 
+  Verifying        : libcgroup-3.0-1.amzn2023.0.1.x86_64                   6/11 
+  Verifying        : libnetfilter_conntrack-1.0.8-2.amzn2023.0.2.x86_64    7/11 
+  Verifying        : libnfnetlink-1.0.1-19.amzn2023.0.2.x86_64             8/11 
+  Verifying        : libnftnl-1.2.2-2.amzn2023.0.2.x86_64                  9/11 
+  Verifying        : pigz-2.5-1.amzn2023.0.4.x86_64                       10/11 
+  Verifying        : runc-1.3.5-1.amzn2023.0.2.x86_64                     11/11 
+
+Installed:
+  container-selinux-4:2.245.0-1.amzn2023.noarch                                 
+  containerd-2.2.4-1.amzn2023.0.3.x86_64                                        
+  docker-25.0.16-1.amzn2023.0.2.x86_64                                          
+  iptables-libs-1.8.8-3.amzn2023.0.2.x86_64                                     
+  iptables-nft-1.8.8-3.amzn2023.0.2.x86_64                                      
+  libcgroup-3.0-1.amzn2023.0.1.x86_64                                           
+  libnetfilter_conntrack-1.0.8-2.amzn2023.0.2.x86_64                            
+  libnfnetlink-1.0.1-19.amzn2023.0.2.x86_64                                     
+  libnftnl-1.2.2-2.amzn2023.0.2.x86_64                                          
+  pigz-2.5-1.amzn2023.0.4.x86_64                                                
+  runc-1.3.5-1.amzn2023.0.2.x86_64                                              
+
+Complete!
+Created symlink /etc/systemd/system/multi-user.target.wants/docker.service → /usr/lib/systemd/system/docker.service.
+>>> docker on redis (44.251.178.21)
+Warning: Permanently added '44.251.178.21' (ED25519) to the list of known hosts.
+Amazon Linux 2023 Kernel Livepatch repository   444 kB/s |  55 kB     00:00    
+Dependencies resolved.
+================================================================================
+ Package                  Arch     Version                  Repository     Size
+================================================================================
+Installing:
+ docker                   x86_64   25.0.16-1.amzn2023.0.2   amazonlinux    46 M
+Installing dependencies:
+ container-selinux        noarch   4:2.245.0-1.amzn2023     amazonlinux    58 k
+ containerd               x86_64   2.2.4-1.amzn2023.0.3     amazonlinux    24 M
+ iptables-libs            x86_64   1.8.8-3.amzn2023.0.2     amazonlinux   401 k
+ iptables-nft             x86_64   1.8.8-3.amzn2023.0.2     amazonlinux   183 k
+ libcgroup                x86_64   3.0-1.amzn2023.0.1       amazonlinux    75 k
+ libnetfilter_conntrack   x86_64   1.0.8-2.amzn2023.0.2     amazonlinux    58 k
+ libnfnetlink             x86_64   1.0.1-19.amzn2023.0.2    amazonlinux    30 k
+ libnftnl                 x86_64   1.2.2-2.amzn2023.0.2     amazonlinux    84 k
+ pigz                     x86_64   2.5-1.amzn2023.0.4       amazonlinux    83 k
+ runc                     x86_64   1.3.5-1.amzn2023.0.2     amazonlinux   3.9 M
+
+Transaction Summary
+================================================================================
+Install  11 Packages
+
+Total download size: 76 M
+Installed size: 284 M
+Downloading Packages:
+(1/11): container-selinux-2.245.0-1.amzn2023.no 1.3 MB/s |  58 kB     00:00    
+(2/11): iptables-libs-1.8.8-3.amzn2023.0.2.x86_  12 MB/s | 401 kB     00:00    
+(3/11): iptables-nft-1.8.8-3.amzn2023.0.2.x86_6 7.0 MB/s | 183 kB     00:00    
+(4/11): libcgroup-3.0-1.amzn2023.0.1.x86_64.rpm 2.4 MB/s |  75 kB     00:00    
+(5/11): libnetfilter_conntrack-1.0.8-2.amzn2023 1.9 MB/s |  58 kB     00:00    
+(6/11): libnfnetlink-1.0.1-19.amzn2023.0.2.x86_ 1.1 MB/s |  30 kB     00:00    
+(7/11): libnftnl-1.2.2-2.amzn2023.0.2.x86_64.rp 2.9 MB/s |  84 kB     00:00    
+(8/11): pigz-2.5-1.amzn2023.0.4.x86_64.rpm      2.5 MB/s |  83 kB     00:00    
+(9/11): containerd-2.2.4-1.amzn2023.0.3.x86_64.  64 MB/s |  24 MB     00:00    
+(10/11): runc-1.3.5-1.amzn2023.0.2.x86_64.rpm    24 MB/s | 3.9 MB     00:00    
+(11/11): docker-25.0.16-1.amzn2023.0.2.x86_64.r  66 MB/s |  46 MB     00:00    
+--------------------------------------------------------------------------------
+Total                                           101 MB/s |  76 MB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Installing       : runc-1.3.5-1.amzn2023.0.2.x86_64                      1/11 
+  Installing       : containerd-2.2.4-1.amzn2023.0.3.x86_64                2/11 
+  Running scriptlet: containerd-2.2.4-1.amzn2023.0.3.x86_64                2/11 
+  Installing       : pigz-2.5-1.amzn2023.0.4.x86_64                        3/11 
+  Installing       : libnftnl-1.2.2-2.amzn2023.0.2.x86_64                  4/11 
+  Installing       : libnfnetlink-1.0.1-19.amzn2023.0.2.x86_64             5/11 
+  Installing       : libnetfilter_conntrack-1.0.8-2.amzn2023.0.2.x86_64    6/11 
+  Installing       : iptables-libs-1.8.8-3.amzn2023.0.2.x86_64             7/11 
+  Installing       : iptables-nft-1.8.8-3.amzn2023.0.2.x86_64              8/11 
+  Running scriptlet: iptables-nft-1.8.8-3.amzn2023.0.2.x86_64              8/11 
+  Installing       : libcgroup-3.0-1.amzn2023.0.1.x86_64                   9/11 
+  Running scriptlet: container-selinux-4:2.245.0-1.amzn2023.noarch        10/11 
+  Installing       : container-selinux-4:2.245.0-1.amzn2023.noarch        10/11 
+  Running scriptlet: container-selinux-4:2.245.0-1.amzn2023.noarch        10/11 
+  Running scriptlet: docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+  Installing       : docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+  Running scriptlet: docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+Created symlink /etc/systemd/system/sockets.target.wants/docker.socket → /usr/lib/systemd/system/docker.socket.
+
+  Running scriptlet: container-selinux-4:2.245.0-1.amzn2023.noarch        11/11 
+  Running scriptlet: docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+  Verifying        : container-selinux-4:2.245.0-1.amzn2023.noarch         1/11 
+  Verifying        : containerd-2.2.4-1.amzn2023.0.3.x86_64                2/11 
+  Verifying        : docker-25.0.16-1.amzn2023.0.2.x86_64                  3/11 
+  Verifying        : iptables-libs-1.8.8-3.amzn2023.0.2.x86_64             4/11 
+  Verifying        : iptables-nft-1.8.8-3.amzn2023.0.2.x86_64              5/11 
+  Verifying        : libcgroup-3.0-1.amzn2023.0.1.x86_64                   6/11 
+  Verifying        : libnetfilter_conntrack-1.0.8-2.amzn2023.0.2.x86_64    7/11 
+  Verifying        : libnfnetlink-1.0.1-19.amzn2023.0.2.x86_64             8/11 
+  Verifying        : libnftnl-1.2.2-2.amzn2023.0.2.x86_64                  9/11 
+  Verifying        : pigz-2.5-1.amzn2023.0.4.x86_64                       10/11 
+  Verifying        : runc-1.3.5-1.amzn2023.0.2.x86_64                     11/11 
+
+Installed:
+  container-selinux-4:2.245.0-1.amzn2023.noarch                                 
+  containerd-2.2.4-1.amzn2023.0.3.x86_64                                        
+  docker-25.0.16-1.amzn2023.0.2.x86_64                                          
+  iptables-libs-1.8.8-3.amzn2023.0.2.x86_64                                     
+  iptables-nft-1.8.8-3.amzn2023.0.2.x86_64                                      
+  libcgroup-3.0-1.amzn2023.0.1.x86_64                                           
+  libnetfilter_conntrack-1.0.8-2.amzn2023.0.2.x86_64                            
+  libnfnetlink-1.0.1-19.amzn2023.0.2.x86_64                                     
+  libnftnl-1.2.2-2.amzn2023.0.2.x86_64                                          
+  pigz-2.5-1.amzn2023.0.4.x86_64                                                
+  runc-1.3.5-1.amzn2023.0.2.x86_64                                              
+
+Complete!
+Created symlink /etc/systemd/system/multi-user.target.wants/docker.service → /usr/lib/systemd/system/docker.service.
+Warning: Permanently added '44.251.178.21' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.251.178.21' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.251.178.21' (ED25519) to the list of known hosts.
+7-alpine: Pulling from library/redis
+897d797d2723: Pulling fs layer
+c14c7509f545: Pulling fs layer
+f546396032e0: Pulling fs layer
+a300455a02bb: Pulling fs layer
+941ebb020cf0: Pulling fs layer
+4f4fb700ef54: Pulling fs layer
+677c7c5aa821: Pulling fs layer
+941ebb020cf0: Waiting
+4f4fb700ef54: Waiting
+677c7c5aa821: Waiting
+a300455a02bb: Waiting
+c14c7509f545: Verifying Checksum
+c14c7509f545: Download complete
+f546396032e0: Verifying Checksum
+f546396032e0: Download complete
+897d797d2723: Verifying Checksum
+897d797d2723: Download complete
+941ebb020cf0: Verifying Checksum
+941ebb020cf0: Download complete
+4f4fb700ef54: Verifying Checksum
+4f4fb700ef54: Download complete
+897d797d2723: Pull complete
+a300455a02bb: Verifying Checksum
+a300455a02bb: Download complete
+c14c7509f545: Pull complete
+677c7c5aa821: Verifying Checksum
+677c7c5aa821: Download complete
+f546396032e0: Pull complete
+a300455a02bb: Pull complete
+941ebb020cf0: Pull complete
+4f4fb700ef54: Pull complete
+677c7c5aa821: Pull complete
+Digest: sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+Status: Downloaded newer image for redis:7-alpine
+docker.io/library/redis:7-alpine
+9e06a6f95f626a9abfd88025738f07a889a0dd6582c024ba7d60f66d0dc8ddcb
+time="2026-07-05T22:26:51Z" level=error msg="error waiting for container: context canceled"
+Redis listening on 172.31.32.39:6379
+waiting for Redis on 172.31.32.39:6379 ...
+Redis ready
+>>> cross-build boson-bench (one-shot docker)
+building boson-bench in amazonlinux:2023 docker -> /home/seanorourke/boson/target/al2023/boson-bench
+info: downloading installer
+warn: It looks like you have an existing rustup settings file at:
+warn: /opt/rustup/settings.toml
+warn: Rustup will install the default toolchain as specified in the settings file,
+warn: instead of the one inferred from the default host triple.
+info: profile set to default
+info: default host triple is x86_64-unknown-linux-gnu
+info: syncing channel updates for stable-x86_64-unknown-linux-gnu
+info: latest update on 2026-06-30 for version 1.96.1 (31fca3adb 2026-06-26)
+info: downloading 6 components
+info: default toolchain set to stable-x86_64-unknown-linux-gnu
+
+  stable-x86_64-unknown-linux-gnu installed - rustc 1.96.1 (31fca3adb 2026-06-26)
+
+
+Rust is installed now. Great!
+
+To get started you need Cargo's bin directory (/opt/cargo/bin) in your PATH
+environment variable. This has not been done automatically.
+
+To configure your current shell, you need to source
+the corresponding env file under /opt/cargo.
+
+This is usually done by running one of the following (note the leading DOT):
+. "/opt/cargo/env"            # For sh/bash/zsh/ash/dash/pdksh
+source "/opt/cargo/env.fish"  # For fish
+source "/opt/cargo/env.nu"  # For nushell
+source "/opt/cargo/env.tcsh"  # For tcsh
+. "/opt/cargo/env.ps1"        # For pwsh
+source "/opt/cargo/env.xsh"   # For xonsh
+CARGO_BUILD_JOBS=16
+    Finished `release` profile [optimized] target(s) in 0.67s
+Built /home/seanorourke/boson/target/al2023/boson-bench (789c412ea4df9157042ee8dbbbf612a3edef9d66-7a2b03be)
+>>> deploy binary to bench 54.188.214.132
+Warning: Permanently added '54.188.214.132' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.188.214.132' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.188.214.132' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.188.214.132' (ED25519) to the list of known hosts.
+deploy gate ok: bm-be1 bm-bd1 registered
+deployed 789c412ea4df9157042ee8dbbbf612a3edef9d66-7a2b03be to 54.188.214.132
+>>> tier3-capacity redis bench=54.188.214.132 broker=172.31.32.39 url=redis://172.31.32.39:6379
+Warning: Permanently added '54.188.214.132' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.188.214.132' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.188.214.132' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.188.214.132' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.188.214.132' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.188.214.132' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.188.214.132' (ED25519) to the list of known hosts.
+started pid=27956
+campaign started; polling (deadline 7200s)...
+  state=running elapsed=7s
+  state=running elapsed=30s
+  state=running elapsed=53s
+  state=running elapsed=76s
+  state=running elapsed=100s
+  state=running elapsed=123s
+  state=running elapsed=146s
+  state=running elapsed=169s
+  state=running elapsed=193s
+  state=running elapsed=216s
+  state=running elapsed=239s
+  state=running elapsed=263s
+  state=running elapsed=286s
+  state=running elapsed=309s
+  state=running elapsed=332s
+  state=running elapsed=356s
+  state=running elapsed=379s
+  state=running elapsed=402s
+  state=running elapsed=426s
+  state=running elapsed=449s
+  state=running elapsed=472s
+  state=running elapsed=496s
+  state=running elapsed=519s
+  state=running elapsed=542s
+  state=running elapsed=566s
+  state=running elapsed=589s
+  state=running elapsed=612s
+  state=running elapsed=635s
+  state=running elapsed=659s
+  state=running elapsed=682s
+  state=running elapsed=705s
+  state=running elapsed=729s
+  state=running elapsed=752s
+  state=running elapsed=776s
+  state=running elapsed=799s
+  state=running elapsed=822s
+  state=running elapsed=846s
+  state=running elapsed=869s
+  state=running elapsed=892s
+  state=running elapsed=916s
+  state=running elapsed=939s
+  state=running elapsed=962s
+  state=running elapsed=985s
+  state=running elapsed=1009s
+  state=running elapsed=1032s
+  state=running elapsed=1055s
+  state=running elapsed=1080s
+  state=running elapsed=1103s
+  state=running elapsed=1126s
+  state=running elapsed=1149s
+  state=running elapsed=1173s
+  state=running elapsed=1196s
+  state=running elapsed=1219s
+  state=running elapsed=1242s
+  state=running elapsed=1266s
+  state=running elapsed=1289s
+  state=running elapsed=1312s
+  state=running elapsed=1336s
+  state=running elapsed=1359s
+  state=running elapsed=1382s
+  state=running elapsed=1405s
+  state=running elapsed=1429s
+  state=running elapsed=1452s
+  state=running elapsed=1475s
+  state=running elapsed=1498s
+  state=running elapsed=1522s
+  state=running elapsed=1545s
+  state=running elapsed=1568s
+  state=running elapsed=1592s
+  state=running elapsed=1615s
+  state=running elapsed=1638s
+  state=running elapsed=1662s
+  state=running elapsed=1685s
+  state=running elapsed=1708s
+  state=running elapsed=1732s
+  state=running elapsed=1755s
+  state=running elapsed=1779s
+  state=running elapsed=1802s
+  state=running elapsed=1825s
+  state=running elapsed=1849s
+  state=running elapsed=1872s
+  state=running elapsed=1895s
+  state=running elapsed=1919s
+  state=running elapsed=1943s
+  state=running elapsed=1967s
+  state=running elapsed=1990s
+  state=running elapsed=2013s
+  state=running elapsed=2036s
+  state=running elapsed=2060s
+  state=running elapsed=2083s
+  state=running elapsed=2106s
+  state=running elapsed=2130s
+  state=running elapsed=2154s
+  state=running elapsed=2177s
+  state=running elapsed=2201s
+  state=running elapsed=2224s
+  state=running elapsed=2247s
+  state=done elapsed=2271s
+Warning: Permanently added '54.188.214.132' (ED25519) to the list of known hosts.
+campaign complete
+Fetching reports from bench (54.188.214.132)
+  extracted 10 files from bench
+Reports in /home/seanorourke/boson/profiling/boson-bench/reports (before=129 after=138)
+Terminating boson-redis-1: i-0041c5b9976473002 i-07e13e480dd98e2ae
+{
+    "TerminatingInstances": [
+        {
+            "InstanceId": "i-07e13e480dd98e2ae",
+            "CurrentState": {
+                "Code": 32,
+                "Name": "shutting-down"
+            },
+            "PreviousState": {
+                "Code": 16,
+                "Name": "running"
+            }
+        },
+        {
+            "InstanceId": "i-0041c5b9976473002",
+            "CurrentState": {
+                "Code": 32,
+                "Name": "shutting-down"
+            },
+            "PreviousState": {
+                "Code": 16,
+                "Name": "running"
+            }
+        }
+    ]
+}
+teardown complete
+========== redis complete ==========
+========== Tier 3 nats on aws-t3-medium ==========
+launched bench=i-0f2da85ae5b4959ac nats=i-056929a8d960def4a
+bench 54.186.115.111 (172.31.36.67) nats 44.244.193.62 (172.31.41.177)
+manifest=/home/seanorourke/boson/infra/native-aws/manifests/boson-nats-1.json
+>>> docker on bench (54.186.115.111)
+Warning: Permanently added '54.186.115.111' (ED25519) to the list of known hosts.
+Waiting for process with pid 1765 to finish.
+Amazon Linux 2023 Kernel Livepatch repository   457 kB/s |  55 kB     00:00    
+Dependencies resolved.
+================================================================================
+ Package                  Arch     Version                  Repository     Size
+================================================================================
+Installing:
+ docker                   x86_64   25.0.16-1.amzn2023.0.2   amazonlinux    46 M
+Installing dependencies:
+ container-selinux        noarch   4:2.245.0-1.amzn2023     amazonlinux    58 k
+ containerd               x86_64   2.2.4-1.amzn2023.0.3     amazonlinux    24 M
+ iptables-libs            x86_64   1.8.8-3.amzn2023.0.2     amazonlinux   401 k
+ iptables-nft             x86_64   1.8.8-3.amzn2023.0.2     amazonlinux   183 k
+ libcgroup                x86_64   3.0-1.amzn2023.0.1       amazonlinux    75 k
+ libnetfilter_conntrack   x86_64   1.0.8-2.amzn2023.0.2     amazonlinux    58 k
+ libnfnetlink             x86_64   1.0.1-19.amzn2023.0.2    amazonlinux    30 k
+ libnftnl                 x86_64   1.2.2-2.amzn2023.0.2     amazonlinux    84 k
+ pigz                     x86_64   2.5-1.amzn2023.0.4       amazonlinux    83 k
+ runc                     x86_64   1.3.5-1.amzn2023.0.2     amazonlinux   3.9 M
+
+Transaction Summary
+================================================================================
+Install  11 Packages
+
+Total download size: 76 M
+Installed size: 284 M
+Downloading Packages:
+(1/11): container-selinux-2.245.0-1.amzn2023.no 1.4 MB/s |  58 kB     00:00    
+(2/11): iptables-libs-1.8.8-3.amzn2023.0.2.x86_  14 MB/s | 401 kB     00:00    
+(3/11): iptables-nft-1.8.8-3.amzn2023.0.2.x86_6 7.9 MB/s | 183 kB     00:00    
+(4/11): libcgroup-3.0-1.amzn2023.0.1.x86_64.rpm 2.7 MB/s |  75 kB     00:00    
+(5/11): libnetfilter_conntrack-1.0.8-2.amzn2023 2.4 MB/s |  58 kB     00:00    
+(6/11): libnfnetlink-1.0.1-19.amzn2023.0.2.x86_ 1.1 MB/s |  30 kB     00:00    
+(7/11): libnftnl-1.2.2-2.amzn2023.0.2.x86_64.rp 3.2 MB/s |  84 kB     00:00    
+(8/11): pigz-2.5-1.amzn2023.0.4.x86_64.rpm      3.2 MB/s |  83 kB     00:00    
+(9/11): containerd-2.2.4-1.amzn2023.0.3.x86_64.  65 MB/s |  24 MB     00:00    
+(10/11): runc-1.3.5-1.amzn2023.0.2.x86_64.rpm    23 MB/s | 3.9 MB     00:00    
+(11/11): docker-25.0.16-1.amzn2023.0.2.x86_64.r  66 MB/s |  46 MB     00:00    
+--------------------------------------------------------------------------------
+Total                                           103 MB/s |  76 MB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Installing       : runc-1.3.5-1.amzn2023.0.2.x86_64                      1/11 
+  Installing       : containerd-2.2.4-1.amzn2023.0.3.x86_64                2/11 
+  Running scriptlet: containerd-2.2.4-1.amzn2023.0.3.x86_64                2/11 
+  Installing       : pigz-2.5-1.amzn2023.0.4.x86_64                        3/11 
+  Installing       : libnftnl-1.2.2-2.amzn2023.0.2.x86_64                  4/11 
+  Installing       : libnfnetlink-1.0.1-19.amzn2023.0.2.x86_64             5/11 
+  Installing       : libnetfilter_conntrack-1.0.8-2.amzn2023.0.2.x86_64    6/11 
+  Installing       : iptables-libs-1.8.8-3.amzn2023.0.2.x86_64             7/11 
+  Installing       : iptables-nft-1.8.8-3.amzn2023.0.2.x86_64              8/11 
+  Running scriptlet: iptables-nft-1.8.8-3.amzn2023.0.2.x86_64              8/11 
+  Installing       : libcgroup-3.0-1.amzn2023.0.1.x86_64                   9/11 
+  Running scriptlet: container-selinux-4:2.245.0-1.amzn2023.noarch        10/11 
+  Installing       : container-selinux-4:2.245.0-1.amzn2023.noarch        10/11 
+  Running scriptlet: container-selinux-4:2.245.0-1.amzn2023.noarch        10/11 
+  Running scriptlet: docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+  Installing       : docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+  Running scriptlet: docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+Created symlink /etc/systemd/system/sockets.target.wants/docker.socket → /usr/lib/systemd/system/docker.socket.
+
+  Running scriptlet: container-selinux-4:2.245.0-1.amzn2023.noarch        11/11 
+  Running scriptlet: docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+  Verifying        : container-selinux-4:2.245.0-1.amzn2023.noarch         1/11 
+  Verifying        : containerd-2.2.4-1.amzn2023.0.3.x86_64                2/11 
+  Verifying        : docker-25.0.16-1.amzn2023.0.2.x86_64                  3/11 
+  Verifying        : iptables-libs-1.8.8-3.amzn2023.0.2.x86_64             4/11 
+  Verifying        : iptables-nft-1.8.8-3.amzn2023.0.2.x86_64              5/11 
+  Verifying        : libcgroup-3.0-1.amzn2023.0.1.x86_64                   6/11 
+  Verifying        : libnetfilter_conntrack-1.0.8-2.amzn2023.0.2.x86_64    7/11 
+  Verifying        : libnfnetlink-1.0.1-19.amzn2023.0.2.x86_64             8/11 
+  Verifying        : libnftnl-1.2.2-2.amzn2023.0.2.x86_64                  9/11 
+  Verifying        : pigz-2.5-1.amzn2023.0.4.x86_64                       10/11 
+  Verifying        : runc-1.3.5-1.amzn2023.0.2.x86_64                     11/11 
+
+Installed:
+  container-selinux-4:2.245.0-1.amzn2023.noarch                                 
+  containerd-2.2.4-1.amzn2023.0.3.x86_64                                        
+  docker-25.0.16-1.amzn2023.0.2.x86_64                                          
+  iptables-libs-1.8.8-3.amzn2023.0.2.x86_64                                     
+  iptables-nft-1.8.8-3.amzn2023.0.2.x86_64                                      
+  libcgroup-3.0-1.amzn2023.0.1.x86_64                                           
+  libnetfilter_conntrack-1.0.8-2.amzn2023.0.2.x86_64                            
+  libnfnetlink-1.0.1-19.amzn2023.0.2.x86_64                                     
+  libnftnl-1.2.2-2.amzn2023.0.2.x86_64                                          
+  pigz-2.5-1.amzn2023.0.4.x86_64                                                
+  runc-1.3.5-1.amzn2023.0.2.x86_64                                              
+
+Complete!
+Created symlink /etc/systemd/system/multi-user.target.wants/docker.service → /usr/lib/systemd/system/docker.service.
+>>> docker on nats (44.244.193.62)
+Warning: Permanently added '44.244.193.62' (ED25519) to the list of known hosts.
+Amazon Linux 2023 Kernel Livepatch repository   436 kB/s |  55 kB     00:00    
+Dependencies resolved.
+================================================================================
+ Package                  Arch     Version                  Repository     Size
+================================================================================
+Installing:
+ docker                   x86_64   25.0.16-1.amzn2023.0.2   amazonlinux    46 M
+Installing dependencies:
+ container-selinux        noarch   4:2.245.0-1.amzn2023     amazonlinux    58 k
+ containerd               x86_64   2.2.4-1.amzn2023.0.3     amazonlinux    24 M
+ iptables-libs            x86_64   1.8.8-3.amzn2023.0.2     amazonlinux   401 k
+ iptables-nft             x86_64   1.8.8-3.amzn2023.0.2     amazonlinux   183 k
+ libcgroup                x86_64   3.0-1.amzn2023.0.1       amazonlinux    75 k
+ libnetfilter_conntrack   x86_64   1.0.8-2.amzn2023.0.2     amazonlinux    58 k
+ libnfnetlink             x86_64   1.0.1-19.amzn2023.0.2    amazonlinux    30 k
+ libnftnl                 x86_64   1.2.2-2.amzn2023.0.2     amazonlinux    84 k
+ pigz                     x86_64   2.5-1.amzn2023.0.4       amazonlinux    83 k
+ runc                     x86_64   1.3.5-1.amzn2023.0.2     amazonlinux   3.9 M
+
+Transaction Summary
+================================================================================
+Install  11 Packages
+
+Total download size: 76 M
+Installed size: 284 M
+Downloading Packages:
+(1/11): container-selinux-2.245.0-1.amzn2023.no 1.4 MB/s |  58 kB     00:00    
+(2/11): iptables-libs-1.8.8-3.amzn2023.0.2.x86_  14 MB/s | 401 kB     00:00    
+(3/11): iptables-nft-1.8.8-3.amzn2023.0.2.x86_6 5.4 MB/s | 183 kB     00:00    
+(4/11): libcgroup-3.0-1.amzn2023.0.1.x86_64.rpm 2.9 MB/s |  75 kB     00:00    
+(5/11): libnetfilter_conntrack-1.0.8-2.amzn2023 2.0 MB/s |  58 kB     00:00    
+(6/11): libnfnetlink-1.0.1-19.amzn2023.0.2.x86_ 1.0 MB/s |  30 kB     00:00    
+(7/11): libnftnl-1.2.2-2.amzn2023.0.2.x86_64.rp 3.2 MB/s |  84 kB     00:00    
+(8/11): pigz-2.5-1.amzn2023.0.4.x86_64.rpm      3.6 MB/s |  83 kB     00:00    
+(9/11): containerd-2.2.4-1.amzn2023.0.3.x86_64.  64 MB/s |  24 MB     00:00    
+(10/11): runc-1.3.5-1.amzn2023.0.2.x86_64.rpm    24 MB/s | 3.9 MB     00:00    
+(11/11): docker-25.0.16-1.amzn2023.0.2.x86_64.r  63 MB/s |  46 MB     00:00    
+--------------------------------------------------------------------------------
+Total                                            97 MB/s |  76 MB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Installing       : runc-1.3.5-1.amzn2023.0.2.x86_64                      1/11 
+  Installing       : containerd-2.2.4-1.amzn2023.0.3.x86_64                2/11 
+  Running scriptlet: containerd-2.2.4-1.amzn2023.0.3.x86_64                2/11 
+  Installing       : pigz-2.5-1.amzn2023.0.4.x86_64                        3/11 
+  Installing       : libnftnl-1.2.2-2.amzn2023.0.2.x86_64                  4/11 
+  Installing       : libnfnetlink-1.0.1-19.amzn2023.0.2.x86_64             5/11 
+  Installing       : libnetfilter_conntrack-1.0.8-2.amzn2023.0.2.x86_64    6/11 
+  Installing       : iptables-libs-1.8.8-3.amzn2023.0.2.x86_64             7/11 
+  Installing       : iptables-nft-1.8.8-3.amzn2023.0.2.x86_64              8/11 
+  Running scriptlet: iptables-nft-1.8.8-3.amzn2023.0.2.x86_64              8/11 
+  Installing       : libcgroup-3.0-1.amzn2023.0.1.x86_64                   9/11 
+  Running scriptlet: container-selinux-4:2.245.0-1.amzn2023.noarch        10/11 
+  Installing       : container-selinux-4:2.245.0-1.amzn2023.noarch        10/11 
+  Running scriptlet: container-selinux-4:2.245.0-1.amzn2023.noarch        10/11 
+  Running scriptlet: docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+  Installing       : docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+  Running scriptlet: docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+Created symlink /etc/systemd/system/sockets.target.wants/docker.socket → /usr/lib/systemd/system/docker.socket.
+
+  Running scriptlet: container-selinux-4:2.245.0-1.amzn2023.noarch        11/11 
+  Running scriptlet: docker-25.0.16-1.amzn2023.0.2.x86_64                 11/11 
+  Verifying        : container-selinux-4:2.245.0-1.amzn2023.noarch         1/11 
+  Verifying        : containerd-2.2.4-1.amzn2023.0.3.x86_64                2/11 
+  Verifying        : docker-25.0.16-1.amzn2023.0.2.x86_64                  3/11 
+  Verifying        : iptables-libs-1.8.8-3.amzn2023.0.2.x86_64             4/11 
+  Verifying        : iptables-nft-1.8.8-3.amzn2023.0.2.x86_64              5/11 
+  Verifying        : libcgroup-3.0-1.amzn2023.0.1.x86_64                   6/11 
+  Verifying        : libnetfilter_conntrack-1.0.8-2.amzn2023.0.2.x86_64    7/11 
+  Verifying        : libnfnetlink-1.0.1-19.amzn2023.0.2.x86_64             8/11 
+  Verifying        : libnftnl-1.2.2-2.amzn2023.0.2.x86_64                  9/11 
+  Verifying        : pigz-2.5-1.amzn2023.0.4.x86_64                       10/11 
+  Verifying        : runc-1.3.5-1.amzn2023.0.2.x86_64                     11/11 
+
+Installed:
+  container-selinux-4:2.245.0-1.amzn2023.noarch                                 
+  containerd-2.2.4-1.amzn2023.0.3.x86_64                                        
+  docker-25.0.16-1.amzn2023.0.2.x86_64                                          
+  iptables-libs-1.8.8-3.amzn2023.0.2.x86_64                                     
+  iptables-nft-1.8.8-3.amzn2023.0.2.x86_64                                      
+  libcgroup-3.0-1.amzn2023.0.1.x86_64                                           
+  libnetfilter_conntrack-1.0.8-2.amzn2023.0.2.x86_64                            
+  libnfnetlink-1.0.1-19.amzn2023.0.2.x86_64                                     
+  libnftnl-1.2.2-2.amzn2023.0.2.x86_64                                          
+  pigz-2.5-1.amzn2023.0.4.x86_64                                                
+  runc-1.3.5-1.amzn2023.0.2.x86_64                                              
+
+Complete!
+Created symlink /etc/systemd/system/multi-user.target.wants/docker.service → /usr/lib/systemd/system/docker.service.
+Warning: Permanently added '44.244.193.62' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.244.193.62' (ED25519) to the list of known hosts.
+Warning: Permanently added '44.244.193.62' (ED25519) to the list of known hosts.
+2.10-alpine: Pulling from library/nats
+d49a2dee86fb: Pulling fs layer
+08267b6ab21b: Pulling fs layer
+252dbe15f747: Pulling fs layer
+a9d9eb83cd84: Pulling fs layer
+a9d9eb83cd84: Waiting
+252dbe15f747: Verifying Checksum
+252dbe15f747: Download complete
+d49a2dee86fb: Verifying Checksum
+d49a2dee86fb: Download complete
+08267b6ab21b: Verifying Checksum
+08267b6ab21b: Download complete
+a9d9eb83cd84: Verifying Checksum
+a9d9eb83cd84: Download complete
+d49a2dee86fb: Pull complete
+08267b6ab21b: Pull complete
+252dbe15f747: Pull complete
+a9d9eb83cd84: Pull complete
+Digest: sha256:b83efabe3e7def1e0a4a31ec6e078999bb17c80363f881df35edc70fcb6bb927
+Status: Downloaded newer image for nats:2.10-alpine
+docker.io/library/nats:2.10-alpine
+e7e51c25abe91a4906025345f0c3198e9a6622b81289b0407bd1bc7e06c12a62
+NATS JetStream listening on 172.31.41.177:4222
+waiting for NATS on 172.31.41.177:4222 ...
+Warning: Permanently added '44.244.193.62' (ED25519) to the list of known hosts.
+NATS ready
+>>> cross-build boson-bench (one-shot docker)
+building boson-bench in amazonlinux:2023 docker -> /home/seanorourke/boson/target/al2023/boson-bench
+info: downloading installer
+warn: It looks like you have an existing rustup settings file at:
+warn: /opt/rustup/settings.toml
+warn: Rustup will install the default toolchain as specified in the settings file,
+warn: instead of the one inferred from the default host triple.
+info: profile set to default
+info: default host triple is x86_64-unknown-linux-gnu
+info: syncing channel updates for stable-x86_64-unknown-linux-gnu
+info: latest update on 2026-06-30 for version 1.96.1 (31fca3adb 2026-06-26)
+info: downloading 6 components
+info: default toolchain set to stable-x86_64-unknown-linux-gnu
+
+  stable-x86_64-unknown-linux-gnu installed - rustc 1.96.1 (31fca3adb 2026-06-26)
+
+
+Rust is installed now. Great!
+
+To get started you need Cargo's bin directory (/opt/cargo/bin) in your PATH
+environment variable. This has not been done automatically.
+
+To configure your current shell, you need to source
+the corresponding env file under /opt/cargo.
+
+This is usually done by running one of the following (note the leading DOT):
+. "/opt/cargo/env"            # For sh/bash/zsh/ash/dash/pdksh
+source "/opt/cargo/env.fish"  # For fish
+source "/opt/cargo/env.nu"  # For nushell
+source "/opt/cargo/env.tcsh"  # For tcsh
+. "/opt/cargo/env.ps1"        # For pwsh
+source "/opt/cargo/env.xsh"   # For xonsh
+CARGO_BUILD_JOBS=16
+    Finished `release` profile [optimized] target(s) in 0.77s
+Built /home/seanorourke/boson/target/al2023/boson-bench (789c412ea4df9157042ee8dbbbf612a3edef9d66-7a2b03be)
+>>> deploy binary to bench 54.186.115.111
+Warning: Permanently added '54.186.115.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.186.115.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.186.115.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.186.115.111' (ED25519) to the list of known hosts.
+deploy gate ok: bm-be1 bm-bd1 registered
+deployed 789c412ea4df9157042ee8dbbbf612a3edef9d66-7a2b03be to 54.186.115.111
+>>> tier3-capacity nats bench=54.186.115.111 broker=172.31.41.177 url=nats://172.31.41.177:4222
+Warning: Permanently added '54.186.115.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.186.115.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.186.115.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.186.115.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.186.115.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.186.115.111' (ED25519) to the list of known hosts.
+Warning: Permanently added '54.186.115.111' (ED25519) to the list of known hosts.
+started pid=27960
+campaign started; polling (deadline 7200s)...
+  state=running elapsed=6s
+  state=running elapsed=29s
+  state=running elapsed=53s
+  state=running elapsed=76s
+  state=running elapsed=100s
+  state=running elapsed=124s
+  state=running elapsed=148s
+  state=running elapsed=171s
+  state=running elapsed=196s
+  state=running elapsed=220s
+  state=running elapsed=244s
+  state=running elapsed=267s
+  state=running elapsed=291s
+  state=running elapsed=315s
+  state=running elapsed=338s
+  state=running elapsed=362s
+  state=running elapsed=387s
+  state=running elapsed=411s
+  state=running elapsed=435s
+  state=running elapsed=459s
+  state=running elapsed=483s
+  state=running elapsed=507s
+  state=running elapsed=531s
+  state=running elapsed=555s
+  state=running elapsed=579s
+  state=running elapsed=602s
+  state=running elapsed=626s
+  state=running elapsed=650s
+  state=running elapsed=674s
+  state=running elapsed=698s
+  state=running elapsed=721s
+  state=running elapsed=746s
+  state=running elapsed=770s
+  state=running elapsed=793s
+  state=running elapsed=817s
+  state=running elapsed=841s
+  state=running elapsed=865s
+  state=running elapsed=888s
+  state=running elapsed=912s
+  state=running elapsed=937s
+  state=running elapsed=960s
+  state=running elapsed=984s
+  state=running elapsed=1008s
+  state=running elapsed=1032s
+  state=running elapsed=1055s
+  state=running elapsed=1079s
+  state=running elapsed=1103s
+  state=running elapsed=1127s
+  state=running elapsed=1151s
+  state=running elapsed=1175s
+  state=running elapsed=1199s
+  state=running elapsed=1223s
+  state=running elapsed=1247s
+  state=running elapsed=1270s
+  state=running elapsed=1294s
+  state=running elapsed=1318s
+  state=running elapsed=1343s
+  state=running elapsed=1367s
+  state=running elapsed=1391s
+  state=running elapsed=1414s
+  state=running elapsed=1438s
+  state=running elapsed=1463s
+  state=running elapsed=1487s
+  state=running elapsed=1510s
+  state=running elapsed=1535s
+  state=done elapsed=1559s
+Warning: Permanently added '54.186.115.111' (ED25519) to the list of known hosts.
+campaign complete
+Fetching reports from bench (54.186.115.111)
+  extracted 10 files from bench
+Reports in /home/seanorourke/boson/profiling/boson-bench/reports (before=138 after=147)
+Terminating boson-nats-1: i-0f2da85ae5b4959ac i-056929a8d960def4a
+{
+    "TerminatingInstances": [
+        {
+            "InstanceId": "i-056929a8d960def4a",
+            "CurrentState": {
+                "Code": 32,
+                "Name": "shutting-down"
+            },
+            "PreviousState": {
+                "Code": 16,
+                "Name": "running"
+            }
+        },
+        {
+            "InstanceId": "i-0f2da85ae5b4959ac",
+            "CurrentState": {
+                "Code": 32,
+                "Name": "shutting-down"
+            },
+            "PreviousState": {
+                "Code": 16,
+                "Name": "running"
+            }
+        }
+    ]
+}
+teardown complete
+========== nats complete ==========
+Tier 3 AWS campaign done. Log: /home/seanorourke/boson/infra/native-aws/state/run-tier3-aws-20260705-222409.log
+Reports: /home/seanorourke/boson/profiling/boson-bench/reports/*-{redis,nats}-*-aws-t3-medium.json

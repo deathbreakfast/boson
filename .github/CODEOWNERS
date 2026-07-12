@@ -1,0 +1,25 @@
+# Default owners for Boson workspace changes.
+* @unified-field-dev
+
+# Core contracts and orchestration
+/boson-core/ @unified-field-dev
+/boson-runtime/ @unified-field-dev
+/boson-macros/ @unified-field-dev
+
+# Persistence adapters
+/boson-backend-*/ @unified-field-dev
+/boson-backend-sql-common/ @unified-field-dev
+
+# HTTP admin
+/boson-axum/ @unified-field-dev
+
+# Test and performance harnesses
+/boson-testkit/ @unified-field-dev
+/boson-e2e/ @unified-field-dev
+/boson-bench/ @unified-field-dev
+
+# CI and supply chain
+/.github/ @unified-field-dev
+/deny.toml @unified-field-dev
+/docs/supply-chain.md @unified-field-dev
+/SECURITY.md @unified-field-dev

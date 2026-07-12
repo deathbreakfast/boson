@@ -1,0 +1,21 @@
+========== Boson BD2 multi-bench fleet sweep (D3) ==========
+launched bench-0=i-0171fc943b885c34c (c6i.large)
+
+aws: [ERROR]: An error occurred (VcpuLimitExceeded) when calling the RunInstances operation: You have requested more vCPU capacity than your current vCPU limit of 16 allows for the instance bucket that the specified instance type belongs to. Please visit http://aws.amazon.com/contact-us/ec2-request to request an adjustment to this limit.
+Terminating remaining boson-bench instances: i-0171fc943b885c34c
+{
+    "TerminatingInstances": [
+        {
+            "InstanceId": "i-0171fc943b885c34c",
+            "CurrentState": {
+                "Code": 32,
+                "Name": "shutting-down"
+            },
+            "PreviousState": {
+                "Code": 16,
+                "Name": "running"
+            }
+        }
+    ]
+}
+teardown complete
