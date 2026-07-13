@@ -413,6 +413,7 @@ name = "boson-runtime"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "boson-backend-mem",
  "boson-core",
  "boson-macros",
  "boson-telemetry",
@@ -454,6 +455,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "tower",
+ "uf-quark",
  "uuid",
 ]
 

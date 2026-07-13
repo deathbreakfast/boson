@@ -23,5 +23,8 @@ chrono = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
+[dev-dependencies]
+boson-backend-mem = { workspace = true }
+
 [lints]
 workspace = true

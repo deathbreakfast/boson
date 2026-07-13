@@ -13,7 +13,7 @@ Uses `ScenarioRunner` from testkit — same `ScenarioSpec` steps as [`boson-benc
 | Tier | Trigger | Command | Backends |
 |------|---------|---------|----------|
 | **Full matrix** | push/PR to `main` | `cargo test -p boson-e2e -- --include-ignored` + services | mem, sqlite, postgres, redis, nats (+ scylla if secret) |
-| **AWS remote** | maintainer | `./infra/native-aws/scripts/run-remote-ci.sh` | mem, sqlite (broker fleets via separate scripts) |
+| **AWS remote** | maintainer | `~/aws/boson/run-remote-ci.sh` | mem, sqlite (broker fleets via separate scripts) |
 | **HTTP** | push/PR | `cargo test -p boson-axum` | route integration tests |
 
 ### Smoke helpers

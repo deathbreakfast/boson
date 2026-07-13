@@ -1,27 +1,27 @@
 {
   "topology": "boson-redis-1",
   "broker": "redis",
-  "campaign": "boson-tier3-redis-20260712",
+  "campaign": "boson-tier3-redis-20260713",
   "region": "us-west-2",
-  "instance_type": "c7i.xlarge",
-  "bench_instance_type": "c7i.xlarge",
+  "instance_type": "t3.medium",
+  "bench_instance_type": "t3.medium",
   "broker_instance_type": "t3.medium",
-  "hardware": "aws-c7i-xlarge",
-  "created_at": "2026-07-12T19:22:30.248086Z",
+  "hardware": "aws-t3-medium",
+  "created_at": "2026-07-13T02:23:40.466525Z",
   "instances": [
     {
       "role": "bench",
-      "instance_id": "i-0755e49ac74795dc4",
-      "instance_type": "c7i.xlarge",
-      "public_ip": "35.94.217.1",
-      "private_ip": "172.31.56.186"
+      "instance_id": "i-0471b6b47bb6aa274",
+      "instance_type": "t3.medium",
+      "public_ip": "54.184.2.106",
+      "private_ip": "172.31.39.30"
     },
     {
       "role": "redis",
-      "instance_id": "i-0538309bce2780b06",
+      "instance_id": "i-085d49786f395ae64",
       "instance_type": "t3.medium",
-      "public_ip": "35.92.220.112",
-      "private_ip": "172.31.38.47"
+      "public_ip": "35.87.213.99",
+      "private_ip": "172.31.40.69"
     }
   ]
 }

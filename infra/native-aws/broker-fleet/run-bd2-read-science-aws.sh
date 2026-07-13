@@ -32,7 +32,7 @@ export BOSON_BENCH_STORAGE_TOPOLOGY=nats-1
 export BOSON_TIER3_PHASE=drain-rep-sweep
 "$ROOT/scripts/provision-broker-1.sh" "$BOSON_NATIVE_MANIFEST"
 "$ROOT/scripts/bootstrap-broker-1.sh" "$BOSON_NATIVE_MANIFEST"
-"$ROOT/scripts/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
+"${BOSON_AWS_ADAPTER:-$HOME/aws/boson}/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
 "$ROOT/scripts/run-broker-lab.sh" "$BOSON_NATIVE_MANIFEST"
 BOSON_NATIVE_MANIFEST="$BOSON_NATIVE_MANIFEST" "$ROOT/scripts/fetch-reports.sh" "$BOSON_NATIVE_MANIFEST"
 "$ROOT/scripts/teardown-fleet.sh" "$BOSON_NATIVE_MANIFEST"
@@ -52,7 +52,7 @@ print(next(i['private_ip'] for i in m['instances'] if i['role'] == 'nats-0'))
 ")"
 export BOSON_NATS_URLS=""
 export BOSON_TEST_NATS_URL="nats://${N0_PRIV}:4222"
-"$ROOT/scripts/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
+"${BOSON_AWS_ADAPTER:-$HOME/aws/boson}/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
 export BOSON_NATS_URLS=""
 "$ROOT/scripts/run-broker-lab.sh" "$BOSON_NATIVE_MANIFEST"
 BOSON_NATIVE_MANIFEST="$BOSON_NATIVE_MANIFEST" "$ROOT/scripts/fetch-reports.sh" "$BOSON_NATIVE_MANIFEST"
@@ -65,7 +65,7 @@ export BOSON_BENCH_STORAGE_TOPOLOGY=nats-1-c6i-broker
 export BOSON_TIER3_PHASE=drain-c6i-broker
 "$ROOT/scripts/provision-broker-1.sh"
 "$ROOT/scripts/bootstrap-broker-1.sh" "$BOSON_NATIVE_MANIFEST"
-"$ROOT/scripts/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
+"${BOSON_AWS_ADAPTER:-$HOME/aws/boson}/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
 "$ROOT/scripts/run-broker-lab.sh" "$BOSON_NATIVE_MANIFEST"
 BOSON_NATIVE_MANIFEST="$BOSON_NATIVE_MANIFEST" "$ROOT/scripts/fetch-reports.sh" "$BOSON_NATIVE_MANIFEST"
 "$ROOT/scripts/teardown-fleet.sh" "$BOSON_NATIVE_MANIFEST"

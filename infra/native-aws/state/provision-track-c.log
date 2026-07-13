@@ -1,3 +1,0 @@
-launched bench=i-0e99117a56395ff95 scylla=i-00c9dfb07584eb05e
-bench 44.251.172.70 (172.31.32.155) scylla 54.188.175.18 (172.31.47.138)
-manifest=/home/seanorourke/boson/infra/native-aws/manifests/boson-scylla-1.json

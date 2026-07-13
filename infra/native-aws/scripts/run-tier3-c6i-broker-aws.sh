@@ -33,7 +33,7 @@ export BOSON_BROKER=nats
 export BOSON_NATIVE_MANIFEST="boson-nats-1"
 "$ROOT/scripts/provision-broker-1.sh"
 "$ROOT/scripts/bootstrap-broker-1.sh" "$BOSON_NATIVE_MANIFEST"
-"$ROOT/scripts/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
+"${BOSON_AWS_ADAPTER:-$HOME/aws/boson}/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
 "$ROOT/scripts/run-broker-lab.sh" "$BOSON_NATIVE_MANIFEST"
 BOSON_NATIVE_MANIFEST="$BOSON_NATIVE_MANIFEST" "$ROOT/scripts/fetch-reports.sh" "$BOSON_NATIVE_MANIFEST"
 "$ROOT/scripts/teardown-fleet.sh" "$BOSON_NATIVE_MANIFEST"

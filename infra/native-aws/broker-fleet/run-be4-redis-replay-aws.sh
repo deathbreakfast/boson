@@ -53,7 +53,7 @@ print(next(i['private_ip'] for i in m['instances'] if i['role'] == 'redis'))
     bash "$REPO_ROOT/infra/native-aws/scripts/run-redis-e2e.sh"
   fi
 
-  "$ROOT/scripts/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
+  "${BOSON_AWS_ADAPTER:-$HOME/aws/boson}/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
   "$ROOT/scripts/run-broker-lab.sh" "$BOSON_NATIVE_MANIFEST"
   BOSON_NATIVE_MANIFEST="$BOSON_NATIVE_MANIFEST" "$ROOT/scripts/fetch-reports.sh" "$BOSON_NATIVE_MANIFEST"
   trap - EXIT

@@ -38,7 +38,7 @@ trap cleanup EXIT
 
 "$ROOT/scripts/provision-broker-1.sh" "$BOSON_NATIVE_MANIFEST"
 "$ROOT/scripts/bootstrap-broker-1.sh" "$BOSON_NATIVE_MANIFEST"
-"$ROOT/scripts/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
+"${BOSON_AWS_ADAPTER:-$HOME/aws/boson}/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
 "$ROOT/scripts/run-broker-lab.sh" "$BOSON_NATIVE_MANIFEST"
 BOSON_NATIVE_MANIFEST="$BOSON_NATIVE_MANIFEST" "$ROOT/scripts/fetch-reports.sh" "$BOSON_NATIVE_MANIFEST" || true
 trap - EXIT
@@ -53,7 +53,7 @@ CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/boson-target}" cargo run -p boson-ben
 export BOSON_TIER3_PHASE=drain-shard
 "$ROOT/scripts/provision-broker-1.sh" "$BOSON_NATIVE_MANIFEST"
 "$ROOT/scripts/bootstrap-broker-1.sh" "$BOSON_NATIVE_MANIFEST"
-"$ROOT/scripts/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
+"${BOSON_AWS_ADAPTER:-$HOME/aws/boson}/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
 "$ROOT/scripts/run-broker-lab.sh" "$BOSON_NATIVE_MANIFEST"
 BOSON_NATIVE_MANIFEST="$BOSON_NATIVE_MANIFEST" "$ROOT/scripts/fetch-reports.sh" "$BOSON_NATIVE_MANIFEST" || true
 trap - EXIT
@@ -80,7 +80,7 @@ for N in 1 2 4; do
   eval "$("$BF/export-fleet-env.sh" "$BOSON_NATIVE_MANIFEST")"
   export BOSON_FLEET_SIZE="$N"
 
-  "$ROOT/scripts/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
+  "${BOSON_AWS_ADAPTER:-$HOME/aws/boson}/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
   eval "$("$BF/export-fleet-env.sh" "$BOSON_NATIVE_MANIFEST")"
   export BOSON_FLEET_SIZE="$N"
   export BOSON_TIER3_PHASE=drain-fleet-shard

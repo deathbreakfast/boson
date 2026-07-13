@@ -1,5 +1,0 @@
-               total        used        free      shared  buff/cache   available
-Mem:            3839         952        1490           0        1396        2633
-Swap:              0           0           0
-CONTAINER ID   NAME            CPU %     MEM USAGE / LIMIT    MEM %     NET I/O   BLOCK I/O        PIDS
-51083ae65608   boson-scylla0   1.08%     694.9MiB / 3.75GiB   18.10%    0B / 0B   129MB / 2.03GB   14

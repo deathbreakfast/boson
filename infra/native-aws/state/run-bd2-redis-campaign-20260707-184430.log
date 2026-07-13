@@ -1,5 +1,0 @@
-========== Phase E2: Redis D0–D1 replay ==========
-launched bench=i-06347364e53076fdf (c6i.large) redis=i-018e708cd3ab13059 (t3.medium) hardware=aws-c6i-large
-bench 16.148.192.50 (172.31.53.167) redis 35.89.154.245 (172.31.42.252)
-manifest=/home/seanorourke/boson/infra/native-aws/manifests/boson-redis-1.json
-infra/native-aws/broker-fleet/run-bd2-redis-replay-aws.sh: line 66: syntax error near unexpected token `('

@@ -94,7 +94,7 @@ EXP_LIST="$(ssh_cmd "$BENCH_HOST" "~/boson-bench/boson-bench experiments 2>/dev/
 for req in bm-be1 bm-bd1; do
   if ! grep -q "$req" <<< "$EXP_LIST"; then
     echo "deploy gate failed: boson-bench on $BENCH_HOST missing $req" >&2
-    echo "Run deploy-bench-binary.sh first" >&2
+    echo "Run ~/aws/boson/deploy-bench-binary.sh first" >&2
     exit 1
   fi
 done

@@ -179,7 +179,7 @@ Full baseline: [`docs/VERIFICATION.md`](docs/VERIFICATION.md). Contribute checkl
 **Remote CI (optional):** mirror the PR subset on a provisioned native-aws bench host:
 
 ```bash
-./infra/native-aws/scripts/run-remote-ci.sh
+~/aws/boson/run-remote-ci.sh
 ```
 
 **Merge gate:** [`.github/workflows/boson-matrix.yml`](.github/workflows/boson-matrix.yml) runs check, `cargo-deny`, clippy, crate tests, full broker e2e (postgres/redis/nats), axum, examples, docs, coverage, and bench smoke on every push/PR to `main`.

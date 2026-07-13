@@ -26,7 +26,7 @@ export BOSON_BENCH_STORAGE_TOPOLOGY=nats-cluster
 eval "$("$BF/export-fleet-env.sh" "$BOSON_NATIVE_MANIFEST")"
 export BOSON_TIER3_PHASE=publisher
 
-"$ROOT/scripts/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
+"${BOSON_AWS_ADAPTER:-$HOME/aws/boson}/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
 "$ROOT/scripts/run-broker-lab.sh" "$BOSON_NATIVE_MANIFEST"
 BOSON_NATIVE_MANIFEST="$BOSON_NATIVE_MANIFEST" "$ROOT/scripts/fetch-reports.sh" "$BOSON_NATIVE_MANIFEST"
 "$ROOT/scripts/teardown-fleet.sh" "$BOSON_NATIVE_MANIFEST"

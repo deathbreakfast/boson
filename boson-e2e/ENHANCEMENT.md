@@ -61,5 +61,5 @@ Implement BM-B2–B8 / BM-BL* runners aligned with e2e scenarios in [`boson-benc
 | Tier | Trigger | What runs |
 |------|---------|-----------|
 | PR | `boson-matrix.yml` | Full matrix: mem/sqlite/postgres/redis/nats contracts + e2e `--include-ignored`; deny; clippy; axum; examples; coverage |
-| AWS remote | `infra/native-aws/scripts/run-remote-ci.sh` | PR subset without broker containers (deny, clippy, crate tests, mem/sqlite e2e) |
+| AWS remote | `~/aws/boson/run-remote-ci.sh` | PR subset without broker containers (deny, clippy, crate tests, mem/sqlite e2e) |
 | Manual | `infra/native-aws/scripts/` | Scylla cloud, fleet routing, extended broker campaigns |

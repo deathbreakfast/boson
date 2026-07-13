@@ -37,7 +37,7 @@ if [[ ! -f "$REPO_ROOT/profiling/boson-bench/reports/bm-bd2-fleet-n4-k4-w"*.json
   eval "$("$BF/export-fleet-env.sh" "$BOSON_NATIVE_MANIFEST")"
   export BOSON_FLEET_SIZE=4
 
-  "$ROOT/scripts/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
+  "${BOSON_AWS_ADAPTER:-$HOME/aws/boson}/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
   eval "$("$BF/export-fleet-env.sh" "$BOSON_NATIVE_MANIFEST")"
   export BOSON_FLEET_SIZE=4
   export BOSON_TIER3_PHASE=drain-fleet-shard

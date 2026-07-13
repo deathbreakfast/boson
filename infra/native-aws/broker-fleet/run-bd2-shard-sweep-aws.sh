@@ -35,7 +35,7 @@ echo "========== Boson BD2 shard sweep (D1) W=${BOSON_BD2_WORKER_COUNT} ========
 eval "$("$BF/export-fleet-env.sh" "$BOSON_NATIVE_MANIFEST")"
 export BOSON_FLEET_SIZE=1
 
-"$ROOT/scripts/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
+"${BOSON_AWS_ADAPTER:-$HOME/aws/boson}/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
 eval "$("$BF/export-fleet-env.sh" "$BOSON_NATIVE_MANIFEST")"
 export BOSON_FLEET_SIZE=1
 export BOSON_TIER3_PHASE=drain-shard

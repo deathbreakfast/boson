@@ -30,7 +30,7 @@ echo "========== Phase F: claim path (D7 + D8) =========="
 
 "$ROOT/scripts/provision-broker-1.sh" "$BOSON_NATIVE_MANIFEST"
 "$ROOT/scripts/bootstrap-broker-1.sh" "$BOSON_NATIVE_MANIFEST"
-"$ROOT/scripts/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
+"${BOSON_AWS_ADAPTER:-$HOME/aws/boson}/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
 
 export BOSON_TIER3_PHASE=drain-fetch-batch
 "$ROOT/scripts/run-broker-lab.sh" "$BOSON_NATIVE_MANIFEST"

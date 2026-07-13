@@ -5,14 +5,13 @@ verification on those hosts.
 
 ## Verification (remote CI)
 
-Mirror the PR CI subset (deny, clippy, crate tests, mem/sqlite e2e, examples, docs) on the bench host:
+Mirror the PR CI subset (deny, clippy, crate tests, mem/sqlite e2e, examples, docs) on the bench host from your laptop (no local `cargo`):
 
 ```bash
-./infra/native-aws/scripts/run-remote-ci.sh [manifest-name]
+~/aws/boson/run-remote-ci.sh [manifest-name]   # set BOSON_ROOT if not ~/boson
 ```
 
-Defaults to manifest `boson-redis-1` (or `BOSON_NATIVE_MANIFEST`). Requires
-`BOSON_NATIVE_AWS_KEY_PATH` and a provisioned manifest under `manifests/`.
+Defaults to manifest `boson-redis-1` under `~/aws/boson/manifests/` (or `BOSON_NATIVE_MANIFEST`). See Cursor skill `aws-remote-verify`.
 
 Broker-backed contracts against a live fleet:
 
@@ -22,7 +21,7 @@ Broker-backed contracts against a live fleet:
 ./infra/native-aws/scripts/run-scylla-e2e.sh
 ```
 
-Build only `boson-bench` on EC2: [`scripts/build-on-ec2.sh`](scripts/build-on-ec2.sh).
+Build/deploy `boson-bench`: `~/aws/boson/build-on-ec2.sh`, `build-al2023-local.sh`, `deploy-bench-binary.sh`.
 
 Full GitHub Actions (including postgres/redis/nats service containers) remains the merge gate:
 [`.github/workflows/boson-matrix.yml`](../../.github/workflows/boson-matrix.yml).

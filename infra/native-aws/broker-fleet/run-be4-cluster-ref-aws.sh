@@ -42,7 +42,7 @@ print(next(i['private_ip'] for i in m['instances'] if i['role'] == 'nats-0'))
 export BOSON_NATS_URLS=""
 export BOSON_TEST_NATS_URL="nats://${N0_PRIV}:4222"
 
-"$ROOT/scripts/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
+"${BOSON_AWS_ADAPTER:-$HOME/aws/boson}/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
 export BOSON_TIER3_PHASE=cluster-shard
 export BOSON_NATS_URLS=""
 "$ROOT/scripts/run-broker-lab.sh" "$BOSON_NATIVE_MANIFEST"

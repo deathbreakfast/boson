@@ -22,10 +22,11 @@ boson-runtime = { workspace = true }
 boson-telemetry = { workspace = true }
 http-body-util = { workspace = true }
 paste = { workspace = true }
+quark = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tempfile = { workspace = true }
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 tower = { workspace = true }
 uuid = { workspace = true }
 

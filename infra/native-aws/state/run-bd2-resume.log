@@ -1,6 +1,0 @@
-========== Resume D2: N=4 fleet drain ==========
-launched bench=i-0e24749902180b52e (c6i.large)
-launched nats-0=i-060ff2cdb727dbfe3 (t3.medium)
-launched nats-1=i-0aa25b3babe73d9b1 (t3.medium)
-
-aws: [ERROR]: An error occurred (VcpuLimitExceeded) when calling the RunInstances operation: You have requested more vCPU capacity than your current vCPU limit of 16 allows for the instance bucket that the specified instance type belongs to. Please visit http://aws.amazon.com/contact-us/ec2-request to request an adjustment to this limit.

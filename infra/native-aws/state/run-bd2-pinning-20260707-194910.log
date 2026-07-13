@@ -1,6 +1,0 @@
-========== Phase G1: pool pinning (D9) ==========
-launched bench=i-09dcef677e42ce9f1 (c6i.large)
-launched nats-0=i-0e91eed89dd2c0398 (t3.medium)
-launched nats-1=i-02f3b62c0844c3cd8 (t3.medium)
-
-aws: [ERROR]: An error occurred (VcpuLimitExceeded) when calling the RunInstances operation: You have requested more vCPU capacity than your current vCPU limit of 16 allows for the instance bucket that the specified instance type belongs to. Please visit http://aws.amazon.com/contact-us/ec2-request to request an adjustment to this limit.

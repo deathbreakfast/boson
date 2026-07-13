@@ -6,7 +6,7 @@
 2. Run verification locally, or mirror the PR subset on a provisioned native-aws host:
 
 ```bash
-./infra/native-aws/scripts/run-remote-ci.sh
+~/aws/boson/run-remote-ci.sh
 ```
 
 3. For broker-backed contracts against a provisioned fleet, chain:

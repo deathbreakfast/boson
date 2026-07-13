@@ -20,7 +20,7 @@ MANIFEST_NAME="${1:-${BOSON_NATIVE_MANIFEST:-boson-nats-multibench-4}}"
 MANIFEST="$(manifest_read "$MANIFEST_NAME")"
 
 echo ">>> cross-build boson-bench (one-shot docker)"
-"$ROOT/scripts/build-al2023-local.sh"
+"${BOSON_AWS_ADAPTER:-$HOME/aws/boson}/build-al2023-local.sh"
 
 BINARY="$(artifact_local_path)"
 

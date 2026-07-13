@@ -39,7 +39,7 @@ for N in 1 2 4; do
   eval "$("$BF/export-fleet-env.sh" "$BOSON_NATIVE_MANIFEST")"
   export BOSON_FLEET_SIZE="$N"
 
-  "$ROOT/scripts/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
+  "${BOSON_AWS_ADAPTER:-$HOME/aws/boson}/deploy-bench-binary.sh" "$BOSON_NATIVE_MANIFEST"
   eval "$("$BF/export-fleet-env.sh" "$BOSON_NATIVE_MANIFEST")"
   export BOSON_FLEET_SIZE="$N"
   export BOSON_TIER3_PHASE=drain-fleet-shard

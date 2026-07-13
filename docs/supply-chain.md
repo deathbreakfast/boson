@@ -35,7 +35,7 @@ lines that cannot be bumped without a coordinated adapter upgrade.
 Run `cargo deny check` locally, or via remote CI on a provisioned native-aws host:
 
 ```bash
-./infra/native-aws/scripts/run-remote-ci.sh
+~/aws/boson/run-remote-ci.sh
 ```
 
 That remote script installs `cargo-deny` if needed and runs `cargo deny check` before

@@ -1,8 +1,0 @@
-========== Phase G1: BD2 fleet pool pinning N=4 W=4 ==========
-=== bm-bd2 backend=nats report=bm-bd2-fleet-n4-k4-w4-unpinned-nats-isolated-lab-off-aws-c6i-large --worker-count 4 --worker-poll-ms 0 --pool-count 4 --pool-layout distinct --prefill-count 10000 ===
-wrote /home/ec2-user/boson-bench/reports/bm-bd2-fleet-n4-k4-w4-unpinned-nats-isolated-lab-off-aws-c6i-large.json
-=== bm-bd2 backend=nats report=bm-bd2-fleet-n4-k4-w4-pinned-nats-isolated-lab-off-aws-c6i-large --worker-count 4 --worker-poll-ms 0 --pool-count 4 --pool-layout distinct --prefill-count 10000 ===
-wrote /home/ec2-user/boson-bench/reports/bm-bd2-fleet-n4-k4-w4-pinned-nats-isolated-lab-off-aws-c6i-large.json
-DONE phase=drain-fleet-pin reports=2
-bm-bd2-fleet-n4-k4-w4-pinned-nats-isolated-lab-off-aws-c6i-large.json
-bm-bd2-fleet-n4-k4-w4-unpinned-nats-isolated-lab-off-aws-c6i-large.json

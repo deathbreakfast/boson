@@ -1,0 +1,3 @@
+# Live fleet manifests (IPs/instance IDs) — keep under ~/aws/boson/manifests/
+*.json
+!*.example.json

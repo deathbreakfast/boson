@@ -9,7 +9,7 @@ Mirror the PR subset on a provisioned bench host (deny, clippy, crate tests, mem
 examples, docs):
 
 ```bash
-./infra/native-aws/scripts/run-remote-ci.sh
+~/aws/boson/run-remote-ci.sh
 ```
 
 Broker contracts against a provisioned fleet:
