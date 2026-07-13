@@ -1,6 +1,6 @@
 //! Shared types, [`QueueBackend`] trait, router, and identity hooks.
 //!
-//! Task authors usually start with [`boson`](https://docs.rs/boson). This crate holds
+//! Task authors usually start with [`boson`](https://docs.rs/uf-boson). This crate holds
 //! shared DTOs, the [`QueueBackend`] trait, and identity types used by runtime and backend adapters.
 //!
 //! ## Entry points

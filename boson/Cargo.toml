@@ -1,5 +1,5 @@
 [package]
-name = "boson"
+name = "uf-boson"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,7 +9,7 @@ homepage.workspace = true
 readme = "README.md"
 keywords.workspace = true
 categories.workspace = true
-documentation = "https://docs.rs/boson"
+documentation = "https://docs.rs/uf-boson"
 description = "Public Boson facade — async work engine"
 
 [package.metadata.docs.rs]

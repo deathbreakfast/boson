@@ -13,7 +13,7 @@
 //! inventory.
 //!
 //! **Link closure:** the binary that boots Boson must depend on every crate that defines tasks.
-//! See the [`boson`](https://docs.rs/boson) crate **Integrating the server** section.
+//! See the [`boson`](https://docs.rs/uf-boson) crate **Integrating the server** section.
 //!
 //! ## Manual registration (tests and advanced)
 //!

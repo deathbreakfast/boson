@@ -30,7 +30,7 @@ configure(boson);
 ```
 
 Link every crate that defines `#[boson::task]` handlers into the worker binary. See
-[`boson`](https://docs.rs/boson) **Integrating the server** and [`task_macro`](https://github.com/unified-field-dev/boson/blob/main/boson/examples/task_macro.rs).
+[`boson`](https://docs.rs/uf-boson) **Integrating the server** and [`task_macro`](https://github.com/unified-field-dev/boson/blob/main/boson/examples/task_macro.rs).
 
 ## Manual task registration (tests)
 
@@ -44,7 +44,7 @@ registry.register(desc);
 
 ## Related crates
 
-- [`boson`](https://docs.rs/boson) — main crate and documentation map
+- [`boson`](https://docs.rs/uf-boson) — main crate and documentation map
 - [`boson-macros`](https://docs.rs/boson-macros) — task attribute macro
 - [`boson-core`](https://docs.rs/boson-core) — `QueueBackend` trait, identity traits
 - [`boson-telemetry`](https://docs.rs/boson-telemetry) — `OpsLog` adapters

@@ -27,7 +27,7 @@ See [`infra/native-aws/README.md`](../infra/native-aws/README.md).
 
 | Job | Purpose |
 |-----|---------|
-| `check` | `cargo check -p boson --features mem` |
+| `check` | `cargo check -p uf-boson --features mem` |
 | `deny` | `cargo deny check` ([`deny.toml`](../deny.toml), [`docs/supply-chain.md`](supply-chain.md)) |
 | `clippy` | workspace clippy `-D warnings` |
 | crate jobs | testkit, mem, sqlite, sql-common, core, runtime/macros, telemetry, axum |
@@ -46,7 +46,7 @@ Use these on AWS via `run-remote-ci.sh`, or on any host with a Rust toolchain:
 ```bash
 export CARGO_BUILD_JOBS=1
 
-cargo check -p boson --features mem
+cargo check -p uf-boson --features mem
 cargo deny check
 cargo clippy --workspace --all-targets -- -D warnings
 
@@ -65,13 +65,13 @@ RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
 cargo test --doc -p boson-core
 cargo test --doc -p boson-runtime
 cargo test --doc -p boson-backend-mem
-cargo test --doc -p boson --features mem
+cargo test --doc -p uf-boson --features mem
 cargo test --doc -p boson-telemetry
 
-cargo run -p boson --example minimal_enqueue --features mem
-cargo run -p boson --example task_macro --features mem
-cargo run -p boson --example idempotency_and_rate_limit --features mem
-cargo run -p boson --example axum_admin --features mem,axum
+cargo run -p uf-boson --example minimal_enqueue --features mem
+cargo run -p uf-boson --example task_macro --features mem
+cargo run -p uf-boson --example idempotency_and_rate_limit --features mem
+cargo run -p uf-boson --example axum_admin --features mem,axum
 
 cargo run -p boson-bench -- experiments
 cargo run -p boson-bench -- run --experiment bm-b0 --backend mem --topology isolated-lab --telemetry off --ops 1000

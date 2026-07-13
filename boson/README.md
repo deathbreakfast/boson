@@ -1,9 +1,12 @@
-# boson
+# boson (`uf-boson` on crates.io)
 
 Main crate — re-exports core types, runtime, optional backends, and the `#[task]` macro.
 
-**Source of truth:** `cargo doc -p boson --features mem,axum --open` — see the documentation map
-on the crate root for task-oriented entry points. Published docs: https://docs.rs/boson
+The crates.io package is **`uf-boson`** (`boson` is already taken). With `[lib] name = "boson"`,
+imports stay `use boson::…`.
+
+**Source of truth:** `cargo doc -p uf-boson --features mem,axum --open` — see the documentation map
+on the crate root for task-oriented entry points. Published docs: https://docs.rs/uf-boson
 
 ## Role
 
@@ -11,7 +14,7 @@ on the crate root for task-oriented entry points. Published docs: https://docs.r
 - [`Boson`](https://docs.rs/boson-runtime) / [`BosonBuilder`](https://docs.rs/boson-runtime) — worker boot
 - Feature-gated backends: `mem`, `sqlite`, `postgres`, `axum`, `telemetry-console`
 - Fleet backends: [`boson-backend-redis`](https://docs.rs/boson-backend-redis), [`boson-backend-nats`](https://docs.rs/boson-backend-nats)
-- [`prelude`](https://docs.rs/boson/latest/boson/prelude/index.html) — common re-exports
+- [`prelude`](https://docs.rs/uf-boson/latest/boson/prelude/index.html) — common re-exports
 
 ## Cargo features
 
@@ -29,7 +32,7 @@ This crate ships with **no default features** (`default = []`).
 
 ```toml
 [dependencies]
-boson = { version = "0.1.0", features = ["mem"] }
+boson = { package = "uf-boson", version = "0.1.0", features = ["mem"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 

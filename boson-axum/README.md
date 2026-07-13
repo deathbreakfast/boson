@@ -23,7 +23,7 @@ let app = Router::new()
 Enable via the `boson` crate's `axum` feature:
 
 ```toml
-boson = { version = "0.1.0", features = ["mem", "axum"] }
+boson = { package = "uf-boson", version = "0.1.0", features = ["mem", "axum"] }
 ```
 
 ## Routes
@@ -40,5 +40,5 @@ boson = { version = "0.1.0", features = ["mem", "axum"] }
 
 ## Related crates
 
-- [`boson`](https://docs.rs/boson) — enable with `features = ["axum"]`
+- [`boson`](https://docs.rs/uf-boson) — enable with `features = ["axum"]`
 - [`boson-runtime`](https://docs.rs/boson-runtime) — `Boson` instance wired into state

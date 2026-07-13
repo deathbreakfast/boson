@@ -1,6 +1,6 @@
 //! Idempotency keys and enqueue rate limits.
 //!
-//! Run: `cargo run -p boson --example idempotency_and_rate_limit --features mem`
+//! Run: `cargo run -p uf-boson --example idempotency_and_rate_limit --features mem`
 
 use std::future::Future;
 use std::pin::Pin;

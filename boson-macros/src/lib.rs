@@ -5,7 +5,7 @@
 //! - a typed params struct (`<FnName>Params`),
 //! - a typed enqueue handle (`<TaskName>::send_with`),
 //! - and link-time registration (see [Integrating the server](#integrating-the-server) on the
-//!   [`boson`](https://docs.rs/boson) crate for worker boot).
+//!   [`boson`](https://docs.rs/uf-boson) crate for worker boot).
 //!
 //! # Define a task
 //!
@@ -29,7 +29,7 @@
 //!
 //! # Enqueue work
 //!
-//! After the worker is running (see [`boson`](https://docs.rs/boson) **Integrating the server**):
+//! After the worker is running (see [`boson`](https://docs.rs/uf-boson) **Integrating the server**):
 //!
 //! ```ignore
 //! let job_id = NotifyUser::send_with(
@@ -54,7 +54,7 @@
 //!
 //! Worker boot (`BosonBuilder`, [`auto_registry`](https://docs.rs/boson-runtime/latest/boson_runtime/struct.BosonBuilder.html#method.auto_registry),
 //! [`configure`](https://docs.rs/boson-runtime/latest/boson_runtime/fn.configure.html), identity factory) is **not** repeated for each new task.
-//! See the [`boson`](https://docs.rs/boson) crate **Integrating the server** section and the
+//! See the [`boson`](https://docs.rs/uf-boson) crate **Integrating the server** section and the
 //! [`task_macro` example](https://github.com/unified-field-dev/boson/blob/main/boson/examples/task_macro.rs).
 //!
 //! # Generated items
@@ -68,7 +68,7 @@
 //! | `__notify_user_impl` | Original function body (internal) |
 //!
 //! Registration for worker dispatch is emitted at compile time; boot-time collection is described
-//! on [`TaskRegistry`](https://docs.rs/boson-runtime/latest/boson_runtime/struct.TaskRegistry.html) and in the [`boson`](https://docs.rs/boson) crate
+//! on [`TaskRegistry`](https://docs.rs/boson-runtime/latest/boson_runtime/struct.TaskRegistry.html) and in the [`boson`](https://docs.rs/uf-boson) crate
 //! **Integrating the server** section.
 //!
 //! Task handle names are derived from the **task name** (dots become underscores, `PascalCase`).
@@ -125,7 +125,7 @@ mod task_validate;
 ///
 /// Generates a params struct, a typed enqueue handle, and a registration entry for worker dispatch.
 /// See the [crate-level documentation](self) for define/enqueue examples, policy attributes, and
-/// worker boot (cross-link to the [`boson`](https://docs.rs/boson) crate).
+/// worker boot (cross-link to the [`boson`](https://docs.rs/uf-boson) crate).
 ///
 /// # Contract
 ///

@@ -17,5 +17,5 @@ Hosts may install other `OpsLog` implementations from separate adapter crates at
 
 ## Related crates
 
-- [`boson`](https://docs.rs/boson) — re-exports and `telemetry-console` feature
+- [`boson`](https://docs.rs/uf-boson) — re-exports and `telemetry-console` feature
 - [`boson-runtime`](https://docs.rs/boson-runtime) — records enqueue/complete/fail metrics via `OpsLog`

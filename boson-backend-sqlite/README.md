@@ -36,6 +36,6 @@ Available via the `boson` crate feature `sqlite`.
 
 ## Related crates
 
-- [`boson`](https://docs.rs/boson) — enable with `features = ["sqlite"]`
+- [`boson`](https://docs.rs/uf-boson) — enable with `features = ["sqlite"]`
 - [`boson-backend-sql-common`](https://docs.rs/boson-backend-sql-common) — shared SQL implementation
 - [`boson-core`](https://docs.rs/boson-core) — `QueueBackend` trait definition

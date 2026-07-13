@@ -1,6 +1,6 @@
 //! Manual task registration without the `#[task]` macro.
 //!
-//! Run: `cargo run -p boson --example minimal_enqueue --features mem`
+//! Run: `cargo run -p uf-boson --example minimal_enqueue --features mem`
 
 use std::future::Future;
 use std::pin::Pin;

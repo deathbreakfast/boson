@@ -2,7 +2,7 @@
 
 Shared types, [`QueueBackend`](src/backend/queue_backend.rs) trait, router, errors, and identity hooks.
 
-Task authors usually start at [`boson`](https://docs.rs/boson). This crate holds shared DTOs and the
+Task authors usually start at [`boson`](https://docs.rs/uf-boson). This crate holds shared DTOs and the
 persistence trait for **Developing the backend**.
 
 ## Role
@@ -22,7 +22,7 @@ wiring live in [`boson-runtime`](https://docs.rs/boson-runtime) and [`src/identi
 
 ## Related crates
 
-- [`boson`](https://docs.rs/boson) — main crate (re-exports `task`, `JsonExecutionContextFactory`)
+- [`boson`](https://docs.rs/uf-boson) — main crate (re-exports `task`, `JsonExecutionContextFactory`)
 - [`boson-macros`](https://docs.rs/boson-macros) — `#[boson::task]` attribute macro
 - [`boson-runtime`](https://docs.rs/boson-runtime) — worker runtime built on this trait
 - [Root README](https://github.com/unified-field-dev/boson/blob/main/README.md) — overview

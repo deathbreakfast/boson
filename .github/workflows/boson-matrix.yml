@@ -18,7 +18,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: cargo check (boson facade)
-        run: cargo check -p boson --features mem
+        run: cargo check -p uf-boson --features mem
 
   deny:
     runs-on: ubuntu-latest
@@ -258,13 +258,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: minimal_enqueue example
-        run: cargo run -p boson --example minimal_enqueue --features mem
+        run: cargo run -p uf-boson --example minimal_enqueue --features mem
       - name: task_macro example
-        run: cargo run -p boson --example task_macro --features mem
+        run: cargo run -p uf-boson --example task_macro --features mem
       - name: idempotency_and_rate_limit example
-        run: cargo run -p boson --example idempotency_and_rate_limit --features mem
+        run: cargo run -p uf-boson --example idempotency_and_rate_limit --features mem
       - name: axum_admin example
-        run: cargo run -p boson --example axum_admin --features mem,axum
+        run: cargo run -p uf-boson --example axum_admin --features mem,axum
 
   docs:
     runs-on: ubuntu-latest
@@ -282,7 +282,7 @@ jobs:
           cargo test --doc -p boson-core
           cargo test --doc -p boson-runtime
           cargo test --doc -p boson-backend-mem
-          cargo test --doc -p boson --features mem
+          cargo test --doc -p uf-boson --features mem
           cargo test --doc -p boson-telemetry
 
   sentrux:

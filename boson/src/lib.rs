@@ -2,7 +2,7 @@
 //!
 //! For a full walkthrough with diagrams, see the [repository README](https://github.com/unified-field-dev/boson/blob/main/README.md).
 //!
-//! **Source of truth:** `cargo doc -p boson --features mem,axum --open` — architecture, boot
+//! **Source of truth:** `cargo doc -p uf-boson --features mem,axum --open` — architecture, boot
 //! workflows, and examples live on the public API items and module pages below.
 //!
 //! ## Cargo features
@@ -55,13 +55,13 @@
 //!   `PostgresQueueBackend` (`postgres`), or fleet crates
 //!   [`boson-backend-redis`](https://docs.rs/boson-backend-redis) /
 //!   [`boson-backend-nats`](https://docs.rs/boson-backend-nats). Connect examples on each backend type.
-//! - **Mount HTTP admin** — nest `boson_router` at `/api/boson` ([`NEST_PATH`](https://docs.rs/boson/latest/boson/constant.NEST_PATH.html) when `axum` is enabled). Runnable:
-//!   `cargo run -p boson --example axum_admin --features mem,axum`.
+//! - **Mount HTTP admin** — nest `boson_router` at `/api/boson` ([`NEST_PATH`](https://docs.rs/uf-boson/latest/boson/constant.NEST_PATH.html) when `axum` is enabled). Runnable:
+//!   `cargo run -p uf-boson --example axum_admin --features mem,axum`.
 //! - **Implement custom persistence** — honor the [`QueueBackend`] contract; start from
 //!   `MemQueueBackend` or see **How to implement** on the trait.
 //!
 //! Runnable binaries: `task_macro`, `minimal_enqueue`, `idempotency_and_rate_limit`, `axum_admin`
-//! (`cargo run -p boson --example <name> --features mem`).
+//! (`cargo run -p uf-boson --example <name> --features mem`).
 //!
 //! ## Configuration precedence
 //!

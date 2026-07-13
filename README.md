@@ -1,7 +1,7 @@
 [![CI](https://github.com/unified-field-dev/boson/actions/workflows/boson-matrix.yml/badge.svg)](https://github.com/unified-field-dev/boson/actions/workflows/boson-matrix.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE-MIT)
 
-[GitHub](https://github.com/unified-field-dev/boson) · `cargo doc -p boson --features mem,axum --open` · [Benchmarks](boson-bench/README.md)
+[GitHub](https://github.com/unified-field-dev/boson) · `cargo doc -p uf-boson --features mem,axum --open` · [Benchmarks](boson-bench/README.md)
 
 # Boson
 
@@ -38,7 +38,7 @@ async fn main() -> anyhow::Result<()> {
 ```
 
 Add tasks with `#[task]` and enqueue via `send_with`. See the hero example below and
-`cargo doc -p boson --features mem --open` for the full documentation map.
+`cargo doc -p uf-boson --features mem --open` for the full documentation map.
 
 ## What Boson owns
 
@@ -105,18 +105,19 @@ flowchart TD
 
 ## Quick start
 
-Add the `boson` crate with the in-memory backend for local evaluation:
+Add the facade crate with the in-memory backend for local evaluation. The crates.io
+package is **`uf-boson`** (the name `boson` is taken); imports stay `use boson::…`:
 
 ```toml
 [dependencies]
-boson = { version = "0.1.0", features = ["mem"] }
+boson = { package = "uf-boson", version = "0.1.0", features = ["mem"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 anyhow = "1"
 ```
 
-Enable features explicitly — `boson` ships with **no default features** (`default = []`). See [Cargo features](#cargo-features) below.
+Enable features explicitly — `uf-boson` ships with **no default features** (`default = []`). See [Cargo features](#cargo-features) below.
 
-API details: [`boson/README.md`](boson/README.md) and `cargo doc -p boson --features mem --open`.
+API details: [`boson/README.md`](boson/README.md) and `cargo doc -p uf-boson --features mem --open`.
 
 ## Cargo features
 
@@ -187,7 +188,7 @@ Full baseline: [`docs/VERIFICATION.md`](docs/VERIFICATION.md). Contribute checkl
 
 | Doc | Covers |
 |-----|----------|
-| `cargo doc -p boson --features mem,axum --open` | Architecture and API reference |
+| `cargo doc -p uf-boson --features mem,axum --open` | Architecture and API reference |
 | [`docs/supply-chain.md`](docs/supply-chain.md) | `cargo-deny` and Git dependency policy |
 | [`SECURITY.md`](SECURITY.md) | Vulnerability reporting |
 | [`boson-macros/README.md`](boson-macros/README.md) | `#[task]` macro, policies, inventory |

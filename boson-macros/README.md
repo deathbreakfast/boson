@@ -24,7 +24,7 @@ Optional policy attributes: `priority`, `pool`, `idempotency_mode`, `max_attempt
 ## Integrating the server
 
 Worker boot — `BosonBuilder`, `.auto_registry()`, identity factory, and `configure` before
-`send_with` — is documented on the [`boson`](https://docs.rs/boson) crate and in
+`send_with` — is documented on the [`boson`](https://docs.rs/uf-boson) crate and in
 [`boson-runtime`](https://docs.rs/boson-runtime). You do not repeat boot steps for each new task.
 
 Runnable first-boot example: [`task_macro`](https://github.com/unified-field-dev/boson/blob/main/boson/examples/task_macro.rs).
@@ -45,7 +45,7 @@ serde_json = "1"
 Or depend on `boson` with the macro re-exported:
 
 ```toml
-boson = { version = "0.1.0", features = ["mem"] }
+boson = { package = "uf-boson", version = "0.1.0", features = ["mem"] }
 ```
 
 ## Identity in handlers

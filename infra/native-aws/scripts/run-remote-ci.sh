@@ -63,7 +63,7 @@ rm -rf "\$CARGO_TARGET_DIR"
 mkdir -p "\$CARGO_TARGET_DIR"
 
 echo "=== check (boson facade) ==="
-cargo check -p boson --features mem
+cargo check -p uf-boson --features mem
 
 echo "=== deny ==="
 if ! command -v cargo-deny >/dev/null 2>&1; then
@@ -108,17 +108,17 @@ cargo run -p boson-bench -- run --experiment bm-b0 --backend mem --topology isol
 cargo run -p boson-bench -- run --experiment bm-b1 --backend mem --topology isolated-lab --telemetry off
 
 echo "=== examples ==="
-cargo run -p boson --example minimal_enqueue --features mem
-cargo run -p boson --example task_macro --features mem
-cargo run -p boson --example idempotency_and_rate_limit --features mem
-cargo run -p boson --example axum_admin --features mem,axum
+cargo run -p uf-boson --example minimal_enqueue --features mem
+cargo run -p uf-boson --example task_macro --features mem
+cargo run -p uf-boson --example idempotency_and_rate_limit --features mem
+cargo run -p uf-boson --example axum_admin --features mem,axum
 
 echo "=== docs ==="
 RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
 cargo test --doc -p boson-core
 cargo test --doc -p boson-runtime
 cargo test --doc -p boson-backend-mem
-cargo test --doc -p boson --features mem
+cargo test --doc -p uf-boson --features mem
 cargo test --doc -p boson-telemetry
 
 echo "Remote CI subset passed (broker live jobs excluded)."

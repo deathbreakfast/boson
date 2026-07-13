@@ -5,7 +5,7 @@
 //! 3. Call [`configure`] so [`Greet::send_with`] can enqueue.
 //! 4. Drive [`ManualWorker::try_run_next`] to execute the job.
 //!
-//! Run: `cargo run -p boson --example task_macro --features mem`
+//! Run: `cargo run -p uf-boson --example task_macro --features mem`
 
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;

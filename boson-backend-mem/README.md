@@ -42,5 +42,5 @@ Available via the `boson` crate feature `mem` (forwards this adapter).
 
 ## Related crates
 
-- [`boson`](https://docs.rs/boson) — enable with `features = ["mem"]`
+- [`boson`](https://docs.rs/uf-boson) — enable with `features = ["mem"]`
 - [`boson-core`](https://docs.rs/boson-core) — `QueueBackend` trait definition

@@ -1,6 +1,6 @@
 //! Mount the Boson HTTP admin API on Axum.
 //!
-//! Run: `cargo run -p boson --example axum_admin --features mem,axum`
+//! Run: `cargo run -p uf-boson --example axum_admin --features mem,axum`
 //!
 //! Then: `curl -X POST http://127.0.0.1:3000/api/boson/jobs/enqueue -H 'Content-Type: application/json' -d '{"task_name":"echo"}'`
 
