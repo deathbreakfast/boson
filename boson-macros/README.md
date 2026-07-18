@@ -36,10 +36,10 @@ Runnable first-boot example: [`task_macro`](https://github.com/unified-field-dev
 Crates that define tasks need:
 
 ```toml
-boson-macros = "0.1.0"
+boson-macros = "0.1.1"
 quark = { package = "uf-quark", version = "0.1.1" }
-boson-runtime = "0.1.0"
-boson-core = "0.1.0"
+boson-runtime = "0.1.1"
+boson-core = "0.1.1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
@@ -47,7 +47,7 @@ serde_json = "1"
 Or depend on `boson` with the macro re-exported:
 
 ```toml
-boson = { package = "uf-boson", version = "0.1.0", features = ["mem"] }
+boson = { package = "uf-boson", version = "0.1.1", features = ["mem"] }
 ```
 
 ## Identity in handlers

@@ -1,3 +1,7 @@
+[![crates.io](https://img.shields.io/crates/v/uf-boson.svg)](https://crates.io/crates/uf-boson)
+[![docs.rs](https://docs.rs/uf-boson/badge.svg)](https://docs.rs/uf-boson)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../LICENSE-MIT)
+
 # boson (`uf-boson` on crates.io)
 
 Main crate — re-exports core types, runtime, optional backends, and the `#[task]` macro.
@@ -34,7 +38,7 @@ This crate ships with **no default features** (`default = []`).
 
 ```toml
 [dependencies]
-boson = { package = "uf-boson", version = "0.1.0", features = ["mem"] }
+boson = { package = "uf-boson", version = "0.1.1", features = ["mem"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
