@@ -3,14 +3,14 @@
 Shared types, [`QueueBackend`](src/backend/queue_backend.rs) trait, router, errors, and identity hooks.
 
 Task authors usually start at [`boson`](https://docs.rs/uf-boson). This crate holds shared DTOs and the
-persistence trait for **Developing the backend**.
+persistence trait for custom backends.
 
 ## Role
 
-- `Job`, `Run`, `TaskConfig`, status enums — shared data (**Creating tasks** / admin)
-- **`ExecutionContext` / `ExecutionContextFactory`** — handler identity (**Creating tasks** in handlers; factory installed at boot)
-- **`QueueBackend`** — stable async trait for queue persistence (**Developing the backend**)
-- **`QueueRouter`** — register named backends at host boot (**Integrating the server**)
+- `Job`, `Run`, `TaskConfig`, status enums — shared data
+- **`ExecutionContext` / `ExecutionContextFactory`** — handler identity (factory installed at boot)
+- **`QueueBackend`** — stable async trait for queue persistence
+- **`QueueRouter`** — register named backends at host boot (see [`boson`](https://docs.rs/uf-boson) Getting started)
 
 Third-party crates implement **`QueueBackend`** only against DTOs exported here. See
 [`QueueBackend`](src/backend/queue_backend.rs) rustdoc (**How to implement**, method groups, skeleton).

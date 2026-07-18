@@ -20,7 +20,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MIT"
 authors = ["Sean O'Rourke"]
@@ -33,22 +33,22 @@ categories = ["asynchronous", "concurrency"]
 anyhow = "1"
 async-trait = "0.1"
 axum = "0.8"
-boson-axum = { path = "boson-axum", version = "0.1.0" }
-boson-backend-mem = { path = "boson-backend-mem", version = "0.1.0" }
-boson-backend-sql-common = { path = "boson-backend-sql-common", version = "0.1.0" }
-boson-backend-sqlite = { path = "boson-backend-sqlite", version = "0.1.0" }
-boson-backend-postgres = { path = "boson-backend-postgres", version = "0.1.0" }
-boson-backend-redis = { path = "boson-backend-redis", version = "0.1.0" }
-boson-backend-nats = { path = "boson-backend-nats", version = "0.1.0" }
-boson-backend-scylla = { path = "boson-backend-scylla", version = "0.1.0" }
-boson-core = { path = "boson-core", version = "0.1.0" }
+boson-axum = { path = "boson-axum", version = "0.1.1" }
+boson-backend-mem = { path = "boson-backend-mem", version = "0.1.1" }
+boson-backend-sql-common = { path = "boson-backend-sql-common", version = "0.1.1" }
+boson-backend-sqlite = { path = "boson-backend-sqlite", version = "0.1.1" }
+boson-backend-postgres = { path = "boson-backend-postgres", version = "0.1.1" }
+boson-backend-redis = { path = "boson-backend-redis", version = "0.1.1" }
+boson-backend-nats = { path = "boson-backend-nats", version = "0.1.1" }
+boson-backend-scylla = { path = "boson-backend-scylla", version = "0.1.1" }
+boson-core = { path = "boson-core", version = "0.1.1" }
 scylla = "1.7"
-boson-macros = { path = "boson-macros", version = "0.1.0" }
-boson-e2e = { path = "boson-e2e", version = "0.1.0" }
-boson-bench = { path = "boson-bench", version = "0.1.0" }
-boson-runtime = { path = "boson-runtime", version = "0.1.0" }
-boson-telemetry = { path = "boson-telemetry", version = "0.1.0" }
-boson-testkit = { path = "boson-testkit", version = "0.1.0" }
+boson-macros = { path = "boson-macros", version = "0.1.1" }
+boson-e2e = { path = "boson-e2e", version = "0.1.1" }
+boson-bench = { path = "boson-bench", version = "0.1.1" }
+boson-runtime = { path = "boson-runtime", version = "0.1.1" }
+boson-telemetry = { path = "boson-telemetry", version = "0.1.1" }
+boson-testkit = { path = "boson-testkit", version = "0.1.1" }
 chrono = { version = "0.4", features = ["serde"] }
 quark = { package = "uf-quark", version = "0.1.1" }
 serde = { version = "1", features = ["derive"] }

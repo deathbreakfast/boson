@@ -4,31 +4,38 @@
 ///
 /// Usually constructed by [`BosonBuilder`](crate::BosonBuilder) via [`worker_id`](crate::BosonBuilder::worker_id)
 /// and [`lease_ttl_secs`](crate::BosonBuilder::lease_ttl_secs). Defaults: worker id from
-/// `INSTANCE_ID` / `BOSON_WORKER_ID` / `boson-worker-1`, lease TTL `0` (single-process, no
+/// `INSTANCE_ID` / `BOSON_WORKER_ID` / `boson-worker-1`, lease TTL `0` (Mode 1 embedded, no
 /// distributed leases).
 ///
-/// # Example — multiple worker processes
+/// Getting started:
+/// [Mode 2 — Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
 ///
-/// Run one Boson instance per process against shared persistence. Each process needs a unique
-/// [`worker_id`](Self::worker_id) and a positive [`lease_ttl_secs`](Self::lease_ttl_secs) so
+/// # Example — multiple worker processes (Mode 2)
+///
+/// Run one Boson instance per process against **shared** persistence (Postgres, `SQLite` path,
+/// Redis, or NATS — not [`MemQueueBackend`](https://docs.rs/boson-backend-mem), which is
+/// in-process only). Each process needs a unique [`worker_id`](Self::worker_id) and a positive
+/// [`lease_ttl_secs`](Self::lease_ttl_secs) so
 /// [`QueueBackend::try_claim_run_lease`](boson_core::QueueBackend::try_claim_run_lease) prevents
 /// double execution:
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 /// use std::sync::Arc;
 ///
-/// use boson_backend_mem::MemQueueBackend;
+/// use boson_backend_postgres::PostgresQueueBackend;
 /// use boson_core::JsonExecutionContextFactory;
 /// use boson_runtime::Boson;
 ///
-/// # fn main() -> boson_core::Result<()> {
+/// # async fn boot() -> boson_core::Result<()> {
+/// let url = std::env::var("DATABASE_URL")?;
+/// let backend = PostgresQueueBackend::connect(&url).await?;
 /// let _boson = Boson::builder()
-///     .queue_backend(Arc::new(MemQueueBackend::new()))
+///     .queue_backend(Arc::new(backend))
 ///     .execution_context_factory(JsonExecutionContextFactory)
 ///     .worker_id("worker-a")
 ///     .lease_ttl_secs(30)
 ///     .auto_registry()
-///     .build()?; // background loop claims and runs jobs for this worker id
+///     .build()?;
 /// # Ok(())
 /// # }
 /// ```

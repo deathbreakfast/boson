@@ -1,11 +1,74 @@
 //! `PostgreSQL` [`QueueBackend`](boson_core::QueueBackend) for Boson.
 //!
-//! Choose at worker boot. Enable via the `boson` crate `postgres` feature.
+//! **When to use:** shared durable state for Mode 1 or Mode 2 (enqueue hosts + worker binaries
+//! against the same database). Enable via the `boson` crate `postgres` feature.
+//!
+//! Mode 2 workers should set a unique `worker_id` and `lease_ttl_secs > 0`. See the
+//! [`boson`](https://docs.rs/uf-boson) crate
+//! [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
 //!
 //! ## Entry points
 //!
 //! - [`PostgresQueueBackend::connect`] — open a pool and bootstrap schema
 //! - [`install_default_postgres_backend`] — register on the global [`QueueRouter`](boson_core::QueueRouter)
+//!
+//! ## Mode 2 — Enqueue binary
+//!
+//! Shared `DATABASE_URL` with the worker. No claim loop in this process:
+//!
+//! ```rust,no_run
+//! use std::sync::Arc;
+//!
+//! use boson_backend_postgres::PostgresQueueBackend;
+//! use boson_core::JsonExecutionContextFactory;
+//! use boson_runtime::{configure, Boson};
+//!
+//! # async fn boot_enqueue() -> boson_core::Result<()> {
+//! let url = std::env::var("DATABASE_URL")
+//!     .unwrap_or_else(|_| "postgres://localhost/boson".into());
+//! let backend = PostgresQueueBackend::connect(&url).await?;
+//! let boson = Boson::builder()
+//!     .queue_backend(Arc::new(backend))
+//!     .execution_context_factory(JsonExecutionContextFactory)
+//!     .auto_registry()
+//!     .without_worker()
+//!     .build()?;
+//! configure(boson);
+//! // MyTask::send_with(...).await?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ## Mode 2 — Worker binary
+//!
+//! Same database URL, unique `worker_id`, and `lease_ttl_secs > 0`:
+//!
+//! ```rust,no_run
+//! use std::sync::Arc;
+//!
+//! use boson_backend_postgres::PostgresQueueBackend;
+//! use boson_core::JsonExecutionContextFactory;
+//! use boson_runtime::Boson;
+//!
+//! # async fn boot_worker() -> boson_core::Result<()> {
+//! let url = std::env::var("DATABASE_URL")
+//!     .unwrap_or_else(|_| "postgres://localhost/boson".into());
+//! let backend = PostgresQueueBackend::connect(&url).await?;
+//! let _boson = Boson::builder()
+//!     .queue_backend(Arc::new(backend))
+//!     .execution_context_factory(JsonExecutionContextFactory)
+//!     .worker_id(std::env::var("BOSON_WORKER_ID").unwrap_or_else(|_| "worker-1".into()))
+//!     .lease_ttl_secs(30)
+//!     .auto_registry()
+//!     .build()?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! Other Mode 2 backends:
+//! [`SQLite`](../boson_backend_sqlite/index.html#mode-2--enqueue-binary),
+//! [Redis](../boson_backend_redis/index.html#mode-2--enqueue-binary),
+//! [NATS](../boson_backend_nats/index.html#mode-2--enqueue-binary).
 
 mod bootstrap;
 
@@ -18,6 +81,9 @@ pub use bootstrap::{
 };
 
 /// PostgreSQL-backed queue backend.
+///
+/// Mode 2 examples: [enqueue](index.html#mode-2--enqueue-binary) /
+/// [worker](index.html#mode-2--worker-binary).
 pub struct PostgresQueueBackend {
     inner: SqlQueueBackend,
 }
@@ -32,15 +98,31 @@ impl PostgresQueueBackend {
         Self::connect(url).await
     }
 
-    /// Connect using a `PostgreSQL` connection URL.
+    /// Connect using a `PostgreSQL` connection URL and wire into [`Boson`](https://docs.rs/boson-runtime).
+    ///
+    /// See crate-level [Mode 2 — Enqueue binary](index.html#mode-2--enqueue-binary) and
+    /// [Mode 2 — Worker binary](index.html#mode-2--worker-binary).
     ///
     /// # Examples
     ///
     /// ```rust,no_run
+    /// use std::sync::Arc;
+    ///
     /// use boson_backend_postgres::PostgresQueueBackend;
+    /// use boson_core::JsonExecutionContextFactory;
+    /// use boson_runtime::Boson;
     ///
     /// # async fn connect() -> boson_core::Result<()> {
-    /// let backend = PostgresQueueBackend::connect("postgres://localhost/boson").await?;
+    /// let url = std::env::var("DATABASE_URL")
+    ///     .unwrap_or_else(|_| "postgres://localhost/boson".into());
+    /// let backend = PostgresQueueBackend::connect(&url).await?;
+    /// let _boson = Boson::builder()
+    ///     .queue_backend(Arc::new(backend))
+    ///     .execution_context_factory(JsonExecutionContextFactory)
+    ///     .worker_id("worker-1")
+    ///     .lease_ttl_secs(30) // Mode 2 multi-process
+    ///     .auto_registry()
+    ///     .build()?;
     /// # Ok(())
     /// # }
     /// ```

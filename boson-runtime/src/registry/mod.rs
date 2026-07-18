@@ -2,7 +2,7 @@
 //!
 //! ## Entry points
 //!
-//! - [`TaskDescriptor`] — static metadata and default policies for one task (**Creating tasks**)
+//! - [`TaskDescriptor`] — static metadata and default policies for one task
 //! - [`TaskDefaults`] — grouped retry/rate/priority defaults for descriptors
 //! - [`TaskRegistry`] — lookup tasks by name and invoke handlers
 //!
@@ -10,10 +10,14 @@
 //!
 //! With [`BosonBuilder::auto_registry`](crate::BosonBuilder::auto_registry), tasks defined with
 //! the [`boson_macros::task`] attribute are discovered at link time via [Quark](https://github.com/unified-field-dev/quark)
-//! inventory.
+//! inventory ([`TaskRegistry::auto_discover`](TaskRegistry::auto_discover)).
 //!
-//! **Link closure:** the binary that boots Boson must depend on every crate that defines tasks.
-//! See the [`boson`](https://docs.rs/uf-boson) crate **Integrating the server** section.
+//! **Link closure:** both **worker** and **enqueue** binaries that call `send_with` /
+//! [`BosonBuilder::auto_registry`](crate::BosonBuilder::auto_registry) must depend on every crate
+//! that defines tasks (enqueue needs descriptors; workers need handlers).
+//! See the [`boson`](https://docs.rs/uf-boson) crate
+//! [Mode 1](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary) /
+//! [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
 //!
 //! ## Manual registration (tests and advanced)
 //!

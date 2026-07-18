@@ -64,5 +64,13 @@ required-features = ["mem"]
 name = "axum_admin"
 required-features = ["mem", "axum"]
 
+[[example]]
+name = "remote_enqueue"
+required-features = ["sqlite"]
+
+[[example]]
+name = "remote_worker"
+required-features = ["sqlite"]
+
 [lints]
 workspace = true

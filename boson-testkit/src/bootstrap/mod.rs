@@ -139,7 +139,7 @@ impl BootstrapSession {
     /// # Errors
     ///
     /// Returns an error if the backend or telemetry adapter is unsupported, or if
-    /// SQLite/Postgres setup fails.
+    /// `SQLite`/Postgres setup fails.
     // Backend-specific setup is clearer as one exhaustive adapter dispatch.
     #[allow(clippy::too_many_lines)]
     pub async fn install(&mut self) -> Result<()> {

@@ -9,10 +9,17 @@ use axum::{
 use super::handlers;
 use super::state::BosonState;
 
-/// Nest path for the Boson API router.
+/// Nest path for the Boson API router (`/api/boson`).
+///
+/// Pass to [`Router::nest`](axum::Router::nest) with [`boson_router`]. See the crate-level
+/// [Example](crate#example) and the [`boson`](https://docs.rs/uf-boson) crate
+/// [§ 5](https://docs.rs/uf-boson/latest/boson/index.html#5-mount-http-admin-optional).
 pub const NEST_PATH: &str = "/api/boson";
 
 /// Create the Boson API router (mount at [`NEST_PATH`]).
+///
+/// Host apps nest this under [`NEST_PATH`] and provide [`BosonState`] via [`FromRef`].
+/// Runnable: `cargo run -p uf-boson --example axum_admin --features mem,axum`.
 pub fn boson_router<S>() -> Router<S>
 where
     S: Clone + Send + Sync + 'static,

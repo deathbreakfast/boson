@@ -4,8 +4,10 @@
 //! task with:
 //! - a typed params struct (`<FnName>Params`),
 //! - a typed enqueue handle (`<TaskName>::send_with`),
-//! - and link-time registration (see [Integrating the server](#integrating-the-server) on the
-//!   [`boson`](https://docs.rs/uf-boson) crate for worker boot).
+//! - and link-time registration (see
+//!   [Mode 1](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary) /
+//!   [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries)
+//!   on the [`boson`](https://docs.rs/uf-boson) crate for worker vs enqueue-host boot).
 //!
 //! # Define a task
 //!
@@ -29,7 +31,9 @@
 //!
 //! # Enqueue work
 //!
-//! After the worker is running (see [`boson`](https://docs.rs/uf-boson) **Integrating the server**):
+//! After **any process** that will call `send_with` has called
+//! [`configure`](https://docs.rs/boson-runtime/latest/boson_runtime/fn.configure.html) (Mode 1
+//! embedded **or** Mode 2 enqueue-only host):
 //!
 //! ```ignore
 //! let job_id = NotifyUser::send_with(
@@ -42,19 +46,22 @@
 //! ```
 //!
 //! Pass the same `actor_json` shape you would use with [`Boson::enqueue`](https://docs.rs/boson-runtime/latest/boson_runtime/struct.Boson.html#method.enqueue).
+//! The worker that **runs** the job must have discovered the task via
+//! [`auto_registry`](https://docs.rs/boson-runtime/latest/boson_runtime/struct.BosonBuilder.html#method.auto_registry)
+//! (and linked the crate that defines it).
 //!
 //! # Project setup (once per crate)
 //!
 //! - **Depend** — add this crate plus `quark`, `boson-runtime`, `boson-core`, `serde`, and
 //!   `serde_json` to the crate that owns the handler (see [README](../README.md)).
 //! - **Link** — when the handler lives in a library crate, make that crate a dependency of the
-//!   worker binary so inventory entries are linked (for example `use my_worker as _;` in `main`).
+//!   **worker** binary so inventory entries are linked (for example `use my_worker as _;` in `main`).
 //!
-//! # Integrating the server
+//! # Boot once (not per task)
 //!
-//! Worker boot (`BosonBuilder`, [`auto_registry`](https://docs.rs/boson-runtime/latest/boson_runtime/struct.BosonBuilder.html#method.auto_registry),
-//! [`configure`](https://docs.rs/boson-runtime/latest/boson_runtime/fn.configure.html), identity factory) is **not** repeated for each new task.
-//! See the [`boson`](https://docs.rs/uf-boson) crate **Integrating the server** section and the
+//! Worker / enqueue-host boot (`BosonBuilder`, `auto_registry`, `configure`, identity factory) is
+//! **not** repeated for each new task. See the [`boson`](https://docs.rs/uf-boson) crate
+//! [Getting started](https://docs.rs/uf-boson/latest/boson/index.html#getting-started) and the
 //! [`task_macro` example](https://github.com/unified-field-dev/boson/blob/main/boson/examples/task_macro.rs).
 //!
 //! # Generated items
@@ -69,7 +76,8 @@
 //!
 //! Registration for worker dispatch is emitted at compile time; boot-time collection is described
 //! on [`TaskRegistry`](https://docs.rs/boson-runtime/latest/boson_runtime/struct.TaskRegistry.html) and in the [`boson`](https://docs.rs/uf-boson) crate
-//! **Integrating the server** section.
+//! [Mode 1](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary) /
+//! [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries) sections.
 //!
 //! Task handle names are derived from the **task name** (dots become underscores, `PascalCase`).
 //! Params struct names are derived from the **function name**.

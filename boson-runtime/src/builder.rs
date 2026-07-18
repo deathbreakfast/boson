@@ -12,14 +12,24 @@ use crate::Boson;
 ///
 /// **Required:** a queue backend ([`queue_backend`](Self::queue_backend) or
 /// [`queue_backend_from_global`](Self::queue_backend_from_global)) and an
-/// [`execution_context_factory`](Self::execution_context_factory). For `#[task]` handlers, call
-/// [`auto_registry`](Self::auto_registry) so inventory entries from linked crates are collected.
+/// [`execution_context_factory`](Self::execution_context_factory). For `#[task]` handlers on a
+/// **worker** process, call [`auto_registry`](Self::auto_registry) so inventory entries from linked
+/// crates are collected.
 ///
-/// **Optional:** [`worker_id`](Self::worker_id) and [`lease_ttl_secs`](Self::lease_ttl_secs) for
-/// distributed workers, [`ops_log`](Self::ops_log) for telemetry, [`without_worker`](Self::without_worker)
-/// when driving [`ManualWorker`](crate::ManualWorker) in tests.
+/// **Topology** (see the [`boson`](https://docs.rs/uf-boson) crate Getting started):
 ///
-/// # Example
+/// | Mode | Builder posture |
+/// |------|-----------------|
+/// | Mode 1 — Embedded | [`auto_registry`](Self::auto_registry) + [`build`](Self::build) (or [`build_manual`](Self::build_manual) in tests) |
+/// | Mode 2 — Enqueue host | [`auto_registry`](Self::auto_registry) + [`without_worker`](Self::without_worker) + [`build`](Self::build) + [`configure`](crate::configure) |
+/// | Mode 2 — Worker | [`worker_id`](Self::worker_id) + [`lease_ttl_secs`](Self::lease_ttl_secs) (`> 0`) + [`auto_registry`](Self::auto_registry) + [`build`](Self::build) |
+///
+/// **Optional:** [`ops_log`](Self::ops_log) / [`ops_log_console`](Self::ops_log_console) for
+/// telemetry ([`OpsLog`](boson_telemetry::OpsLog)).
+///
+/// # Examples
+///
+/// ## Mode 1 — embedded (enqueue + worker in one process)
 ///
 /// After [`build`](Self::build), call [`configure`](crate::configure) if callers use macro
 /// `send_with` (not required when holding `Boson` and calling [`Boson::enqueue`] directly).
@@ -36,6 +46,28 @@ use crate::Boson;
 ///     .queue_backend(Arc::new(MemQueueBackend::new()))
 ///     .execution_context_factory(JsonExecutionContextFactory)
 ///     .auto_registry()
+///     .build()?;
+/// configure(boson);
+/// # Ok(())
+/// # }
+/// ```
+///
+/// ## Mode 2 — enqueue-only host
+///
+/// ```rust,no_run
+/// use std::sync::Arc;
+///
+/// use boson_backend_mem::MemQueueBackend;
+/// use boson_core::JsonExecutionContextFactory;
+/// use boson_runtime::{configure, Boson};
+///
+/// # fn main() -> boson_core::Result<()> {
+/// // Production Mode 2: use Sqlite/Postgres/Redis/NATS — mem cannot cross processes.
+/// let boson = Boson::builder()
+///     .queue_backend(Arc::new(MemQueueBackend::new()))
+///     .execution_context_factory(JsonExecutionContextFactory)
+///     .auto_registry()
+///     .without_worker()
 ///     .build()?;
 /// configure(boson);
 /// # Ok(())
@@ -59,6 +91,32 @@ pub struct BosonBuilder {
 
 impl BosonBuilder {
     /// Worker identity for lease claims (default: `INSTANCE_ID` / `BOSON_WORKER_ID` / `boson-worker-1`).
+    ///
+    /// Required to be **unique per process** in Mode 2 (multiple workers sharing a backend). See
+    /// [`WorkerSettings`](crate::WorkerSettings) and the
+    /// [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries)
+    /// section on the `boson` crate.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use std::sync::Arc;
+    ///
+    /// use boson_backend_mem::MemQueueBackend;
+    /// use boson_core::JsonExecutionContextFactory;
+    /// use boson_runtime::Boson;
+    ///
+    /// # fn main() -> boson_core::Result<()> {
+    /// let _boson = Boson::builder()
+    ///     .queue_backend(Arc::new(MemQueueBackend::new()))
+    ///     .execution_context_factory(JsonExecutionContextFactory)
+    ///     .worker_id("worker-a")
+    ///     .lease_ttl_secs(30)
+    ///     .auto_registry()
+    ///     .build()?;
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn worker_id(mut self, worker_id: impl Into<String>) -> Self {
         self.worker_id = Some(worker_id.into());
@@ -66,6 +124,11 @@ impl BosonBuilder {
     }
 
     /// Run lease TTL in seconds; when `> 0`, claim path acquires leases before job claim.
+    ///
+    /// Use `0` (default) for Mode 1 embedded monoliths. Use a positive value for Mode 2 so
+    /// workers do not double-execute the same run. Env override: `BOSON_LEASE_TTL_SECS`.
+    ///
+    /// See [`WorkerSettings`](crate::WorkerSettings).
     #[must_use]
     pub const fn lease_ttl_secs(mut self, secs: i64) -> Self {
         self.lease_ttl_secs = Some(secs);
@@ -110,6 +173,10 @@ impl BosonBuilder {
     }
 
     /// Inject queue persistence backend explicitly.
+    ///
+    /// Pick the backend for your topology: [`MemQueueBackend`](https://docs.rs/boson-backend-mem)
+    /// for Mode 1 only; `SQLite`/Postgres/Redis/NATS when processes share a queue. See the
+    /// [`boson`](https://docs.rs/uf-boson) crate backend table.
     #[must_use]
     pub fn queue_backend(mut self, backend: Arc<dyn QueueBackend>) -> Self {
         self.queue_backend = Some(backend);
@@ -166,13 +233,16 @@ impl BosonBuilder {
     }
 
     /// Install ops log adapter (default [`boson_telemetry::NoOpsLog`]).
+    ///
+    /// Prefer this or [`ops_log_console`](Self::ops_log_console) over installing an [`OpsLog`]
+    /// ad hoc. See [`boson_telemetry::OpsLog`] for adapter choices.
     #[must_use]
     pub fn ops_log(mut self, log: impl OpsLog + 'static) -> Self {
         self.ops_log = Some(Arc::new(log));
         self
     }
 
-    /// Use console stderr ops log.
+    /// Use console stderr ops log ([`ConsoleOpsLog`](boson_telemetry::ConsoleOpsLog)).
     #[must_use]
     pub fn ops_log_console(mut self) -> Self {
         self.ops_log = Some(Arc::new(ConsoleOpsLog));
@@ -189,9 +259,18 @@ impl BosonBuilder {
 
     /// Discover tasks registered via Quark inventory (for example `#[boson::task]`).
     ///
-    /// The worker binary must link every crate that defines inventory submissions; otherwise
-    /// tasks defined in library crates will not appear in the registry. Add the task-owning crate
-    /// as a dependency of the binary (for example `use my_worker as _;`).
+    /// **Worker processes** need this (or [`registry`](Self::registry)) so handlers are available
+    /// to the claim loop. **Enqueue hosts** also need it (or a manual registry) because
+    /// `send_with` / [`Boson::enqueue`] resolve task descriptors for priority, pool, and policies
+    /// — they do not run handlers.
+    ///
+    /// The binary must link every crate that defines inventory submissions; otherwise tasks
+    /// defined in library crates will not appear in the registry. Add the task-owning crate as a
+    /// dependency (for example `use my_worker as _;`).
+    ///
+    /// Getting started:
+    /// [Mode 1](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary) /
+    /// [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
     ///
     /// # Example
     ///
@@ -227,7 +306,37 @@ impl BosonBuilder {
         self
     }
 
-    /// Do not spawn background worker (caller drives [`ManualWorker`](crate::ManualWorker)).
+    /// Do not spawn the background worker loop.
+    ///
+    /// Use for:
+    /// - **Mode 2 enqueue hosts** — this process only [`configure`](crate::configure)s and
+    ///   calls `send_with`; a separate worker binary drains the shared backend
+    /// - **Tests** — pair with [`build_manual`](Self::build_manual) and
+    ///   [`ManualWorker`](crate::ManualWorker)
+    ///
+    /// Getting started:
+    /// [Mode 2 — enqueue binary](https://docs.rs/uf-boson/latest/boson/index.html#enqueue-binary).
+    ///
+    /// # Example — enqueue-only process
+    ///
+    /// ```rust,no_run
+    /// use std::sync::Arc;
+    ///
+    /// use boson_backend_mem::MemQueueBackend;
+    /// use boson_core::JsonExecutionContextFactory;
+    /// use boson_runtime::{configure, Boson};
+    ///
+    /// # fn main() -> boson_core::Result<()> {
+    /// let boson = Boson::builder()
+    ///     .queue_backend(Arc::new(MemQueueBackend::new()))
+    ///     .execution_context_factory(JsonExecutionContextFactory)
+    ///     .auto_registry()
+    ///     .without_worker()
+    ///     .build()?;
+    /// configure(boson);
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub const fn without_worker(mut self) -> Self {
         self.spawn_worker = false;

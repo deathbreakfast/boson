@@ -1,6 +1,9 @@
 //! HTTP admin API under `/api/boson`.
 //!
-//! Requires a booted [`boson_runtime::Boson`] — see [`BosonBuilder`](https://docs.rs/boson-runtime/latest/boson_runtime/struct.BosonBuilder.html) on the [`boson`](https://docs.rs/uf-boson) crate before mounting this router.
+//! Requires a booted [`boson_runtime::Boson`] — see
+//! [Getting started](https://docs.rs/uf-boson/latest/boson/index.html#getting-started) on the
+//! [`boson`](https://docs.rs/uf-boson) crate before mounting this router
+//! ([§ 5](https://docs.rs/uf-boson/latest/boson/index.html#5-mount-http-admin-optional)).
 //!
 //! ## Entry points
 //!

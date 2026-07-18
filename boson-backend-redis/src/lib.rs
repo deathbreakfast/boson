@@ -1,10 +1,81 @@
-//! Redis [`QueueBackend`] for fleet-scale deployments.
+//! Redis [`QueueBackend`] for fleet-scale deployments (Mode 2 remote / multi-host).
 //!
-//! See the [crate README](../README.md) for connect snippets and environment variables.
-//! Fleet URL resolution: `BOSON_REDIS_POOL_ROUTING` takes precedence over `BOSON_REDIS_URLS`
-//! when both are set (see `fleet_urls_from_env` in the `fleet` module).
+//! **When to use:** broker-backed fleets where many enqueue hosts and workers share Redis.
+//! Not a `boson` facade feature — depend on this crate directly. Mode 2 workers need unique
+//! `worker_id` and `lease_ttl_secs > 0`.
 //!
-//! To implement a custom adapter, see **How to implement** on [`QueueBackend`].
+//! Getting started:
+//! [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
+//! Full Compose / env tables: [crate README](https://github.com/unified-field-dev/boson/blob/main/boson-backend-redis/README.md).
+//!
+//! Fleet URL precedence: `BOSON_REDIS_POOL_ROUTING` over `BOSON_REDIS_URLS`
+//! (see [`connect_fleet_from_env`]).
+//!
+//! ## Mode 2 — Enqueue binary
+//!
+//! Shared Redis with the worker. No claim loop in this process:
+//!
+//! ```rust,ignore
+//! use std::sync::Arc;
+//!
+//! use boson_backend_redis::{RedisQueueBackend, RedisQueueConfig};
+//! use boson_core::JsonExecutionContextFactory;
+//! use boson_runtime::{configure, Boson};
+//!
+//! # async fn boot_enqueue() -> boson_core::Result<()> {
+//! let backend = RedisQueueBackend::connect(RedisQueueConfig {
+//!     url: std::env::var("BOSON_REDIS_URL")
+//!         .unwrap_or_else(|_| "redis://127.0.0.1:6379".into()),
+//!     key_prefix: "boson".into(),
+//! }).await?;
+//! let boson = Boson::builder()
+//!     .queue_backend(Arc::new(backend))
+//!     .execution_context_factory(JsonExecutionContextFactory)
+//!     .auto_registry()
+//!     .without_worker()
+//!     .build()?;
+//! configure(boson);
+//! // MyTask::send_with(...).await?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! Fleet routers: [`connect_fleet_from_env`] (same `without_worker` + `configure` pattern).
+//!
+//! ## Mode 2 — Worker binary
+//!
+//! Same Redis URL / fleet, unique `worker_id`, and `lease_ttl_secs > 0`:
+//!
+//! ```rust,ignore
+//! use std::sync::Arc;
+//!
+//! use boson_backend_redis::{RedisQueueBackend, RedisQueueConfig};
+//! use boson_core::JsonExecutionContextFactory;
+//! use boson_runtime::Boson;
+//!
+//! # async fn boot_worker() -> boson_core::Result<()> {
+//! let backend = RedisQueueBackend::connect(RedisQueueConfig {
+//!     url: std::env::var("BOSON_REDIS_URL")
+//!         .unwrap_or_else(|_| "redis://127.0.0.1:6379".into()),
+//!     key_prefix: "boson".into(),
+//! }).await?;
+//! let _boson = Boson::builder()
+//!     .queue_backend(Arc::new(backend))
+//!     .execution_context_factory(JsonExecutionContextFactory)
+//!     .worker_id(std::env::var("BOSON_WORKER_ID").unwrap_or_else(|_| "worker-1".into()))
+//!     .lease_ttl_secs(30)
+//!     .auto_registry()
+//!     .build()?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! Other Mode 2 backends:
+//! [`SQLite`](../boson_backend_sqlite/index.html#mode-2--enqueue-binary),
+//! [Postgres](../boson_backend_postgres/index.html#mode-2--enqueue-binary),
+//! [NATS](../boson_backend_nats/index.html#mode-2--enqueue-binary).
+//!
+//! Custom adapters: **How to implement** on [`QueueBackend`].
 
 mod config;
 mod enqueue_rate;
@@ -38,6 +109,9 @@ struct LeaseRow {
 }
 
 /// Redis-backed queue (ZSET ready queue + JSON job bodies).
+///
+/// Mode 2 examples: [enqueue](index.html#mode-2--enqueue-binary) /
+/// [worker](index.html#mode-2--worker-binary).
 pub struct RedisQueueBackend {
     conn: ConnectionManager,
     keys: keys::Keyspace,

@@ -14,7 +14,8 @@
 //!
 //! Install the factory once at worker boot via
 //! [`BosonBuilder::execution_context_factory`](https://docs.rs/boson-runtime/latest/boson_runtime/struct.BosonBuilder.html#method.execution_context_factory).
-//! See the [`boson`](https://docs.rs/uf-boson) crate documentation map for a full boot example.
+//! See the [`boson`](https://docs.rs/uf-boson) crate
+//! [Getting started](https://docs.rs/uf-boson/latest/boson/index.html#getting-started) for a full boot example.
 //!
 //! | Approach | When to use |
 //! |----------|-------------|

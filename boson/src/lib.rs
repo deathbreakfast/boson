@@ -1,19 +1,34 @@
-//! Background jobs, task handlers, and worker runtime.
+//! Boson is a Rust job-work runtime: durable background tasks, retries, rate limits, and
+//! pluggable persistence behind [`QueueBackend`].
 //!
-//! For a full walkthrough with diagrams, see the [repository README](https://github.com/unified-field-dev/boson/blob/main/README.md).
+//! Wire a backend once with [`Boson::builder()`], define handlers with [`task`], then enqueue
+//! with typed `send_with` (after [`configure`]) or [`Boson::enqueue`]. Swap `mem`, `sqlite`,
+//! `postgres`, or fleet crates (`boson-backend-redis` / `boson-backend-nats`) without changing
+//! task code.
 //!
-//! **Source of truth:** `cargo doc -p uf-boson --features mem,axum --open` — architecture, boot
-//! workflows, and examples live on the public API items and module pages below.
+//! ## Features
 //!
-//! ## Cargo features
+//! - **Typed task handlers** — [`task`] macro with policy attributes and generated `send_with`
+//! - **Composable persistence** — inject [`MemQueueBackend`], [`SqliteQueueBackend`],
+//!   [`PostgresQueueBackend`](https://docs.rs/boson-backend-postgres), or fleet backends on
+//!   [`BosonBuilder`]
+//! - **Embedded or remote workers** — one process can enqueue and drain, or many hosts can
+//!   enqueue while a separate worker binary claims jobs (see
+//!   [Mode 2](#mode-2--remote-worker-two-binaries))
+//! - **Leases and pools** — multi-process coordination via [`BosonBuilder::lease_ttl_secs`] and
+//!   [`WorkerSettings`]
+//! - **HTTP admin (optional)** — nest [`boson_router`] at [`NEST_PATH`] when the `axum` feature
+//!   is enabled
+//!
+//! *Background jobs without locking you into one queue store.*
 //!
 //! This crate ships with **no default features** (`default = []`). Enable explicitly:
 //!
-//! - `mem` — in-memory `MemQueueBackend` for tests and local dev
-//! - `sqlite` — `SqliteQueueBackend` persistence
-//! - `postgres` — `PostgresQueueBackend` persistence
+//! - `mem` — [`MemQueueBackend`] for tests and local Mode 1
+//! - `sqlite` — [`SqliteQueueBackend`] durable single-host (or shared-file Mode 2)
+//! - `postgres` — [`PostgresQueueBackend`](https://docs.rs/boson-backend-postgres) shared durable state
 //! - `telemetry-console` — marker for console ops log ([`ConsoleOpsLog`] is always re-exported)
-//! - `axum` — HTTP admin API (`boson_router`, `BosonState`)
+//! - `axum` — HTTP admin API ([`boson_router`], [`BosonState`], [`NEST_PATH`])
 //!
 //! Fleet backends (`boson-backend-redis`, `boson-backend-nats`) are separate workspace crates.
 //!
@@ -24,61 +39,206 @@
 //!
 //! # Getting started
 //!
-//! Depend on this crate with the `mem` feature, boot a worker, and hold a runtime handle:
+//! You always define and enqueue tasks the same way (`#[task]`, `send_with`). What changes is
+//! **which process runs the worker loop**.
 //!
-//! ```rust
+//! ## Choose your topology
+//!
+//! - **[Mode 1 — Embedded](#mode-1--embedded-one-binary)** — one binary enqueues and drains.
+//!   Start here.
+//! - **[Mode 2 — Remote worker](#mode-2--remote-worker-two-binaries)** — API/host processes
+//!   enqueue; a separate **worker** binary (or fleet) claims and runs jobs.
+//!
+//! After you pick a mode, continue with [define tasks](#3-define-tasks) (shared by every mode).
+//!
+//! ## Mode 1 — Embedded (one binary)
+//!
+//! This process enqueues jobs **and** runs the worker loop (or drives [`ManualWorker`] in tests).
+//! There is no second binary. Default lease TTL is `0` (no distributed lease coordination).
+//!
+//! ```text
+//! Your app ──enqueue──► Boson ──worker loop──► mem / `SQLite` / Postgres / …
+//! ```
+//!
+//! | Backend | Type | Feature / crate | Topology | When to use |
+//! |---------|------|-----------------|----------|-------------|
+//! | In-memory | [`MemQueueBackend`] | `mem` | embedded only | Local experiments and tests |
+//! | `SQLite` | [`SqliteQueueBackend`] | `sqlite` | embedded (or Mode 2 on one host) | Durable single host |
+//! | Postgres | [`PostgresQueueBackend`](https://docs.rs/boson-backend-postgres) | `postgres` | embedded or remote | Shared durable state |
+//! | Redis | `RedisQueueBackend` | [`boson-backend-redis`](https://docs.rs/boson-backend-redis) | remote / fleet | Broker-backed multi-host |
+//! | NATS | `NatsQueueBackend` | [`boson-backend-nats`](https://docs.rs/boson-backend-nats) | remote / fleet | Broker-backed multi-host |
+//!
+//! **In-memory first run** (feature `mem`):
+//!
+//! ```rust,no_run
 //! # #[cfg(feature = "mem")]
 //! # {
-//! # use std::sync::Arc;
-//! # use boson::{Boson, JsonExecutionContextFactory, MemQueueBackend};
-//! let _boson = Boson::builder()
+//! use std::sync::Arc;
+//!
+//! use boson::{
+//!     configure, task, Boson, ExecutionContext, JsonExecutionContextFactory, MemQueueBackend,
+//! };
+//!
+//! #[task(name = "greet")]
+//! async fn greet(ctx: Box<dyn ExecutionContext>, name: String) -> boson_core::Result<()> {
+//!     let _ = (ctx, name);
+//!     Ok(())
+//! }
+//!
+//! # async fn run() -> boson_core::Result<()> {
+//! let boson = Boson::builder()
 //!     .queue_backend(Arc::new(MemQueueBackend::new()))
 //!     .execution_context_factory(JsonExecutionContextFactory)
-//!     .build_manual()
-//!     .expect("build");
+//!     .auto_registry()
+//!     .build()?; // background worker loop
+//! configure(boson);
+//!
+//! Greet::send_with(
+//!     serde_json::json!({"System": {"operation": "demo"}}),
+//!     GreetParams { name: "world".into() },
+//! )
+//! .await?;
+//! # Ok(())
+//! # }
 //! # }
 //! ```
 //!
-//! ## Documentation map
+//! For step-driven tests, use [`BosonBuilder::without_worker`] + [`BosonBuilder::build_manual`]
+//! and [`ManualWorker::try_run_next`] instead of [`BosonBuilder::build`].
 //!
-//! Full snippets live on the linked items (not repeated here).
-//!
-//! - **Define a handler** — `#[task(name = "...")]` with typed params and `send_with`. Example on [`task`].
-//! - **Boot a worker** — wire backend, identity factory, and task discovery once per process.
-//!   Examples on [`BosonBuilder`], [`BosonBuilder::auto_registry`], [`configure`].
-//! - **Enqueue work** — `<TaskName>::send_with(actor_json, params)` or [`Boson::enqueue`].
-//! - **Run jobs** — background worker via [`BosonBuilder::build`], or step-driven
-//!   [`ManualWorker::try_run_next`] for tests. Examples on each method.
-//! - **Configure task policies** — retries, rate limits, pools via macro attributes or persisted
-//!   [`TaskConfig`]. Example on [`TaskConfig`].
-//! - **Choose persistence** — `MemQueueBackend` (`mem`), `SqliteQueueBackend` (`sqlite`),
-//!   `PostgresQueueBackend` (`postgres`), or fleet crates
-//!   [`boson-backend-redis`](https://docs.rs/boson-backend-redis) /
-//!   [`boson-backend-nats`](https://docs.rs/boson-backend-nats). Connect examples on each backend type.
-//! - **Mount HTTP admin** — nest `boson_router` at `/api/boson` ([`NEST_PATH`](https://docs.rs/uf-boson/latest/boson/constant.NEST_PATH.html) when `axum` is enabled). Runnable:
-//!   `cargo run -p uf-boson --example axum_admin --features mem,axum`.
-//! - **Implement custom persistence** — honor the [`QueueBackend`] contract; start from
-//!   `MemQueueBackend` or see **How to implement** on the trait.
-//!
-//! Runnable binaries: `task_macro`, `minimal_enqueue`, `idempotency_and_rate_limit`, `axum_admin`
+//! Runnable: `task_macro`, `minimal_enqueue`, `idempotency_and_rate_limit`
 //! (`cargo run -p uf-boson --example <name> --features mem`).
+//! Then continue with [define tasks](#3-define-tasks).
 //!
-//! ## Configuration precedence
+//! ## Mode 2 — Remote worker (two binaries)
 //!
-//! | Layer | Resolution order |
-//! |-------|------------------|
-//! | Worker settings | [`BosonBuilder`] field → environment variable → hardcoded default |
-//! | Task config at enqueue | Persisted backend config → macro/descriptor defaults |
-//! | Idempotency mode | Per-task override → [`BosonBuilder::idempotency_mode`] (default lease-backed) |
-//! | Queue backend | Explicit [`BosonBuilder::queue_backend`] → global router |
-//! | Ops log | [`BosonBuilder::ops_log`] → [`NoOpsLog`]; or [`ops_log_from_env`] separately |
-//! | Fleet URLs (Redis/NATS) | `BOSON_*_POOL_ROUTING` → `BOSON_*_URLS` |
+//! Use this when HTTP/API processes should **enqueue only**, and a dedicated worker process (or
+//! many workers) should **claim and run** jobs against **shared** persistence.
 //!
-//! See [`WorkerSettings`] and [`TaskConfig`] for field-level defaults.
+//! [`MemQueueBackend`] cannot cross process boundaries — Mode 2 needs `SQLite` (shared path),
+//! Postgres, Redis, or NATS.
 //!
-//! ## Adding another task
+//! ```text
+//! Enqueue binary(ies) ──send_with──► shared QueueBackend ◄──claim── Worker binary(ies)
+//! ```
 //!
-//! When the worker is already booted, adding a handler is only the macro and enqueue call:
+//! ### What you create
+//!
+//! | Piece | Purpose |
+//! |-------|---------|
+//! | Shared task crate (recommended) | Same `#[task]` handlers + inventory on the worker |
+//! | Enqueue binary | Boots Boson **without** a worker loop; [`auto_registry`](BosonBuilder::auto_registry) so
+//!   descriptors exist for `send_with`; calls [`configure`] + `send_with` |
+//! | Worker binary | Same backend URL/path; [`auto_registry`](BosonBuilder::auto_registry); unique
+//!   [`worker_id`](BosonBuilder::worker_id); **`lease_ttl_secs > 0`**; [`build`](BosonBuilder::build) |
+//! | Shared backend | `SQLite` path, Postgres URL, or Redis/NATS fleet |
+//!
+//! ### Enqueue binary
+//!
+//! This process must **not** spawn the drain loop. Use [`BosonBuilder::without_worker`] then
+//! [`BosonBuilder::build`], still call [`BosonBuilder::auto_registry`] (enqueue looks up task
+//! descriptors for priority/pool/policies), install with [`configure`], and enqueue.
+//!
+//! **Pick a shared backend** (each link has a Mode 2 enqueue-binary example):
+//!
+//! | Backend | Feature / crate | Mode 2 enqueue example |
+//! |---------|-----------------|------------------------|
+//! | `SQLite` | `sqlite` | [`SqliteQueueBackend` — enqueue](../boson_backend_sqlite/index.html#mode-2--enqueue-binary) |
+//! | Postgres | `postgres` | [`PostgresQueueBackend` — enqueue](../boson_backend_postgres/index.html#mode-2--enqueue-binary) |
+//! | Redis | [`boson-backend-redis`](https://docs.rs/boson-backend-redis) | [Redis — enqueue](../boson_backend_redis/index.html#mode-2--enqueue-binary) |
+//! | NATS | [`boson-backend-nats`](https://docs.rs/boson-backend-nats) | [NATS — enqueue](../boson_backend_nats/index.html#mode-2--enqueue-binary) |
+//!
+//! `SQLite` sketch (same pattern on every backend page above):
+//!
+//! ```rust,no_run
+//! # #[cfg(feature = "sqlite")]
+//! # {
+//! use std::sync::Arc;
+//!
+//! use boson::{
+//!     configure, Boson, JsonExecutionContextFactory, SqliteQueueBackend,
+//! };
+//!
+//! # async fn boot_enqueue() -> boson_core::Result<()> {
+//! let path = std::env::var("BOSON_SQLITE_PATH").unwrap_or_else(|_| "/tmp/boson-remote.db".into());
+//! let backend = SqliteQueueBackend::new(&path).await?;
+//! let boson = Boson::builder()
+//!     .queue_backend(Arc::new(backend))
+//!     .execution_context_factory(JsonExecutionContextFactory)
+//!     .auto_registry() // descriptors for send_with — no claim loop
+//!     .without_worker()
+//!     .build()?;
+//! configure(boson);
+//! // Greet::send_with(...).await?;  // same API as Mode 1
+//! # Ok(())
+//! # }
+//! # }
+//! ```
+//!
+//! API detail: [`BosonBuilder::without_worker`], [`BosonBuilder::auto_registry`], [`configure`].
+//!
+//! ### Worker binary
+//!
+//! A **different** binary owns the drain loop. Link every crate that defines `#[task]` handlers
+//! (`use my_tasks as _;`) so inventory discovery works.
+//!
+//! **Pick the same shared backend** (each link has a Mode 2 worker-binary example):
+//!
+//! | Backend | Feature / crate | Mode 2 worker example |
+//! |---------|-----------------|------------------------|
+//! | `SQLite` | `sqlite` | [`SqliteQueueBackend` — worker](../boson_backend_sqlite/index.html#mode-2--worker-binary) |
+//! | Postgres | `postgres` | [`PostgresQueueBackend` — worker](../boson_backend_postgres/index.html#mode-2--worker-binary) |
+//! | Redis | [`boson-backend-redis`](https://docs.rs/boson-backend-redis) | [Redis — worker](../boson_backend_redis/index.html#mode-2--worker-binary) |
+//! | NATS | [`boson-backend-nats`](https://docs.rs/boson-backend-nats) | [NATS — worker](../boson_backend_nats/index.html#mode-2--worker-binary) |
+//!
+//! `SQLite` sketch (same pattern on every backend page above):
+//!
+//! ```rust,no_run
+//! # #[cfg(feature = "sqlite")]
+//! # {
+//! use std::sync::Arc;
+//!
+//! use boson::{Boson, JsonExecutionContextFactory, SqliteQueueBackend};
+//!
+//! # async fn boot_worker() -> boson_core::Result<()> {
+//! let path = std::env::var("BOSON_SQLITE_PATH").unwrap_or_else(|_| "/tmp/boson-remote.db".into());
+//! let backend = SqliteQueueBackend::new(&path).await?;
+//! let _boson = Boson::builder()
+//!     .queue_backend(Arc::new(backend))
+//!     .execution_context_factory(JsonExecutionContextFactory)
+//!     .worker_id(std::env::var("BOSON_WORKER_ID").unwrap_or_else(|_| "worker-1".into()))
+//!     .lease_ttl_secs(30) // required when multiple processes share the backend
+//!     .auto_registry()
+//!     .build()?; // background claim + dispatch loop
+//! // keep the process alive (await shutdown, serve health, …)
+//! # Ok(())
+//! # }
+//! # }
+//! ```
+//!
+//! API detail: [`BosonBuilder::worker_id`], [`BosonBuilder::lease_ttl_secs`], [`WorkerSettings`],
+//! [`BosonBuilder::auto_registry`].
+//!
+//! ### Run both
+//!
+//! 1. Start the **worker** (so claims are ready).
+//! 2. Start one or more **enqueue** hosts.
+//! 3. Each worker process needs a unique `BOSON_WORKER_ID` (or builder
+//!    [`worker_id`](BosonBuilder::worker_id)) and a positive lease TTL (`BOSON_LEASE_TTL_SECS` or
+//!    [`lease_ttl_secs`](BosonBuilder::lease_ttl_secs)).
+//!
+//! Runnable: `remote_worker`, `remote_enqueue`
+//!
+//! ```bash
+//! export BOSON_SQLITE_PATH=/tmp/boson-remote.db
+//! cargo run -p uf-boson --example remote_worker --features sqlite &
+//! cargo run -p uf-boson --example remote_enqueue --features sqlite
+//! ```
+//!
+//! ## 3. Define tasks
+//!
+//! When the worker is already booted (Mode 1) or the worker binary discovers inventory (Mode 2),
+//! adding a handler is the macro plus an enqueue call:
 //!
 //! ```rust,no_run
 //! use boson::{task, ExecutionContext};
@@ -99,41 +259,58 @@
 //! # }
 //! ```
 //!
-//! ## First boot and first task
+//! Policy attributes (`priority`, `pool`, `max_attempts`, …) are documented on [`task`].
+//! Persisted overrides use [`TaskConfig`].
 //!
-//! ```rust,no_run
-//! use std::sync::Arc;
+//! ## 4. Choose persistence
 //!
-//! use boson::{
-//!     configure, task, Boson, ExecutionContext, JsonExecutionContextFactory,
-//! };
-//! # #[cfg(feature = "mem")]
-//! # use boson::MemQueueBackend;
+//! Pick from the [Mode 1 backend table](#mode-1--embedded-one-binary). Connect examples live on
+//! each backend type. Fleet Redis/NATS: see those crate docs for `connect_fleet_from_env` and
+//! URL precedence (`BOSON_*_POOL_ROUTING` → `BOSON_*_URLS`).
 //!
-//! #[task(name = "greet")]
-//! async fn greet(ctx: Box<dyn ExecutionContext>, name: String) -> boson_core::Result<()> {
-//!     let _ = (ctx, name);
-//!     Ok(())
-//! }
+//! Custom adapters implement [`QueueBackend`] (start from [`MemQueueBackend`] or the trait’s
+//! **How to implement** section).
 //!
-//! # async fn run() -> boson_core::Result<()> {
-//! # #[cfg(feature = "mem")]
-//! # {
-//! let boson = Boson::builder()
-//!     .queue_backend(Arc::new(MemQueueBackend::new()))
-//!     .execution_context_factory(JsonExecutionContextFactory)
-//!     .auto_registry()
-//!     .build()?;
-//! configure(boson);
-//! # }
+//! ## 5. Mount HTTP admin (optional)
 //!
-//! Greet::send_with(
-//!     serde_json::json!({"System": {"operation": "demo"}}),
-//!     GreetParams { name: "world".into() },
-//! )
-//! .await?;
-//! # Ok(())
-//! # }
+//! With feature `axum`, nest [`boson_router`] at [`NEST_PATH`] (`/api/boson`) using [`BosonState`]:
+//!
+//! Runnable: `cargo run -p uf-boson --example axum_admin --features mem,axum`
+//! (`BOSON_EXAMPLE_SERVE=1` to listen).
+//!
+//! ## Prerequisites and gotchas
+//!
+//! - Enable the backend feature (or fleet crate) that matches your topology — `mem` is Mode 1 only.
+//! - Mode 2 workers need **`lease_ttl_secs > 0`** and unique [`worker_id`](BosonBuilder::worker_id) values.
+//! - Worker binaries must **link** every crate that submits `#[task]` inventory.
+//! - [`configure`] is required in any process that calls macro `send_with` (including enqueue-only hosts).
+//!
+//! ## Configuration precedence
+//!
+//! | Layer | Resolution order |
+//! |-------|------------------|
+//! | Worker settings | [`BosonBuilder`] field → environment variable → hardcoded default |
+//! | Task config at enqueue | Persisted backend config → macro/descriptor defaults |
+//! | Idempotency mode | Per-task override → [`BosonBuilder::idempotency_mode`] (default lease-backed) |
+//! | Queue backend | Explicit [`BosonBuilder::queue_backend`] → global router |
+//! | Ops log | [`BosonBuilder::ops_log`] → [`NoOpsLog`]; or [`ops_log_from_env`] separately |
+//! | Fleet URLs (Redis/NATS) | `BOSON_*_POOL_ROUTING` → `BOSON_*_URLS` |
+//!
+//! See [`WorkerSettings`] and [`TaskConfig`] for field-level defaults.
+//!
+//! ## Runnable examples
+//!
+//! | Example | Topology | Features |
+//! |---------|----------|----------|
+//! | `task_macro` | Mode 1 (manual drain) | `mem` |
+//! | `minimal_enqueue` | Mode 1 | `mem` |
+//! | `idempotency_and_rate_limit` | Mode 1 | `mem` |
+//! | `axum_admin` | Mode 1 + HTTP | `mem,axum` |
+//! | `remote_worker` | Mode 2 worker | `sqlite` |
+//! | `remote_enqueue` | Mode 2 enqueue | `sqlite` |
+//!
+//! ```bash
+//! cargo run -p uf-boson --example task_macro --features mem
 //! ```
 
 pub mod prelude;
@@ -148,8 +325,9 @@ pub use boson_core::{
 ///
 /// # Example
 ///
-/// Assumes the worker is already booted; for one-time setup see
-/// [First boot and first task](crate#first-boot-and-first-task).
+/// Assumes the worker (or enqueue host) is already booted and [`configure`]d. For topology
+/// choice see [Mode 1](crate#mode-1--embedded-one-binary) and
+/// [Mode 2](crate#mode-2--remote-worker-two-binaries).
 ///
 /// ```rust,no_run
 /// use boson::{task, ExecutionContext};

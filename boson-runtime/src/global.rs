@@ -11,8 +11,13 @@ static DEFAULT_BOSON: RwLock<Option<Boson>> = std::sync::RwLock::new(None);
 
 /// Install the process-wide default [`Boson`] instance.
 ///
-/// Required before calling macro-generated `<TaskName>::send_with`. Typically called once after
-/// building the runtime:
+/// Required in **any process** that calls macro-generated `<TaskName>::send_with` — including
+/// Mode 2 enqueue-only hosts that use [`BosonBuilder::without_worker`](crate::BosonBuilder::without_worker).
+/// Not required when you only call [`Boson::enqueue`](crate::Boson::enqueue) on a held handle.
+///
+/// Getting started:
+/// [Mode 1](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary) /
+/// [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
 ///
 /// ```rust,no_run
 /// # use std::sync::Arc;
@@ -50,4 +55,3 @@ pub fn default() -> Option<Boson> {
     let guard = DEFAULT_BOSON.read().unwrap();
     guard.clone()
 }
-

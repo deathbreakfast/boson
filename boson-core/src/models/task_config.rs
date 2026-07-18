@@ -79,6 +79,32 @@ pub struct RateLimitPolicy {
 }
 
 /// Per-task config persisted for admin UI and enqueue defaults.
+///
+/// Seeded from [`task`](https://docs.rs/boson-macros) macro attributes on first enqueue; admins can
+/// later upsert via [`QueueBackend::upsert_task_config`](crate::QueueBackend::upsert_task_config)
+/// or the axum `/tasks/{name}/config` route. On enqueue, Boson merges descriptor defaults with any
+/// stored config to set [`Job`](crate::Job) priority, pool, and policies.
+///
+/// Getting started: [define tasks](https://docs.rs/uf-boson/latest/boson/index.html#3-define-tasks).
+///
+/// # Example — macro attrs become the initial config
+///
+/// ```ignore
+/// use boson::task;
+///
+/// #[task(
+///     name = "notify",
+///     priority = 10,
+///     pool = "alerts",
+///     max_attempts = 5,
+///     max_in_flight = 20
+/// )]
+/// async fn notify(ctx: Box<dyn boson::ExecutionContext>, message: String) -> boson_core::Result<()> {
+///     let _ = (ctx, message);
+///     Ok(())
+/// }
+/// // First Notify::send_with(...) persists a TaskConfig shaped like those attributes.
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskConfig {
     /// Task name (unique key).

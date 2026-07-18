@@ -1,7 +1,10 @@
 [![CI](https://github.com/unified-field-dev/boson/actions/workflows/boson-matrix.yml/badge.svg)](https://github.com/unified-field-dev/boson/actions/workflows/boson-matrix.yml)
+[![crates.io](https://img.shields.io/crates/v/uf-boson.svg)](https://crates.io/crates/uf-boson)
+[![docs.rs](https://docs.rs/uf-boson/badge.svg)](https://docs.rs/uf-boson)
+[![Downloads](https://img.shields.io/crates/d/uf-boson.svg)](https://crates.io/crates/uf-boson)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE-MIT)
 
-[GitHub](https://github.com/unified-field-dev/boson) · `cargo doc -p uf-boson --features mem,axum --open` · [Benchmarks](boson-bench/README.md)
+[GitHub](https://github.com/unified-field-dev/boson) · [crates.io](https://crates.io/crates/uf-boson) · [docs.rs](https://docs.rs/uf-boson) · `cargo doc -p uf-boson --features mem,axum --open` · [Benchmarks](boson-bench/README.md)
 
 # Boson
 
@@ -38,7 +41,8 @@ async fn main() -> anyhow::Result<()> {
 ```
 
 Add tasks with `#[task]` and enqueue via `send_with`. See the hero example below and
-`cargo doc -p uf-boson --features mem --open` for the full documentation map.
+`cargo doc -p uf-boson --features mem,axum --open` for the guided get-started (embedded vs
+remote worker topology).
 
 ## What Boson owns
 
@@ -87,7 +91,7 @@ async fn main() -> anyhow::Result<()> {
 }
 ```
 
-**Status:** v0.1.0 · MIT · [GitHub](https://github.com/unified-field-dev/boson)
+**Status:** v0.1.1 · MIT · [GitHub](https://github.com/unified-field-dev/boson) · [crates.io](https://crates.io/crates/uf-boson)
 
 ## Architecture
 
@@ -110,7 +114,7 @@ package is **`uf-boson`** (the name `boson` is taken); imports stay `use boson::
 
 ```toml
 [dependencies]
-boson = { package = "uf-boson", version = "0.1.0", features = ["mem"] }
+boson = { package = "uf-boson", version = "0.1.1", features = ["mem"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 anyhow = "1"
 ```

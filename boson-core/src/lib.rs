@@ -7,7 +7,8 @@
 //!
 //! - [`Job`], [`Run`], [`TaskConfig`], [`ExecutionContext`] — portable data and handler context
 //! - [`QueueBackend`] — persistence trait for jobs, runs, config, leases (**Developing the backend**)
-//! - [`QueueRouter`] — register named backends at host boot (**Integrating the server**)
+//! - [`QueueRouter`] — register named backends at host boot (see
+//!   [Getting started](https://docs.rs/uf-boson/latest/boson/index.html#getting-started) on `boson`)
 //!
 //! Hosts inject a `QueueBackend` implementation at build time; this crate has no I/O.
 

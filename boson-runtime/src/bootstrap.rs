@@ -49,15 +49,24 @@ impl BosonBuilder {
         install_ops_log(ops);
     }
 
-    /// Build [`Boson`] and spawn the background worker loop.
+    /// Build [`Boson`] and optionally spawn the background worker loop.
     ///
-    /// After `build`, a Tokio task polls queued jobs, claims them, dispatches registered handlers
-    /// (from [`auto_registry`](Self::auto_registry) or [`registry`](Self::registry)), and applies
-    /// retry policy. Enqueue with [`Boson::enqueue`] or macro `send_with` after [`configure`](crate::configure).
+    /// When [`without_worker`](Self::without_worker) was **not** set (default), a Tokio task polls
+    /// queued jobs, claims them, dispatches registered handlers (from
+    /// [`auto_registry`](Self::auto_registry) or [`registry`](Self::registry)), and applies retry
+    /// policy — Mode 1 embedded or Mode 2 worker.
     ///
+    /// When [`without_worker`](Self::without_worker) **was** set, no claim loop starts; use this
+    /// for Mode 2 enqueue hosts, then [`configure`](crate::configure) + `send_with`.
+    ///
+    /// Enqueue with [`Boson::enqueue`] or macro `send_with` after [`configure`](crate::configure).
     /// For step-driven tests, use [`build_manual`](Self::build_manual) instead.
     ///
-    /// # Example
+    /// Getting started:
+    /// [Mode 1](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary) /
+    /// [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
+    ///
+    /// # Example — Mode 1 embedded
     ///
     /// ```rust,no_run
     /// use std::sync::Arc;
@@ -108,21 +117,37 @@ impl BosonBuilder {
 
     /// Build without a background worker; returns [`ManualWorker`] for step-driven execution.
     ///
-    /// # Examples
+    /// Prefer this in **tests** when you want to enqueue then call
+    /// [`ManualWorker::try_run_next`](crate::ManualWorker::try_run_next). For Mode 2 enqueue-only
+    /// production hosts that never drain locally, prefer [`without_worker`](Self::without_worker)
+    /// + [`build`](Self::build) instead (no `ManualWorker` handle needed).
+    ///
+    /// # Example — enqueue then drain one job
     ///
     /// ```rust,no_run
     /// use std::sync::Arc;
     ///
     /// use boson_backend_mem::MemQueueBackend;
-    /// use boson_core::JsonExecutionContextFactory;
-    /// use boson_runtime::{Boson, ManualWorker};
+    /// use boson_core::{ExecutionContext, JsonExecutionContextFactory};
+    /// use boson_macros::task;
+    /// use boson_runtime::{configure, Boson, ManualWorker};
     ///
-    /// # fn main() -> boson_core::Result<()> {
-    /// let (_boson, _worker): (_, ManualWorker) = Boson::builder()
+    /// #[task(name = "ping")]
+    /// async fn ping(_ctx: Box<dyn ExecutionContext>, n: u32) -> boson_core::Result<()> {
+    ///     let _ = n;
+    ///     Ok(())
+    /// }
+    ///
+    /// # async fn demo() -> boson_core::Result<()> {
+    /// let (boson, manual): (_, ManualWorker) = Boson::builder()
     ///     .queue_backend(Arc::new(MemQueueBackend::new()))
     ///     .execution_context_factory(JsonExecutionContextFactory)
+    ///     .auto_registry()
     ///     .without_worker()
     ///     .build_manual()?;
+    /// configure(boson);
+    /// Ping::send_with(serde_json::json!({}), PingParams { n: 1 }).await?;
+    /// assert!(manual.try_run_next().await);
     /// # Ok(())
     /// # }
     /// ```
