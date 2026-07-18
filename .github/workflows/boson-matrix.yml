@@ -275,7 +275,7 @@ jobs:
       - name: cargo doc (deny warnings, workspace)
         run: |
           export CARGO_TARGET_DIR=target-boson-extract
-          RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+          RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --all-features
       - name: cargo test --doc (core crates)
         run: |
           export CARGO_TARGET_DIR=target-boson-extract

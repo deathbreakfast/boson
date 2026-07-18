@@ -66,7 +66,7 @@
 //! ```
 //!
 //! Other Mode 2 backends:
-//! [SQLite](../boson_backend_sqlite/index.html#mode-2--enqueue-binary),
+//! [`SQLite`](../boson_backend_sqlite/index.html#mode-2--enqueue-binary),
 //! [Redis](../boson_backend_redis/index.html#mode-2--enqueue-binary),
 //! [NATS](../boson_backend_nats/index.html#mode-2--enqueue-binary).
 

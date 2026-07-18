@@ -71,7 +71,7 @@
 //! ```
 //!
 //! Other Mode 2 backends:
-//! [SQLite](../boson_backend_sqlite/index.html#mode-2--enqueue-binary),
+//! [`SQLite`](../boson_backend_sqlite/index.html#mode-2--enqueue-binary),
 //! [Postgres](../boson_backend_postgres/index.html#mode-2--enqueue-binary),
 //! [NATS](../boson_backend_nats/index.html#mode-2--enqueue-binary).
 //!

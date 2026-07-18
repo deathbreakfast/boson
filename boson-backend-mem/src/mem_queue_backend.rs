@@ -43,22 +43,18 @@ impl MemQueueBackend {
     /// Wire into [`Boson::builder`](https://docs.rs/boson-runtime/latest/boson_runtime/struct.Boson.html#method.builder)
     /// (feature `mem` on the `boson` facade):
     ///
-    /// ```rust,no_run
+    /// ```rust
     /// use std::sync::Arc;
     ///
     /// use boson_backend_mem::MemQueueBackend;
-    /// use boson_core::JsonExecutionContextFactory;
-    /// use boson_runtime::Boson;
+    /// use boson_core::QueueBackend;
     ///
-    /// # fn main() -> boson_core::Result<()> {
-    /// let _boson = Boson::builder()
-    ///     .queue_backend(Arc::new(MemQueueBackend::new()))
-    ///     .execution_context_factory(JsonExecutionContextFactory)
-    ///     .auto_registry()
-    ///     .build()?;
-    /// # Ok(())
-    /// # }
+    /// let backend: Arc<dyn QueueBackend> = Arc::new(MemQueueBackend::new());
+    /// let _ = backend;
     /// ```
+    ///
+    /// Full boot with [`Boson`](https://docs.rs/boson-runtime):
+    /// `Boson::builder().queue_backend(Arc::new(MemQueueBackend::new()))…`.
     #[must_use]
     pub fn new() -> Self {
         Self {

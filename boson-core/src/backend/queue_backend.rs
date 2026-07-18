@@ -1,6 +1,6 @@
 //! [`QueueBackend`] — queue persistence trait for custom storage adapters.
 //!
-//! **App authors:** pick a shipped backend by topology (mem = Mode 1 only; SQLite/Postgres/Redis/NATS
+//! **App authors:** pick a shipped backend by topology (mem = Mode 1 only; `SQLite`/Postgres/Redis/NATS
 //! for shared queues) using the [`boson`](https://docs.rs/uf-boson) crate
 //! [backend table](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary).
 //!
@@ -58,7 +58,7 @@ pub enum JobEnqueueDisposition {
 /// # Reference implementations
 ///
 /// - [`MemQueueBackend`](https://docs.rs/boson-backend-mem/latest/boson_backend_mem/struct.MemQueueBackend.html) — in-memory, ideal starting point (~200 lines per module)
-/// - [`SqlQueueBackend`](https://docs.rs/boson-backend-sql-common/latest/boson_backend_sql_common/struct.SqlQueueBackend.html) — shared SQL for SQLite/PostgreSQL
+/// - [`SqlQueueBackend`](https://docs.rs/boson-backend-sql-common/latest/boson_backend_sql_common/struct.SqlQueueBackend.html) — shared SQL for `SQLite`/`PostgreSQL`
 ///
 /// # Example
 ///

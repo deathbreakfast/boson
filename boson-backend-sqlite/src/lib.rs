@@ -83,7 +83,7 @@ use sqlx::SqlitePool;
 
 pub use bootstrap::install_default_sqlite_backend;
 
-/// SQLite-backed queue backend.
+/// `SQLite`-backed queue backend.
 ///
 /// Suitable for Mode 1 embedded boots and for Mode 2 when both binaries open the **same path**.
 /// For multi-host fleets prefer Postgres, Redis, or NATS.

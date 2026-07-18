@@ -175,7 +175,7 @@ impl BosonBuilder {
     /// Inject queue persistence backend explicitly.
     ///
     /// Pick the backend for your topology: [`MemQueueBackend`](https://docs.rs/boson-backend-mem)
-    /// for Mode 1 only; SQLite/Postgres/Redis/NATS when processes share a queue. See the
+    /// for Mode 1 only; `SQLite`/Postgres/Redis/NATS when processes share a queue. See the
     /// [`boson`](https://docs.rs/uf-boson) crate backend table.
     #[must_use]
     pub fn queue_backend(mut self, backend: Arc<dyn QueueBackend>) -> Self {

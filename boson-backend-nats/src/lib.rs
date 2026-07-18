@@ -1,12 +1,12 @@
 //! `NATS` `JetStream` [`QueueBackend`] for fleet-scale deployments (Mode 2 remote / multi-host).
 //!
-//! **When to use:** broker-backed fleets with NATS JetStream (KV and/or workqueue). Not a
+//! **When to use:** broker-backed fleets with NATS `JetStream` (KV and/or workqueue). Not a
 //! `boson` facade feature — depend on this crate directly. Mode 2 workers need unique
 //! `worker_id` and `lease_ttl_secs > 0`.
 //!
 //! Getting started:
 //! [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
-//! Full Compose / KV vs WorkQueue / env: [crate README](https://github.com/unified-field-dev/boson/blob/main/boson-backend-nats/README.md).
+//! Full Compose / KV vs `WorkQueue` / env: [crate README](https://github.com/unified-field-dev/boson/blob/main/boson-backend-nats/README.md).
 //!
 //! Fleet URL precedence: `BOSON_NATS_POOL_ROUTING` over `BOSON_NATS_URLS`
 //! (see [`connect_fleet_from_env`]).
@@ -68,7 +68,7 @@
 //! ```
 //!
 //! Other Mode 2 backends:
-//! [SQLite](../boson_backend_sqlite/index.html#mode-2--enqueue-binary),
+//! [`SQLite`](../boson_backend_sqlite/index.html#mode-2--enqueue-binary),
 //! [Postgres](../boson_backend_postgres/index.html#mode-2--enqueue-binary),
 //! [Redis](../boson_backend_redis/index.html#mode-2--enqueue-binary).
 //!

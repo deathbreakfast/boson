@@ -1,7 +1,7 @@
 //! In-memory [`QueueBackend`](boson_core::QueueBackend) adapter for tests and local development.
 //!
 //! **Topology:** Mode 1 embedded only — state lives in this process and cannot be shared with a
-//! remote worker. For Mode 2 (enqueue host + worker binary), use SQLite, Postgres, Redis, or NATS.
+//! remote worker. For Mode 2 (enqueue host + worker binary), use `SQLite`, Postgres, Redis, or NATS.
 //! See the [`boson`](https://docs.rs/uf-boson) crate
 //! [Getting started](https://docs.rs/uf-boson/latest/boson/index.html#getting-started).
 //!

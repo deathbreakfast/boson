@@ -1,4 +1,4 @@
-//! Mode 2 worker process — claims and runs jobs from a shared SQLite database.
+//! Mode 2 worker process — claims and runs jobs from a shared `SQLite` database.
 //!
 //! Pair with `remote_enqueue` against the same `BOSON_SQLITE_PATH`.
 //!
@@ -11,7 +11,7 @@
 //! See the crate docs:
 //! [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
 
-#[path = "remote_shared_task.rs"]
+#[path = "shared/remote_ping.rs"]
 mod remote_shared_task;
 
 use std::sync::Arc;

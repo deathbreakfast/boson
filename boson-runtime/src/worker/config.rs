@@ -12,7 +12,7 @@
 ///
 /// # Example — multiple worker processes (Mode 2)
 ///
-/// Run one Boson instance per process against **shared** persistence (Postgres, SQLite path,
+/// Run one Boson instance per process against **shared** persistence (Postgres, `SQLite` path,
 /// Redis, or NATS — not [`MemQueueBackend`](https://docs.rs/boson-backend-mem), which is
 /// in-process only). Each process needs a unique [`worker_id`](Self::worker_id) and a positive
 /// [`lease_ttl_secs`](Self::lease_ttl_secs) so

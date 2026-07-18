@@ -133,7 +133,8 @@ impl BosonBuilder {
     /// use boson_runtime::{configure, Boson, ManualWorker};
     ///
     /// #[task(name = "ping")]
-    /// async fn ping(_ctx: Box<dyn ExecutionContext>, _n: u32) -> boson_core::Result<()> {
+    /// async fn ping(_ctx: Box<dyn ExecutionContext>, n: u32) -> boson_core::Result<()> {
+    ///     let _ = n;
     ///     Ok(())
     /// }
     ///

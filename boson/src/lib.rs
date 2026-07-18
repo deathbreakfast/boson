@@ -57,13 +57,13 @@
 //! There is no second binary. Default lease TTL is `0` (no distributed lease coordination).
 //!
 //! ```text
-//! Your app ──enqueue──► Boson ──worker loop──► mem / SQLite / Postgres / …
+//! Your app ──enqueue──► Boson ──worker loop──► mem / `SQLite` / Postgres / …
 //! ```
 //!
 //! | Backend | Type | Feature / crate | Topology | When to use |
 //! |---------|------|-----------------|----------|-------------|
 //! | In-memory | [`MemQueueBackend`] | `mem` | embedded only | Local experiments and tests |
-//! | SQLite | [`SqliteQueueBackend`] | `sqlite` | embedded (or Mode 2 on one host) | Durable single host |
+//! | `SQLite` | [`SqliteQueueBackend`] | `sqlite` | embedded (or Mode 2 on one host) | Durable single host |
 //! | Postgres | [`PostgresQueueBackend`](https://docs.rs/boson-backend-postgres) | `postgres` | embedded or remote | Shared durable state |
 //! | Redis | `RedisQueueBackend` | [`boson-backend-redis`](https://docs.rs/boson-backend-redis) | remote / fleet | Broker-backed multi-host |
 //! | NATS | `NatsQueueBackend` | [`boson-backend-nats`](https://docs.rs/boson-backend-nats) | remote / fleet | Broker-backed multi-host |
@@ -115,7 +115,7 @@
 //! Use this when HTTP/API processes should **enqueue only**, and a dedicated worker process (or
 //! many workers) should **claim and run** jobs against **shared** persistence.
 //!
-//! [`MemQueueBackend`] cannot cross process boundaries — Mode 2 needs SQLite (shared path),
+//! [`MemQueueBackend`] cannot cross process boundaries — Mode 2 needs `SQLite` (shared path),
 //! Postgres, Redis, or NATS.
 //!
 //! ```text
@@ -131,7 +131,7 @@
 //!   descriptors exist for `send_with`; calls [`configure`] + `send_with` |
 //! | Worker binary | Same backend URL/path; [`auto_registry`](BosonBuilder::auto_registry); unique
 //!   [`worker_id`](BosonBuilder::worker_id); **`lease_ttl_secs > 0`**; [`build`](BosonBuilder::build) |
-//! | Shared backend | SQLite path, Postgres URL, or Redis/NATS fleet |
+//! | Shared backend | `SQLite` path, Postgres URL, or Redis/NATS fleet |
 //!
 //! ### Enqueue binary
 //!
@@ -143,12 +143,12 @@
 //!
 //! | Backend | Feature / crate | Mode 2 enqueue example |
 //! |---------|-----------------|------------------------|
-//! | SQLite | `sqlite` | [`SqliteQueueBackend` — enqueue](../boson_backend_sqlite/index.html#mode-2--enqueue-binary) |
+//! | `SQLite` | `sqlite` | [`SqliteQueueBackend` — enqueue](../boson_backend_sqlite/index.html#mode-2--enqueue-binary) |
 //! | Postgres | `postgres` | [`PostgresQueueBackend` — enqueue](../boson_backend_postgres/index.html#mode-2--enqueue-binary) |
 //! | Redis | [`boson-backend-redis`](https://docs.rs/boson-backend-redis) | [Redis — enqueue](../boson_backend_redis/index.html#mode-2--enqueue-binary) |
 //! | NATS | [`boson-backend-nats`](https://docs.rs/boson-backend-nats) | [NATS — enqueue](../boson_backend_nats/index.html#mode-2--enqueue-binary) |
 //!
-//! SQLite sketch (same pattern on every backend page above):
+//! `SQLite` sketch (same pattern on every backend page above):
 //!
 //! ```rust,no_run
 //! # #[cfg(feature = "sqlite")]
@@ -186,12 +186,12 @@
 //!
 //! | Backend | Feature / crate | Mode 2 worker example |
 //! |---------|-----------------|------------------------|
-//! | SQLite | `sqlite` | [`SqliteQueueBackend` — worker](../boson_backend_sqlite/index.html#mode-2--worker-binary) |
+//! | `SQLite` | `sqlite` | [`SqliteQueueBackend` — worker](../boson_backend_sqlite/index.html#mode-2--worker-binary) |
 //! | Postgres | `postgres` | [`PostgresQueueBackend` — worker](../boson_backend_postgres/index.html#mode-2--worker-binary) |
 //! | Redis | [`boson-backend-redis`](https://docs.rs/boson-backend-redis) | [Redis — worker](../boson_backend_redis/index.html#mode-2--worker-binary) |
 //! | NATS | [`boson-backend-nats`](https://docs.rs/boson-backend-nats) | [NATS — worker](../boson_backend_nats/index.html#mode-2--worker-binary) |
 //!
-//! SQLite sketch (same pattern on every backend page above):
+//! `SQLite` sketch (same pattern on every backend page above):
 //!
 //! ```rust,no_run
 //! # #[cfg(feature = "sqlite")]
