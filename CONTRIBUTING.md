@@ -3,10 +3,20 @@
 ## Before opening a PR
 
 1. Read [`docs/VERIFICATION.md`](docs/VERIFICATION.md).
-2. Run verification locally, or mirror the PR subset on a provisioned native-aws host:
+2. Run verification locally with **one rustc job** (`export CARGO_BUILD_JOBS=1`), or mirror the PR subset on a provisioned native-aws host:
 
 ```bash
+export CARGO_BUILD_JOBS=1
 ~/aws/boson/run-remote-ci.sh
+```
+
+Local quick gate (same as CI `fmt` / `clippy` / `deny`):
+
+```bash
+export CARGO_BUILD_JOBS=1
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo deny check
 ```
 
 3. For broker-backed contracts against a provisioned fleet, chain:

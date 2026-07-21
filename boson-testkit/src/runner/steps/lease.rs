@@ -11,7 +11,7 @@ pub async fn run_simulate_lease_contention(
         Some(id) => id.clone(),
         None => return Ok(Some("SimulateLeaseContention: no enqueued job".into())),
     };
-    let backend = state.boson().queue_backend();
+    let backend = state.boson()?.queue_backend();
     let ttl = i64::from(ttl_secs);
     let lease_a = backend
         .try_claim_run_lease(&job_id, "worker-a", ttl)

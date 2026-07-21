@@ -33,8 +33,7 @@ pub fn count_active_jobs_for_task(inner: &Inner, task_name: &str) -> u32 {
         .jobs
         .values()
         .filter(|j| {
-            j.task_name == task_name
-                && matches!(j.status, JobStatus::Queued | JobStatus::Running)
+            j.task_name == task_name && matches!(j.status, JobStatus::Queued | JobStatus::Running)
         })
         .count();
     u32::try_from(count).unwrap_or(u32::MAX)
@@ -155,7 +154,11 @@ pub fn list_queued_for_pool_sorted(inner: &Inner, pool: &str, limit: usize) -> V
         .filter(|j| j.status == JobStatus::Queued && j.pool == pool)
         .cloned()
         .collect();
-    jobs.sort_by(|a, b| a.priority.cmp(&b.priority).then_with(|| a.created_at.cmp(&b.created_at)));
+    jobs.sort_by(|a, b| {
+        a.priority
+            .cmp(&b.priority)
+            .then_with(|| a.created_at.cmp(&b.created_at))
+    });
     jobs.truncate(limit);
     jobs
 }
@@ -179,17 +182,11 @@ pub fn count_jobs(inner: &Inner, status_filter: Option<JobStatus>) -> u64 {
 }
 
 /// Count jobs for one task optionally filtered by status.
-pub fn count_jobs_for_task(
-    inner: &Inner,
-    task_name: &str,
-    status: Option<JobStatus>,
-) -> u64 {
+pub fn count_jobs_for_task(inner: &Inner, task_name: &str, status: Option<JobStatus>) -> u64 {
     let count = inner
         .jobs
         .values()
-        .filter(|j| {
-            j.task_name == task_name && status.is_none_or(|s| j.status == s)
-        })
+        .filter(|j| j.task_name == task_name && status.is_none_or(|s| j.status == s))
         .count();
     u64::try_from(count).unwrap_or(u64::MAX)
 }

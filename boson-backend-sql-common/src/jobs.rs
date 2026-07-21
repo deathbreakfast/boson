@@ -1,8 +1,6 @@
 //! Job persistence for the SQL queue backend.
 
-use boson_core::{
-    BosonError, Job, JobEnqueueDisposition, JobStatus, Result, TaskConfig,
-};
+use boson_core::{BosonError, Job, JobEnqueueDisposition, JobStatus, Result, TaskConfig};
 use sqlx::Row;
 
 use crate::enqueue_rate::EnqueueRateLimiter;
@@ -73,7 +71,9 @@ impl SqlQueueBackend {
              WHERE task_name = ? AND status IN ('queued', 'running')",
         );
         sql_fetch_one_map!(self, &sql, |q| q.bind(task_name), |r| {
-            Ok::<u32, boson_core::BosonError>(u32::try_from(r.get::<i64, _>("cnt")).unwrap_or(u32::MAX))
+            Ok::<u32, boson_core::BosonError>(
+                u32::try_from(r.get::<i64, _>("cnt")).unwrap_or(u32::MAX),
+            )
         })
     }
 
@@ -83,8 +83,7 @@ impl SqlQueueBackend {
         job: Job,
         task_config: &TaskConfig,
     ) -> Result<(String, JobEnqueueDisposition)> {
-        let idempotency =
-            task_config.resolved_idempotency_mode(boson_core::IdempotencyMode::Lwt);
+        let idempotency = task_config.resolved_idempotency_mode(boson_core::IdempotencyMode::Lwt);
         let mut job = job;
         if idempotency == boson_core::IdempotencyMode::Lwt {
             if let Some(ref key) = job.idempotency_key {
@@ -133,12 +132,7 @@ impl SqlQueueBackend {
 
     pub(crate) async fn get_job_impl(&self, job_id: &str) -> Result<Option<Job>> {
         let sql = bind_sql(self.dialect, "SELECT * FROM boson_job WHERE job_id = ?");
-        sql_fetch_optional_map!(
-            self,
-            &sql,
-            |q| q.bind(job_id),
-            |r| row_to_job(&r)
-        )
+        sql_fetch_optional_map!(self, &sql, |q| q.bind(job_id), |r| row_to_job(&r))
     }
 
     pub(crate) async fn list_jobs_impl(
@@ -152,19 +146,29 @@ impl SqlQueueBackend {
                 self.dialect,
                 "SELECT * FROM boson_job WHERE status = ? ORDER BY created_at ASC LIMIT ? OFFSET ?",
             );
-            sql_fetch_all_map!(self, &sql, |q| {
-                q.bind(job_status_to_str(status))
-                    .bind(i64::try_from(limit).unwrap_or(i64::MAX))
-                    .bind(i64::try_from(offset).unwrap_or(i64::MAX))
-            }, |r| row_to_job(r))
+            sql_fetch_all_map!(
+                self,
+                &sql,
+                |q| {
+                    q.bind(job_status_to_str(status))
+                        .bind(i64::try_from(limit).unwrap_or(i64::MAX))
+                        .bind(i64::try_from(offset).unwrap_or(i64::MAX))
+                },
+                |r| row_to_job(r)
+            )
         } else {
             let sql = bind_sql(
                 self.dialect,
                 "SELECT * FROM boson_job ORDER BY created_at ASC LIMIT ? OFFSET ?",
             );
-            sql_fetch_all_map!(self, &sql, |q| q.bind(i64::try_from(limit).unwrap_or(i64::MAX)).bind(i64::try_from(offset).unwrap_or(i64::MAX)), |r| {
-                row_to_job(r)
-            })
+            sql_fetch_all_map!(
+                self,
+                &sql,
+                |q| q
+                    .bind(i64::try_from(limit).unwrap_or(i64::MAX))
+                    .bind(i64::try_from(offset).unwrap_or(i64::MAX)),
+                |r| { row_to_job(r) }
+            )
         }
     }
 
@@ -188,12 +192,7 @@ impl SqlQueueBackend {
              WHERE job_id = ? AND status = 'queued'
              RETURNING *",
         );
-        sql_fetch_optional_map!(
-            self,
-            &sql,
-            |q| q.bind(job_id),
-            |r| row_to_job(&r)
-        )
+        sql_fetch_optional_map!(self, &sql, |q| q.bind(job_id), |r| row_to_job(&r))
     }
 
     pub(crate) async fn revert_job_to_queued_impl(&self, job_id: &str) -> Result<()> {
@@ -227,7 +226,12 @@ impl SqlQueueBackend {
              ORDER BY priority ASC, created_at ASC
              LIMIT ?",
         );
-        sql_fetch_all_map!(self, &sql, |q| q.bind(pool).bind(i64::try_from(limit).unwrap_or(i64::MAX)), |r| row_to_job(r))
+        sql_fetch_all_map!(
+            self,
+            &sql,
+            |q| q.bind(pool).bind(i64::try_from(limit).unwrap_or(i64::MAX)),
+            |r| row_to_job(r)
+        )
     }
 
     pub(crate) async fn count_jobs_impl(&self, status_filter: Option<JobStatus>) -> Result<u64> {
@@ -236,12 +240,9 @@ impl SqlQueueBackend {
                 self.dialect,
                 "SELECT COUNT(*) AS cnt FROM boson_job WHERE status = ?",
             );
-            sql_fetch_one_map!(
-                self,
-                &sql,
-                |q| q.bind(job_status_to_str(status)),
-                |r| Ok(u64::try_from(r.get::<i64, _>("cnt")).unwrap_or(u64::MAX))
-            )
+            sql_fetch_one_map!(self, &sql, |q| q.bind(job_status_to_str(status)), |r| Ok(
+                u64::try_from(r.get::<i64, _>("cnt")).unwrap_or(u64::MAX)
+            ))
         } else {
             let sql = bind_sql(self.dialect, "SELECT COUNT(*) AS cnt FROM boson_job");
             sql_fetch_one_map!(self, &sql, |q| q, |r| {
@@ -271,12 +272,10 @@ impl SqlQueueBackend {
                 self.dialect,
                 "SELECT COUNT(*) AS cnt FROM boson_job WHERE task_name = ?",
             );
-            sql_fetch_one_map!(
-                self,
-                &sql,
-                |q| q.bind(task_name),
-                |r| Ok(u64::try_from(r.get::<i64, _>("cnt")).unwrap_or(u64::MAX))
+            sql_fetch_one_map!(self, &sql, |q| q.bind(task_name), |r| Ok(u64::try_from(
+                r.get::<i64, _>("cnt")
             )
+            .unwrap_or(u64::MAX)))
         }
     }
 }

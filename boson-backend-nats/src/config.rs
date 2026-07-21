@@ -97,7 +97,11 @@ fn max_inflight_from_env(sync_ack: bool) -> u32 {
             return n.max(1);
         }
     }
-    if sync_ack { 256 } else { 512 }
+    if sync_ack {
+        256
+    } else {
+        512
+    }
 }
 
 fn sync_kv_mirror_from_env() -> bool {

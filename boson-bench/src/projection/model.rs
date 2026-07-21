@@ -40,7 +40,11 @@ pub struct FleetProjection {
 }
 
 /// Compute fleet projection from measured load-tier ceilings.
-#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_precision_loss)]
+#[allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_precision_loss
+)]
 pub fn compute(inputs: &FleetProjectionInputs) -> FleetProjection {
     let ceiling = inputs
         .per_partition_ceiling

@@ -11,12 +11,9 @@ impl SqlQueueBackend {
             self.dialect,
             "SELECT * FROM boson_task_config WHERE task_name = ?",
         );
-        sql_fetch_optional_map!(
-            self,
-            &sql,
-            |q| q.bind(task_name),
-            |r| row_to_task_config(&r)
-        )
+        sql_fetch_optional_map!(self, &sql, |q| q.bind(task_name), |r| row_to_task_config(
+            &r
+        ))
     }
 
     pub(crate) async fn upsert_task_config_impl(&self, config: &TaskConfig) -> Result<()> {

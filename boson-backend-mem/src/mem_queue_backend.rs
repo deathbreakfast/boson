@@ -22,7 +22,10 @@ use crate::store::{read, write, write_fallible, Inner};
 /// Getting started:
 /// [Mode 1](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary).
 ///
-/// Thread-safe via `RwLock`.
+/// Thread-safe via [`std::sync::RwLock`].
+///
+/// The lock is held only inside synchronous `store::{read,write,write_fallible}` helpers — never
+/// across `.await` points — so Tokio's async `RwLock` is unnecessary for this in-memory adapter.
 #[derive(Debug)]
 pub struct MemQueueBackend {
     inner: RwLock<Inner>,
@@ -96,44 +99,46 @@ impl QueueBackend for MemQueueBackend {
     }
 
     async fn cancel_job_if_active(&self, job_id: &str) -> Result<()> {
-        write_fallible(&self.inner, |inner| crate::jobs::cancel_job_if_active(inner, job_id))
+        write_fallible(&self.inner, |inner| {
+            crate::jobs::cancel_job_if_active(inner, job_id)
+        })
     }
 
     async fn try_claim_job(&self, job_id: &str) -> Result<Option<Job>> {
-        write(&self.inner, |inner| crate::jobs::try_claim_job(inner, job_id))
+        write(&self.inner, |inner| {
+            crate::jobs::try_claim_job(inner, job_id)
+        })
     }
 
     async fn revert_job_to_queued(&self, job_id: &str) -> Result<()> {
-        write(&self.inner, |inner| crate::jobs::revert_job_to_queued(inner, job_id))
+        write(&self.inner, |inner| {
+            crate::jobs::revert_job_to_queued(inner, job_id);
+        })
     }
 
     async fn distinct_pools_queued(&self) -> Result<Vec<String>> {
         read(&self.inner, crate::jobs::distinct_pools_queued)
     }
 
-    async fn list_queued_for_pool_sorted(
-        &self,
-        pool: &str,
-        limit: usize,
-    ) -> Result<Vec<Job>> {
+    async fn list_queued_for_pool_sorted(&self, pool: &str, limit: usize) -> Result<Vec<Job>> {
         read(&self.inner, |inner| {
             crate::jobs::list_queued_for_pool_sorted(inner, pool, limit)
         })
     }
 
     async fn pop_claim_from_pool(&self, pool: &str) -> Result<Option<Job>> {
-        write(&self.inner, |inner| crate::jobs::pop_claim_from_pool(inner, pool))
+        write(&self.inner, |inner| {
+            crate::jobs::pop_claim_from_pool(inner, pool)
+        })
     }
 
     async fn count_jobs(&self, status_filter: Option<JobStatus>) -> Result<u64> {
-        read(&self.inner, |inner| crate::jobs::count_jobs(inner, status_filter))
+        read(&self.inner, |inner| {
+            crate::jobs::count_jobs(inner, status_filter)
+        })
     }
 
-    async fn count_jobs_for_task(
-        &self,
-        task_name: &str,
-        status: Option<JobStatus>,
-    ) -> Result<u64> {
+    async fn count_jobs_for_task(&self, task_name: &str, status: Option<JobStatus>) -> Result<u64> {
         read(&self.inner, |inner| {
             crate::jobs::count_jobs_for_task(inner, task_name, status)
         })
@@ -183,23 +188,33 @@ impl QueueBackend for MemQueueBackend {
     }
 
     async fn count_runs(&self, job_id_filter: Option<&str>) -> Result<u64> {
-        read(&self.inner, |inner| crate::runs::count_runs(inner, job_id_filter))
+        read(&self.inner, |inner| {
+            crate::runs::count_runs(inner, job_id_filter)
+        })
     }
 
     async fn count_runs_since(&self, since: DateTime<Utc>) -> Result<u64> {
-        read(&self.inner, |inner| crate::runs::count_runs_since(inner, since))
+        read(&self.inner, |inner| {
+            crate::runs::count_runs_since(inner, since)
+        })
     }
 
     async fn task_run_stats(&self, task_name: &str) -> Result<TaskRunStats> {
-        read(&self.inner, |inner| crate::runs::task_run_stats(inner, task_name))
+        read(&self.inner, |inner| {
+            crate::runs::task_run_stats(inner, task_name)
+        })
     }
 
     async fn get_task_config(&self, task_name: &str) -> Result<Option<TaskConfig>> {
-        read(&self.inner, |inner| crate::task_config::get_task_config(inner, task_name))
+        read(&self.inner, |inner| {
+            crate::task_config::get_task_config(inner, task_name)
+        })
     }
 
     async fn upsert_task_config(&self, config: &TaskConfig) -> Result<()> {
-        write(&self.inner, |inner| crate::task_config::upsert_task_config(inner, config))
+        write(&self.inner, |inner| {
+            crate::task_config::upsert_task_config(inner, config);
+        })
     }
 
     async fn try_claim_run_lease(
@@ -214,11 +229,15 @@ impl QueueBackend for MemQueueBackend {
     }
 
     async fn extend_lease(&self, lease_id: &str, ttl_secs: i64) -> Result<()> {
-        write(&self.inner, |inner| crate::leases::extend_lease(inner, lease_id, ttl_secs))
+        write(&self.inner, |inner| {
+            crate::leases::extend_lease(inner, lease_id, ttl_secs);
+        })
     }
 
     async fn release_lease(&self, lease_id: &str) -> Result<()> {
-        write(&self.inner, |inner| crate::leases::release_lease(inner, lease_id))
+        write(&self.inner, |inner| {
+            crate::leases::release_lease(inner, lease_id);
+        })
     }
 
     async fn expired_lease_job_pairs(&self) -> Result<Vec<(String, String)>> {

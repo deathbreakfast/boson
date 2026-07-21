@@ -8,7 +8,7 @@
 
 pub use crate::{
     configure, task, Boson, BosonBuilder, BosonError, ExecutionContext, ExecutionContextFactory,
-    JsonExecutionContextFactory, Job, JobStatus, QueueBackend, Run, TaskConfig, TaskDescriptor,
+    Job, JobStatus, JsonExecutionContextFactory, QueueBackend, Run, TaskConfig, TaskDescriptor,
     TaskRegistry, WorkerSettings,
 };
 

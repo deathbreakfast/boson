@@ -10,9 +10,7 @@ impl Keyspace {
     /// Default prefix (`boson`) or `BOSON_REDIS_KEY_PREFIX` when set.
     #[must_use]
     pub fn from_env() -> Self {
-        Self::new(
-            std::env::var("BOSON_REDIS_KEY_PREFIX").unwrap_or_else(|_| "boson".into()),
-        )
+        Self::new(std::env::var("BOSON_REDIS_KEY_PREFIX").unwrap_or_else(|_| "boson".into()))
     }
 
     /// Explicit prefix (isolated tests / multi-tenant).

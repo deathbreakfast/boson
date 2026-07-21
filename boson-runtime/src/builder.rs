@@ -147,10 +147,7 @@ impl BosonBuilder {
     /// Also available via `BOSON_WORKER_POOLS=pool-a,pool-b`. Pin workers to disjoint pool sets
     /// for shared-nothing scaling (each worker skips `distinct_pools_queued` fan-out).
     #[must_use]
-    pub fn worker_pools(
-        mut self,
-        pools: impl IntoIterator<Item = impl Into<String>>,
-    ) -> Self {
+    pub fn worker_pools(mut self, pools: impl IntoIterator<Item = impl Into<String>>) -> Self {
         self.worker_pools = Some(pools.into_iter().map(Into::into).collect());
         self
     }

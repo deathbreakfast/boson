@@ -1,4 +1,7 @@
 //! In-memory store backing [`MemQueueBackend`](crate::MemQueueBackend).
+//!
+//! Lock helpers take [`std::sync::RwLock`] and run closures without `.await`, keeping critical
+//! sections short on the async runtime.
 
 use std::collections::HashMap;
 
@@ -37,10 +40,7 @@ impl Inner {
 }
 
 /// Acquire a read lock, mapping poison to [`BosonError::Backend`](boson_core::BosonError::Backend).
-pub fn read<T, R>(
-    lock: &std::sync::RwLock<T>,
-    f: impl FnOnce(&T) -> R,
-) -> boson_core::Result<R> {
+pub fn read<T, R>(lock: &std::sync::RwLock<T>, f: impl FnOnce(&T) -> R) -> boson_core::Result<R> {
     let guard = lock.read().map_err(|_| lock_err())?;
     Ok(f(&guard))
 }

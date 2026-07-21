@@ -33,7 +33,9 @@ pub fn expand_task(attrs: &TaskAttrs, input: &ItemFn) -> TokenStream2 {
     let max_in_flight = attrs.max_in_flight;
     let max_enqueue_per_second = attrs.max_enqueue_per_second;
     let idempotency_mode_tokens = match attrs.idempotency_mode.as_deref() {
-        Some("none") => quote! { ::core::option::Option::Some(::boson_core::IdempotencyMode::None) },
+        Some("none") => {
+            quote! { ::core::option::Option::Some(::boson_core::IdempotencyMode::None) }
+        }
         Some("lwt") => quote! { ::core::option::Option::Some(::boson_core::IdempotencyMode::Lwt) },
         _ => quote! { ::core::option::Option::None },
     };

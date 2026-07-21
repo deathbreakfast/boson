@@ -94,9 +94,9 @@ fn lookup_builder(normalized: &str) -> Option<ScenarioBuilder> {
         }),
         "bm-b16" => Some(|_| (ScenarioSpec::handler_failure_terminal("fail"), None)),
         "bm-b17" => Some(bm_b17),
-        "bm-bi1" | "bm-bf2" | "bm-be1" | "bm-be2" | "bm-be4" | "bm-bd1" | "bm-bd2"
-        | "bm-bl0" | "bm-bl1" | "bm-bl2" | "bm-bl3" | "bm-bl4" | "bm-bp1" | "bm-bp2"
-        | "bm-bm1" | "bm-bm2" | "bm-bm3" | "bm-bm4" => Some(enqueue_only_stub),
+        "bm-bi1" | "bm-bf2" | "bm-be1" | "bm-be2" | "bm-be4" | "bm-bd1" | "bm-bd2" | "bm-bl0"
+        | "bm-bl1" | "bm-bl2" | "bm-bl3" | "bm-bl4" | "bm-bp1" | "bm-bp2" | "bm-bm1" | "bm-bm2"
+        | "bm-bm3" | "bm-bm4" => Some(enqueue_only_stub),
         _ => None,
     }
 }
@@ -104,8 +104,9 @@ fn lookup_builder(normalized: &str) -> Option<ScenarioBuilder> {
 /// Resolve an experiment id to a scenario (see EXPERIMENTS.md).
 pub fn resolve_experiment(id: &str, ops: Option<u32>) -> Result<ExperimentPlan> {
     let normalized = id.to_ascii_lowercase();
-    let builder = lookup_builder(&normalized)
-        .ok_or_else(|| anyhow::anyhow!("unknown experiment {id}; see boson-bench/EXPERIMENTS.md"))?;
+    let builder = lookup_builder(&normalized).ok_or_else(|| {
+        anyhow::anyhow!("unknown experiment {id}; see boson-bench/EXPERIMENTS.md")
+    })?;
     let (scenario, ops) = builder(ops);
     Ok(ExperimentPlan {
         id: normalized,

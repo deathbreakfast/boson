@@ -1,5 +1,12 @@
 //! Integration tests for `#[boson::task]` inventory registration and dispatch.
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::print_stdout,
+    clippy::print_stderr
+)] // Integration-test helpers are not covered by clippy.toml allow-*-in-tests.
+
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 

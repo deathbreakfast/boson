@@ -368,7 +368,9 @@ pub use boson_runtime::{
     configure, default, Boson, BosonBuilder, InvokeFn, ManualWorker, TaskDescriptor, TaskRegistry,
     WorkerSettings,
 };
-pub use boson_telemetry::{install_ops_log, ops_log, ops_log_from_env, ConsoleOpsLog, NoOpsLog, OpsLog};
+pub use boson_telemetry::{
+    install_ops_log, ops_log, ops_log_from_env, ConsoleOpsLog, NoOpsLog, OpsLog,
+};
 
 #[cfg(feature = "mem")]
 pub use boson_backend_mem::{install_default_mem_backend, MemQueueBackend};

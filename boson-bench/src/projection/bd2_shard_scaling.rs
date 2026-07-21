@@ -42,7 +42,9 @@ pub fn bd2_shard_curve(
 ) -> Result<()> {
     let curve = load_bd2_shard_curve(reports_dir, hardware, backend)?;
     let out_path = out.unwrap_or_else(|| {
-        reports_dir.join(format!("scaling-curve-bd2-shards-{hardware}-{backend}.json"))
+        reports_dir.join(format!(
+            "scaling-curve-bd2-shards-{hardware}-{backend}.json"
+        ))
     });
     if let Some(parent) = out_path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -87,10 +89,7 @@ pub fn load_bd2_shard_curve(
             if fname.contains("fleet-n") {
                 continue;
             }
-            if v.pointer("/dimensions/hardware")
-                .and_then(Value::as_str)
-                != Some(hardware)
-            {
+            if v.pointer("/dimensions/hardware").and_then(Value::as_str) != Some(hardware) {
                 continue;
             }
             if v.pointer("/dimensions/backend").and_then(Value::as_str) != Some(backend) {
@@ -107,8 +106,7 @@ pub fn load_bd2_shard_curve(
             if k == 1 {
                 k1_peak = Some(k1_peak.map_or(rate, |p| p.max(rate)));
             }
-            best
-                .entry(k)
+            best.entry(k)
                 .and_modify(|(best_rate, best_w, best_file)| {
                     if rate > *best_rate {
                         *best_rate = rate;

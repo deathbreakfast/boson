@@ -61,12 +61,10 @@ pub async fn list_runs(
     Query(q): Query<ListRunsQuery>,
 ) -> Json<ApiResponse<Vec<RunResponse>>> {
     let limit = q.limit.unwrap_or(100);
-    match state
-        .boson
-        .list_runs(q.job_id.as_deref(), 0, limit)
-        .await
-    {
-        Ok(runs) => Json(ApiResponse::ok(runs.into_iter().map(RunResponse::from).collect())),
+    match state.boson.list_runs(q.job_id.as_deref(), 0, limit).await {
+        Ok(runs) => Json(ApiResponse::ok(
+            runs.into_iter().map(RunResponse::from).collect(),
+        )),
         Err(e) => Json(ApiResponse::err(e.to_string())),
     }
 }

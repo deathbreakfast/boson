@@ -108,10 +108,7 @@ pub fn load_bd2_multibench_curve(
             if v.get("experiment_id").and_then(|e| e.as_str()) != Some(BD2_EXPERIMENT) {
                 continue;
             }
-            if v.pointer("/dimensions/hardware")
-                .and_then(Value::as_str)
-                != Some(hardware)
-            {
+            if v.pointer("/dimensions/hardware").and_then(Value::as_str) != Some(hardware) {
                 continue;
             }
             if v.pointer("/dimensions/backend").and_then(Value::as_str) != Some(backend) {
@@ -149,8 +146,7 @@ pub fn load_bd2_multibench_curve(
             if bc == 1 {
                 bc1_peak = Some(bc1_peak.map_or(rate, |p| p.max(rate)));
             }
-            best
-                .entry(bc)
+            best.entry(bc)
                 .and_modify(|(best_rate, fs, pc, wc, best_file)| {
                     if rate > *best_rate {
                         *best_rate = rate;
@@ -231,7 +227,9 @@ pub fn load_bd2_multibench_curve(
         peak_drain_ops_per_sec,
         peak_bench_client_count,
         scaling_verdict,
-        disclaimer: "multibench_efficiency = aggregate / (bc × bc1_peak); each bench host = one embed.".into(),
+        disclaimer:
+            "multibench_efficiency = aggregate / (bc × bc1_peak); each bench host = one embed."
+                .into(),
     })
 }
 

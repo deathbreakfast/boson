@@ -1,7 +1,7 @@
 //! Multi-client and multi-pool scale experiments BM-BP* / BM-BM*.
 
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use anyhow::Result;
@@ -120,7 +120,11 @@ fn finalize_scale_metrics(
     let ok = counters.ops_ok.load(Ordering::SeqCst);
     let err = counters.ops_err.load(Ordering::SeqCst);
     let total = ok + err;
-    let error_rate = if total == 0 { 0.0 } else { err as f64 / total as f64 };
+    let error_rate = if total == 0 {
+        0.0
+    } else {
+        err as f64 / total as f64
+    };
     let stats = MetricStats::summarize(Vec::new());
 
     ReportMetrics {

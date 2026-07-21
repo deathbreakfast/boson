@@ -4,10 +4,15 @@
 //! identically. Production apps usually put handlers in a shared crate and `use tasks as _;`
 //! from the worker binary.
 
+#![allow(clippy::print_stdout)] // Examples print status to the console.
+
 use boson::{task, ExecutionContext};
 
 #[task(name = "remote_ping")]
-pub async fn remote_ping(ctx: Box<dyn ExecutionContext>, message: String) -> boson_core::Result<()> {
+pub async fn remote_ping(
+    ctx: Box<dyn ExecutionContext>,
+    message: String,
+) -> boson_core::Result<()> {
     println!("remote_ping: {} (actor={})", message, ctx.label());
     Ok(())
 }

@@ -85,10 +85,7 @@ pub fn load_bd2_fleet_curve(
             {
                 continue;
             }
-            if v.pointer("/dimensions/hardware")
-                .and_then(Value::as_str)
-                != Some(hardware)
-            {
+            if v.pointer("/dimensions/hardware").and_then(Value::as_str) != Some(hardware) {
                 continue;
             }
             if v.pointer("/dimensions/backend").and_then(Value::as_str) != Some(backend) {
@@ -111,8 +108,7 @@ pub fn load_bd2_fleet_curve(
             if fleet_size == 1 {
                 n1_peak = Some(n1_peak.map_or(rate, |p| p.max(rate)));
             }
-            best
-                .entry(fleet_size)
+            best.entry(fleet_size)
                 .and_modify(|(best_rate, pc, wc, best_file)| {
                     if rate > *best_rate {
                         *best_rate = rate;
@@ -187,7 +183,8 @@ pub fn load_bd2_fleet_curve(
         peak_drain_ops_per_sec,
         peak_fleet_size,
         scaling_verdict,
-        disclaimer: "fleet_efficiency = agg_drain / (N × n1_peak); pool-routed standalone NATS.".into(),
+        disclaimer: "fleet_efficiency = agg_drain / (N × n1_peak); pool-routed standalone NATS."
+            .into(),
     })
 }
 

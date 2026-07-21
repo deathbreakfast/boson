@@ -22,7 +22,9 @@ pub fn postgres_test_url() -> String {
 /// # Errors
 ///
 /// Propagates errors from [`PostgresQueueBackend::connect`].
-pub async fn install_default_postgres_backend(url: &str) -> boson_core::Result<Arc<PostgresQueueBackend>> {
+pub async fn install_default_postgres_backend(
+    url: &str,
+) -> boson_core::Result<Arc<PostgresQueueBackend>> {
     let backend = Arc::new(PostgresQueueBackend::connect(url).await?);
     let dyn_backend: Arc<dyn QueueBackend> = Arc::clone(&backend) as Arc<dyn QueueBackend>;
     QueueRouter::set_global(QueueRouter::with_default(dyn_backend));

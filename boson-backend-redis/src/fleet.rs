@@ -31,17 +31,21 @@ impl std::fmt::Debug for PoolRoutedBackend {
 impl PoolRoutedBackend {
     fn backend_for_pool(&self, pool: &str) -> Result<&Arc<RedisQueueBackend>> {
         if let Some(&idx) = self.pool_index.get(pool) {
-            return self.backends.get(idx).ok_or_else(|| {
-                BosonError::Backend(format!("no backend for pool {pool}"))
-            });
+            return self
+                .backends
+                .get(idx)
+                .ok_or_else(|| BosonError::Backend(format!("no backend for pool {pool}")));
         }
         let idx = pool_slot_index(pool, self.backends.len());
-        self.backends.get(idx).ok_or_else(|| {
-            BosonError::Backend(format!("no backend index {idx} for pool {pool}"))
-        })
+        self.backends
+            .get(idx)
+            .ok_or_else(|| BosonError::Backend(format!("no backend index {idx} for pool {pool}")))
     }
 
-    async fn find_job_backend(&self, job_id: &str) -> Result<Option<(&Arc<RedisQueueBackend>, Job)>> {
+    async fn find_job_backend(
+        &self,
+        job_id: &str,
+    ) -> Result<Option<(&Arc<RedisQueueBackend>, Job)>> {
         for backend in &self.backends {
             if let Some(job) = backend.get_job(job_id).await? {
                 return Ok(Some((backend, job)));
@@ -243,11 +247,7 @@ impl QueueBackend for PoolRoutedBackend {
         Ok(total)
     }
 
-    async fn count_jobs_for_task(
-        &self,
-        task_name: &str,
-        status: Option<JobStatus>,
-    ) -> Result<u64> {
+    async fn count_jobs_for_task(&self, task_name: &str, status: Option<JobStatus>) -> Result<u64> {
         let mut total = 0u64;
         for backend in &self.backends {
             total = total.saturating_add(backend.count_jobs_for_task(task_name, status).await?);
@@ -374,7 +374,9 @@ impl QueueBackend for PoolRoutedBackend {
         ttl_secs: i64,
     ) -> Result<Option<String>> {
         if let Some((backend, _)) = self.find_job_backend(job_id).await? {
-            backend.try_claim_run_lease(job_id, worker_id, ttl_secs).await
+            backend
+                .try_claim_run_lease(job_id, worker_id, ttl_secs)
+                .await
         } else {
             self.backends[0]
                 .try_claim_run_lease(job_id, worker_id, ttl_secs)

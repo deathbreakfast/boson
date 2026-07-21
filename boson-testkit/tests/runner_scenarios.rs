@@ -1,5 +1,12 @@
 //! Integration tests for [`ScenarioRunner`](boson_testkit::runner::ScenarioRunner).
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::print_stdout,
+    clippy::print_stderr
+)] // Integration-test helpers are not covered by clippy.toml allow-*-in-tests.
+
 use boson_testkit::bootstrap::BootstrapSession;
 use boson_testkit::fixtures::{
     register_fail_n_then_ok_task, register_noop_task, register_rate_limited_in_flight_task,
@@ -13,7 +20,7 @@ async fn install_session(
     register: impl FnOnce(&mut boson_runtime::TaskRegistry),
 ) -> BootstrapSession {
     let mut session = BootstrapSession::new(MatrixSpec::ci_mem_isolated_lab());
-    register(session.registry_mut());
+    register(session.registry_mut().expect("unique registry"));
     session.install().await.expect("install");
     session
 }
@@ -23,7 +30,10 @@ async fn runner_enqueue_and_drain_correctness() {
     reset_noop_hits();
     let session = install_session(|r| register_noop_task(r, "noop")).await;
     let result = ScenarioRunner::new(&session)
-        .run(&ScenarioSpec::enqueue_and_drain("noop"), RunMode::Correctness)
+        .run(
+            &ScenarioSpec::enqueue_and_drain("noop"),
+            RunMode::Correctness,
+        )
         .await
         .expect("run");
     assert!(result.error.is_none(), "{:?}", result.error);

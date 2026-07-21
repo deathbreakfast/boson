@@ -1,9 +1,9 @@
 use anyhow::{anyhow, Result};
 use boson_core::JobStatus;
 
+use super::super::state::RunState;
 use super::super::support::{counting_hit_count, noop_hit_count};
 use super::super::RunMode;
-use super::super::state::RunState;
 
 /// Assert a job's status by enqueue index (`AssertJobStatus` step).
 pub async fn run_assert_job_status(
@@ -19,7 +19,7 @@ pub async fn run_assert_job_status(
         return Ok(Some(format!("job_index {job_index} out of range")));
     };
     let job = state
-        .boson()
+        .boson()?
         .get_job(job_id)
         .await?
         .ok_or_else(|| anyhow!("job not found"))?;
@@ -45,7 +45,7 @@ pub async fn run_assert_run_outcome(
     let Some(job_id) = state.job_ids.get(job_index) else {
         return Ok(Some(format!("job_index {job_index} out of range")));
     };
-    let runs = state.boson().list_runs(Some(job_id), 0, 8).await?;
+    let runs = state.boson()?.list_runs(Some(job_id), 0, 8).await?;
     let Some(latest) = runs.last() else {
         return Ok(Some(format!("AssertRunOutcome: no runs for job {job_id}")));
     };
@@ -147,7 +147,7 @@ pub async fn run_assert_job_count(
     if mode == RunMode::Benchmark {
         return Ok(None);
     }
-    let actual = state.boson().count_jobs(status).await?;
+    let actual = state.boson()?.count_jobs(status).await?;
     if actual != count {
         return Ok(Some(format!(
             "AssertJobCount: expected {count}, got {actual} (status filter {status:?})"
@@ -169,7 +169,7 @@ pub async fn run_assert_run_count(
     let Some(job_id) = state.job_ids.get(job_index) else {
         return Ok(Some(format!("job_index {job_index} out of range")));
     };
-    let runs = state.boson().list_runs(Some(job_id), 0, 32).await?;
+    let runs = state.boson()?.list_runs(Some(job_id), 0, 32).await?;
     if runs.len() != count {
         return Ok(Some(format!(
             "AssertRunCount: expected {count} runs for job {job_id}, got {}",
@@ -188,7 +188,7 @@ pub async fn run_assert_job_missing(
     if mode == RunMode::Benchmark {
         return Ok(None);
     }
-    if state.boson().get_job(job_id).await?.is_some() {
+    if state.boson()?.get_job(job_id).await?.is_some() {
         return Ok(Some(format!(
             "AssertJobMissing: expected no job for id {job_id}"
         )));

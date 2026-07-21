@@ -12,11 +12,11 @@ fn slot() -> &'static RwLock<Option<Arc<dyn OpsLog>>> {
 
 /// Install the process-wide ops log (typically at server boot before Boson runtime).
 ///
-/// # Panics
-///
-/// Panics if the internal lock is poisoned.
+/// Recovers from a poisoned lock by taking the inner value.
 pub fn install_ops_log(log: Arc<dyn OpsLog>) {
-    let mut guard = slot().write().expect("boson-telemetry ops log lock");
+    let mut guard = slot()
+        .write()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     *guard = Some(log);
 }
 

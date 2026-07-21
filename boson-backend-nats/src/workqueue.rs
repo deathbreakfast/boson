@@ -218,7 +218,10 @@ impl NatsWorkQueueBackend {
     }
 
     async fn kv_put(&self, key: &str, value: &[u8]) -> Result<()> {
-        self.kv.put(key, value.to_vec().into()).await.map_err(map_err)?;
+        self.kv
+            .put(key, value.to_vec().into())
+            .await
+            .map_err(map_err)?;
         Ok(())
     }
 
@@ -253,9 +256,7 @@ impl NatsWorkQueueBackend {
 
     fn job_payload_bytes(&self, job: &Job) -> Result<Bytes> {
         match self.config.enqueue_mode {
-            EnqueueMode::Stream => {
-                Ok(Bytes::from(serde_json::to_vec(job).map_err(map_err)?))
-            }
+            EnqueueMode::Stream => Ok(Bytes::from(serde_json::to_vec(job).map_err(map_err)?)),
             EnqueueMode::Dual => Ok(Bytes::from(job.job_id.clone())),
         }
     }
@@ -265,10 +266,7 @@ impl NatsWorkQueueBackend {
         self.ensure_stream(&job.pool).await?;
         let subject = self.subject(&job.pool);
         self.pipeline.publish(&self.js, subject, body).await?;
-        self.active_pools
-            .lock()
-            .await
-            .insert(job.pool.clone());
+        self.active_pools.lock().await.insert(job.pool.clone());
         Ok(())
     }
 
@@ -393,7 +391,7 @@ impl NatsWorkQueueBackend {
 }
 
 fn map_err(e: impl std::fmt::Display) -> BosonError {
-    BosonError::Backend(e.to_string())
+    BosonError::Backend(format!("nats workqueue: {e}"))
 }
 
 #[async_trait]
@@ -540,7 +538,9 @@ impl QueueBackend for NatsWorkQueueBackend {
 
     async fn list_queued_for_pool_sorted(&self, pool: &str, limit: usize) -> Result<Vec<Job>> {
         let limit = limit.max(1);
-        let jobs = self.list_jobs(Some(JobStatus::Queued), 0, usize::MAX).await?;
+        let jobs = self
+            .list_jobs(Some(JobStatus::Queued), 0, usize::MAX)
+            .await?;
         let mut queued: Vec<Job> = jobs.into_iter().filter(|j| j.pool == pool).collect();
         queued.sort_by(|a, b| {
             a.priority
@@ -588,11 +588,7 @@ impl QueueBackend for NatsWorkQueueBackend {
         Ok(u64::try_from(jobs.len()).unwrap_or(u64::MAX))
     }
 
-    async fn count_jobs_for_task(
-        &self,
-        task_name: &str,
-        status: Option<JobStatus>,
-    ) -> Result<u64> {
+    async fn count_jobs_for_task(&self, task_name: &str, status: Option<JobStatus>) -> Result<u64> {
         let jobs = self.list_jobs(status, 0, usize::MAX).await?;
         let count = jobs.iter().filter(|j| j.task_name == task_name).count();
         Ok(u64::try_from(count).unwrap_or(u64::MAX))
@@ -732,7 +728,11 @@ impl QueueBackend for NatsWorkQueueBackend {
                 }
             }
         }
-        if self.kv_get(&self.keys.lease_by_job(job_id)).await?.is_some() {
+        if self
+            .kv_get(&self.keys.lease_by_job(job_id))
+            .await?
+            .is_some()
+        {
             return Ok(None);
         }
         let lease_id = Uuid::new_v4().to_string();

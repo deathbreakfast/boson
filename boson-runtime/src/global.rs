@@ -35,23 +35,20 @@ static DEFAULT_BOSON: RwLock<Option<Boson>> = std::sync::RwLock::new(None);
 /// # }
 /// ```
 ///
-/// # Panics
-///
-/// Panics if the internal lock is poisoned.
 pub fn configure(boson: Boson) {
-    let mut guard = DEFAULT_BOSON.write().unwrap();
+    let mut guard = DEFAULT_BOSON
+        .write()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     *guard = Some(boson);
 }
 
 /// Return the configured default [`Boson`] instance, if any.
 ///
 /// Used by macro-generated `send_with` helpers. Returns `None` when [`configure`] has not been
-/// called.
-///
-/// # Panics
-///
-/// Panics if the internal lock is poisoned.
+/// called. Recovers from a poisoned lock by taking the inner value.
 pub fn default() -> Option<Boson> {
-    let guard = DEFAULT_BOSON.read().unwrap();
+    let guard = DEFAULT_BOSON
+        .read()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     guard.clone()
 }

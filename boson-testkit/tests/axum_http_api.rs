@@ -1,5 +1,12 @@
 //! HTTP integration tests for the Boson Axum API.
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::print_stdout,
+    clippy::print_stderr
+)] // Integration-test helpers are not covered by clippy.toml allow-*-in-tests.
+
 use std::sync::Arc;
 
 use axum::{
@@ -133,13 +140,7 @@ async fn post_enqueue_rate_limited_429() {
     let (status1, body1) = enqueue_via_http(&app, "limited").await;
     assert_eq!(status1, StatusCode::OK);
     let job_id = body1["data"]["job_id"].as_str().expect("job_id");
-    assert!(
-        app.boson
-            .get_job(job_id)
-            .await
-            .expect("get_job")
-            .is_some()
-    );
+    assert!(app.boson.get_job(job_id).await.expect("get_job").is_some());
 
     let (status2, body2) = enqueue_via_http(&app, "limited").await;
     assert_eq!(status2, StatusCode::TOO_MANY_REQUESTS);

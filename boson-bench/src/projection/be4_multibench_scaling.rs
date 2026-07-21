@@ -91,10 +91,7 @@ pub fn load_be4_multibench_curve(
             if v.get("experiment_id").and_then(|e| e.as_str()) != Some("bm-be4") {
                 continue;
             }
-            if v.pointer("/dimensions/hardware")
-                .and_then(Value::as_str)
-                != Some(hardware)
-            {
+            if v.pointer("/dimensions/hardware").and_then(Value::as_str) != Some(hardware) {
                 continue;
             }
             if v.pointer("/dimensions/backend").and_then(Value::as_str) != Some(backend) {
@@ -140,8 +137,7 @@ pub fn load_be4_multibench_curve(
             if bc == 1 {
                 bc1_peak = Some(bc1_peak.map_or(rate, |p| p.max(rate)));
             }
-            best
-                .entry(bc)
+            best.entry(bc)
                 .and_modify(|(best_rate, fs, pc, cc, best_file)| {
                     if rate > *best_rate {
                         *best_rate = rate;
@@ -202,11 +198,7 @@ pub fn load_be4_multibench_curve(
     let per = per_embed.unwrap_or(0.0);
     let mut embeds_for_target = HashMap::new();
     for &target in TARGETS {
-        let rate_per_embed = if per > 0.0 {
-            per
-        } else {
-            peak_aggregate
-        };
+        let rate_per_embed = if per > 0.0 { per } else { peak_aggregate };
         let embeds = if rate_per_embed > 0.0 {
             (target as f64 / rate_per_embed).ceil() as u64
         } else {
@@ -225,9 +217,15 @@ pub fn load_be4_multibench_curve(
         points,
         peak_aggregate_ops_per_sec: peak_aggregate,
         peak_bench_client_count,
-        scaling_verdict: Some(classify_multibench(peak_aggregate, peak_bench_client_count, per_embed)),
+        scaling_verdict: Some(classify_multibench(
+            peak_aggregate,
+            peak_bench_client_count,
+            per_embed,
+        )),
         embeds_for_target,
-        disclaimer: "multibench_efficiency = aggregate / (bc × bc1_peak); each bench host = one embed.".into(),
+        disclaimer:
+            "multibench_efficiency = aggregate / (bc × bc1_peak); each bench host = one embed."
+                .into(),
     })
 }
 

@@ -222,7 +222,8 @@ mod tests {
 
     #[test]
     fn runtime_idempotency_fallback_fills_none_only() {
-        let filled = TaskConfig::default_for("t").with_runtime_idempotency_fallback(IdempotencyMode::Lwt);
+        let filled =
+            TaskConfig::default_for("t").with_runtime_idempotency_fallback(IdempotencyMode::Lwt);
         assert_eq!(filled.idempotency_mode, Some(IdempotencyMode::Lwt));
 
         let kept = TaskConfig::default_for("t");

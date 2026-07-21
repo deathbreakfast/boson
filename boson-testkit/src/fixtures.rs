@@ -212,7 +212,11 @@ pub fn register_fail_exhaustion_task(
 }
 
 /// Register a handler that fails `fail_count` times then succeeds.
-pub fn register_fail_n_then_ok_task(registry: &mut TaskRegistry, name: &'static str, fail_count: u32) {
+pub fn register_fail_n_then_ok_task(
+    registry: &mut TaskRegistry,
+    name: &'static str,
+    fail_count: u32,
+) {
     set_fail_remaining(fail_count);
     register_task_with_policy(
         registry,
@@ -281,15 +285,7 @@ fn register_task_with_pool(
     priority: i32,
     pool: &'static str,
 ) {
-    register_task_with_signature_hash(
-        registry,
-        name,
-        invoke,
-        policy,
-        priority,
-        pool,
-        0,
-    );
+    register_task_with_signature_hash(registry, name, invoke, policy, priority, pool, 0);
 }
 
 fn register_task_with_signature_hash(

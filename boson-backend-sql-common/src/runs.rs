@@ -42,12 +42,7 @@ impl SqlQueueBackend {
 
     pub(crate) async fn get_run_impl(&self, run_id: &str) -> Result<Option<Run>> {
         let sql = bind_sql(self.dialect, "SELECT * FROM boson_run WHERE run_id = ?");
-        sql_fetch_optional_map!(
-            self,
-            &sql,
-            |q| q.bind(run_id),
-            |r| row_to_run(&r)
-        )
+        sql_fetch_optional_map!(self, &sql, |q| q.bind(run_id), |r| row_to_run(&r))
     }
 
     pub(crate) async fn list_runs_impl(
@@ -61,19 +56,29 @@ impl SqlQueueBackend {
                 self.dialect,
                 "SELECT * FROM boson_run WHERE job_id = ? ORDER BY started_at DESC LIMIT ? OFFSET ?",
             );
-            sql_fetch_all_map!(self, &sql, |q| {
-                q.bind(job_id)
-                    .bind(i64::try_from(limit).unwrap_or(i64::MAX))
-                    .bind(i64::try_from(offset).unwrap_or(i64::MAX))
-            }, |r| row_to_run(r))
+            sql_fetch_all_map!(
+                self,
+                &sql,
+                |q| {
+                    q.bind(job_id)
+                        .bind(i64::try_from(limit).unwrap_or(i64::MAX))
+                        .bind(i64::try_from(offset).unwrap_or(i64::MAX))
+                },
+                |r| row_to_run(r)
+            )
         } else {
             let sql = bind_sql(
                 self.dialect,
                 "SELECT * FROM boson_run ORDER BY started_at DESC LIMIT ? OFFSET ?",
             );
-            sql_fetch_all_map!(self, &sql, |q| q.bind(i64::try_from(limit).unwrap_or(i64::MAX)).bind(i64::try_from(offset).unwrap_or(i64::MAX)), |r| {
-                row_to_run(r)
-            })
+            sql_fetch_all_map!(
+                self,
+                &sql,
+                |q| q
+                    .bind(i64::try_from(limit).unwrap_or(i64::MAX))
+                    .bind(i64::try_from(offset).unwrap_or(i64::MAX)),
+                |r| { row_to_run(r) }
+            )
         }
     }
 
@@ -105,12 +110,10 @@ impl SqlQueueBackend {
                 self.dialect,
                 "SELECT COUNT(*) AS cnt FROM boson_run WHERE job_id = ?",
             );
-            sql_fetch_one_map!(
-                self,
-                &sql,
-                |q| q.bind(job_id),
-                |r| Ok(u64::try_from(r.get::<i64, _>("cnt")).unwrap_or(u64::MAX))
+            sql_fetch_one_map!(self, &sql, |q| q.bind(job_id), |r| Ok(u64::try_from(
+                r.get::<i64, _>("cnt")
             )
+            .unwrap_or(u64::MAX)))
         } else {
             let sql = bind_sql(self.dialect, "SELECT COUNT(*) AS cnt FROM boson_run");
             sql_fetch_one_map!(self, &sql, |q| q, |r| {
@@ -124,12 +127,10 @@ impl SqlQueueBackend {
             self.dialect,
             "SELECT COUNT(*) AS cnt FROM boson_run WHERE started_at >= ?",
         );
-        sql_fetch_one_map!(
-            self,
-            &sql,
-            |q| q.bind(since),
-            |r| Ok(u64::try_from(r.get::<i64, _>("cnt")).unwrap_or(u64::MAX))
+        sql_fetch_one_map!(self, &sql, |q| q.bind(since), |r| Ok(u64::try_from(
+            r.get::<i64, _>("cnt")
         )
+        .unwrap_or(u64::MAX)))
     }
 
     pub(crate) async fn task_run_stats_impl(&self, task_name: &str) -> Result<TaskRunStats> {
@@ -141,18 +142,19 @@ impl SqlQueueBackend {
             self.dialect,
             "SELECT COUNT(*) AS cnt FROM boson_run WHERE task_name = ? AND status = 'success'",
         );
-        let runs_total = sql_fetch_one_map!(
-            self,
-            &total_sql,
-            |q| q.bind(task_name),
-            |r| Ok::<u32, boson_core::BosonError>(u32::try_from(r.get::<i64, _>("cnt")).unwrap_or(u32::MAX))
-        )?;
-        let success_count = sql_fetch_one_map!(
-            self,
-            &success_sql,
-            |q| q.bind(task_name),
-            |r| Ok::<u32, boson_core::BosonError>(u32::try_from(r.get::<i64, _>("cnt")).unwrap_or(u32::MAX))
-        )?;
+        let runs_total = sql_fetch_one_map!(self, &total_sql, |q| q.bind(task_name), |r| Ok::<
+            u32,
+            boson_core::BosonError,
+        >(
+            u32::try_from(r.get::<i64, _>("cnt")).unwrap_or(u32::MAX)
+        ))?;
+        let success_count =
+            sql_fetch_one_map!(self, &success_sql, |q| q.bind(task_name), |r| Ok::<
+                u32,
+                boson_core::BosonError,
+            >(
+                u32::try_from(r.get::<i64, _>("cnt")).unwrap_or(u32::MAX)
+            ))?;
         Ok(TaskRunStats {
             runs_total,
             success_count,

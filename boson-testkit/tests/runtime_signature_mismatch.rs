@@ -1,5 +1,12 @@
 //! Signature hash mismatch fails job execution via the manual worker.
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::print_stdout,
+    clippy::print_stderr
+)] // Integration-test helpers are not covered by clippy.toml allow-*-in-tests.
+
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -8,7 +15,7 @@ use boson_backend_mem::MemQueueBackend;
 use boson_core::{
     ExecutionContext, ExecutionContextFactory, IdentityError, JobStatus, QueueBackend,
 };
-use boson_runtime::{Boson, TaskDescriptor, TaskDefaults, TaskRegistry};
+use boson_runtime::{Boson, TaskDefaults, TaskDescriptor, TaskRegistry};
 
 struct TestCtx {
     actor_json: serde_json::Value,
@@ -69,7 +76,12 @@ async fn manual_worker_marks_job_failed_on_signature_mismatch() {
         .expect("build");
 
     boson
-        .enqueue("sig_task", serde_json::json!({"System": {}}), serde_json::json!({}), None)
+        .enqueue(
+            "sig_task",
+            serde_json::json!({"System": {}}),
+            serde_json::json!({}),
+            None,
+        )
         .await
         .expect("enqueue");
 

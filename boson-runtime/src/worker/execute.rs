@@ -26,6 +26,9 @@ pub async fn execute_job(
 }
 
 /// Persist run start. Job status is already `Running` from [`try_claim_job`](QueueBackend::try_claim_job).
-pub async fn record_run_start(backend: &Arc<dyn QueueBackend>, run: &boson_core::Run) -> Result<()> {
+pub async fn record_run_start(
+    backend: &Arc<dyn QueueBackend>,
+    run: &boson_core::Run,
+) -> Result<()> {
     backend.upsert_run(run).await
 }

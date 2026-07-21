@@ -11,7 +11,9 @@ use crate::{ScyllaQueueBackend, ScyllaQueueConfig};
 /// # Errors
 ///
 /// Returns an error when connect or schema bootstrap fails.
-pub async fn install_default_scylla_backend(config: ScyllaQueueConfig) -> Result<Arc<ScyllaQueueBackend>> {
+pub async fn install_default_scylla_backend(
+    config: ScyllaQueueConfig,
+) -> Result<Arc<ScyllaQueueBackend>> {
     let backend = Arc::new(Box::pin(ScyllaQueueBackend::connect(config)).await?);
     let dyn_backend: Arc<dyn QueueBackend> = Arc::clone(&backend) as Arc<dyn QueueBackend>;
     QueueRouter::set_global(QueueRouter::with_default(dyn_backend));

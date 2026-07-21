@@ -63,12 +63,11 @@ pub fn run_be4_aggregate(
     reports_dir: &Path,
     cell_prefix: Option<&str>,
 ) -> Result<()> {
-    projection::aggregate_be4_reports(hardware, backend, reports_dir, cell_prefix)
-        .map(|paths| {
-            for p in paths {
-                println!("wrote {}", p.display());
-            }
-        })
+    projection::aggregate_be4_reports(hardware, backend, reports_dir, cell_prefix).map(|paths| {
+        for p in paths {
+            println!("wrote {}", p.display());
+        }
+    })
 }
 
 /// Print BM-BE4 multi-bench scaling curve.
@@ -114,12 +113,11 @@ pub fn run_bd2_aggregate(
     reports_dir: &Path,
     cell_prefix: Option<&str>,
 ) -> Result<()> {
-    projection::aggregate_bd2_reports(hardware, backend, reports_dir, cell_prefix)
-        .map(|paths| {
-            for p in paths {
-                println!("wrote {}", p.display());
-            }
-        })
+    projection::aggregate_bd2_reports(hardware, backend, reports_dir, cell_prefix).map(|paths| {
+        for p in paths {
+            println!("wrote {}", p.display());
+        }
+    })
 }
 
 pub fn run_bd2_multibench_curve(

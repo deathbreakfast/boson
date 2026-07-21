@@ -140,9 +140,7 @@ mod tests {
         )
         .expect_err("first parameter mismatch must fail");
 
-        assert!(error
-            .to_string()
-            .contains("Box<dyn ExecutionContext>"));
+        assert!(error.to_string().contains("Box<dyn ExecutionContext>"));
     }
 
     #[test]

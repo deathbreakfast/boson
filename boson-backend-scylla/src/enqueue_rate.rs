@@ -1,4 +1,9 @@
 //! Process-local sliding-window limiter for enqueues per task per second.
+//!
+//! Uses [`std::sync::Mutex`] intentionally: [`EnqueueRateLimiter::try_record`] holds the lock only
+//! for a short, non-`.await` critical section (prune window + push timestamp). Async enqueue paths
+//! call it between awaits, so a Tokio mutex would add overhead without preventing runtime stalls.
+//! Poisoned locks recover via [`std::sync::PoisonError::into_inner`].
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::Mutex;

@@ -44,7 +44,9 @@ pub fn bd2_worker_curve(
 ) -> Result<()> {
     let curve = load_bd2_worker_curve(reports_dir, hardware, backend)?;
     let out_path = out.unwrap_or_else(|| {
-        reports_dir.join(format!("scaling-curve-bd2-workers-{hardware}-{backend}.json"))
+        reports_dir.join(format!(
+            "scaling-curve-bd2-workers-{hardware}-{backend}.json"
+        ))
     });
     if let Some(parent) = out_path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -85,10 +87,7 @@ pub fn load_bd2_worker_curve(
             if !fname.contains("-w") || fname.contains("fleet-n") || fname.contains("-bc") {
                 continue;
             }
-            if v.pointer("/dimensions/hardware")
-                .and_then(Value::as_str)
-                != Some(hardware)
-            {
+            if v.pointer("/dimensions/hardware").and_then(Value::as_str) != Some(hardware) {
                 continue;
             }
             if v.pointer("/dimensions/backend").and_then(Value::as_str) != Some(backend) {
@@ -102,8 +101,7 @@ pub fn load_bd2_worker_curve(
                 continue;
             };
             let k = bd2_common::pool_count(&v, &fname).unwrap_or(1);
-            best
-                .entry(w)
+            best.entry(w)
                 .and_modify(|(best_rate, pc, best_file)| {
                     if rate > *best_rate {
                         *best_rate = rate;
@@ -201,12 +199,7 @@ pub fn render_worker_markdown(curve: &Bd2WorkerCurve) -> String {
             .map_or_else(|| "—".into(), |v| format!("{v:.0}"));
         lines.push(format!(
             "| {} | {:.0} | {} | {} | {} | {} |",
-            p.worker_count,
-            p.peak_drain_ops_per_sec,
-            opw,
-            vs,
-            p.pool_count,
-            p.report_file
+            p.worker_count, p.peak_drain_ops_per_sec, opw, vs, p.pool_count, p.report_file
         ));
     }
     lines.push(String::new());

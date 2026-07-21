@@ -1,8 +1,17 @@
 //! NATS broker fleet routing contract tests (requires 2 NATS URLs).
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::print_stdout,
+    clippy::print_stderr
+)] // Integration-test helpers are not covered by clippy.toml allow-*-in-tests.
+
 use std::sync::Arc;
 
-use boson_backend_nats::{connect_fleet_from_env, keys, EnqueueMode, NatsEnqueueConfig, NatsWorkQueueBackend};
+use boson_backend_nats::{
+    connect_fleet_from_env, keys, EnqueueMode, NatsEnqueueConfig, NatsWorkQueueBackend,
+};
 use boson_core::{Job, QueueBackend};
 use boson_testkit::fixtures::{empty_params, system_actor};
 

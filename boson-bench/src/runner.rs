@@ -7,7 +7,8 @@ use anyhow::Result;
 use boson_core::{ExecutionContextFactory, IdempotencyMode};
 use boson_runtime::WorkerSettings;
 use boson_testkit::{
-    BootstrapSession, MatrixSpec, RunMode, ScenarioRunner, ScenarioSpec, StubExecutionContextFactory,
+    BootstrapSession, MatrixSpec, RunMode, ScenarioRunner, ScenarioSpec,
+    StubExecutionContextFactory,
 };
 
 use crate::config::BenchRunConfig;
@@ -24,17 +25,19 @@ use crate::scale;
 use crate::stats::MetricStats;
 use crate::tasks;
 
-fn dimensions_from_matrix(matrix: &MatrixSpec, hardware: &str, cfg: &BenchRunConfig) -> ReportDimensions {
+fn dimensions_from_matrix(
+    matrix: &MatrixSpec,
+    hardware: &str,
+    cfg: &BenchRunConfig,
+) -> ReportDimensions {
     let storage_topology = cfg
         .storage_topology
         .clone()
-        .or_else(|| {
-            match matrix.backend_name() {
-                "scylla" => Some("scylla-1".to_string()),
-                "redis" => Some("redis-1".to_string()),
-                "nats" => Some("nats-1".to_string()),
-                _ => None,
-            }
+        .or_else(|| match matrix.backend_name() {
+            "scylla" => Some("scylla-1".to_string()),
+            "redis" => Some("redis-1".to_string()),
+            "nats" => Some("nats-1".to_string()),
+            _ => None,
         });
     let bench_client_index = std::env::var("BOSON_BENCH_CLIENT_INDEX")
         .ok()
@@ -109,7 +112,7 @@ pub async fn run_experiment(
         }
     } else if plan.id == "bm-bi1" {
         let mut session = session_for(matrix.clone(), &bench_cfg);
-        tasks::register_for_plan(session.registry_mut(), &plan, &bench_cfg);
+        tasks::register_for_plan(session.registry_mut()?, &plan, &bench_cfg);
         session.install().await?;
         let boson = session.build_boson()?;
         match load::run_keyed_enqueue(&boson, 60).await {
@@ -118,7 +121,7 @@ pub async fn run_experiment(
         }
     } else if plan.id == "bm-bf2" {
         let mut session = session_for(matrix.clone(), &bench_cfg);
-        tasks::register_for_plan(session.registry_mut(), &plan, &bench_cfg);
+        tasks::register_for_plan(session.registry_mut()?, &plan, &bench_cfg);
         session.install().await?;
         let boson = Arc::new(session.build_boson()?);
         match scale::run_task_fanout(boson, &bench_cfg).await {
@@ -127,7 +130,7 @@ pub async fn run_experiment(
         }
     } else if plan.id.starts_with("bm-be") {
         let mut session = capacity_session(matrix.clone(), &bench_cfg);
-        tasks::register_for_plan(session.registry_mut(), &plan, &bench_cfg);
+        tasks::register_for_plan(session.registry_mut()?, &plan, &bench_cfg);
         session.install().await?;
         let (boson, _) = session.build_boson_manual()?;
         match enqueue::run_enqueue_capacity(Arc::new(boson), &bench_cfg).await {
@@ -136,9 +139,11 @@ pub async fn run_experiment(
         }
     } else if plan.id == "bm-bd1" {
         let mut session = capacity_session(matrix.clone(), &bench_cfg);
-        tasks::register_for_plan(session.registry_mut(), &plan, &bench_cfg);
+        tasks::register_for_plan(session.registry_mut()?, &plan, &bench_cfg);
         session.install().await?;
-        let backend = session.backend().ok_or_else(|| anyhow::anyhow!("no backend"))?;
+        let backend = session
+            .backend()
+            .ok_or_else(|| anyhow::anyhow!("no backend"))?;
         let registry = session.registry();
         let identity: Arc<dyn ExecutionContextFactory> = Arc::new(StubExecutionContextFactory);
         let (boson, _) = session.build_boson_manual()?;
@@ -157,9 +162,11 @@ pub async fn run_experiment(
         }
     } else if plan.id == "bm-bd2" {
         let mut session = capacity_session(matrix.clone(), &bench_cfg);
-        tasks::register_for_plan(session.registry_mut(), &plan, &bench_cfg);
+        tasks::register_for_plan(session.registry_mut()?, &plan, &bench_cfg);
         session.install().await?;
-        let backend = session.backend().ok_or_else(|| anyhow::anyhow!("no backend"))?;
+        let backend = session
+            .backend()
+            .ok_or_else(|| anyhow::anyhow!("no backend"))?;
         let registry = session.registry();
         let identity: Arc<dyn ExecutionContextFactory> = Arc::new(StubExecutionContextFactory);
         match drain::run_background_drain(
@@ -177,7 +184,7 @@ pub async fn run_experiment(
         }
     } else if plan.id.starts_with("bm-bl") {
         let mut session = session_for(matrix.clone(), &bench_cfg);
-        tasks::register_for_plan(session.registry_mut(), &plan, &bench_cfg);
+        tasks::register_for_plan(session.registry_mut()?, &plan, &bench_cfg);
         session.install().await?;
         let boson = session.build_boson()?;
         match load::run_load(&boson, &plan.id).await {
@@ -186,7 +193,7 @@ pub async fn run_experiment(
         }
     } else if plan.id.starts_with("bm-bm") || plan.id.starts_with("bm-bp") {
         let mut session = session_for(matrix.clone(), &bench_cfg);
-        tasks::register_for_plan(session.registry_mut(), &plan, &bench_cfg);
+        tasks::register_for_plan(session.registry_mut()?, &plan, &bench_cfg);
         session.install().await?;
         let boson = Arc::new(session.build_boson()?);
         match scale::run_scale(boson, &bench_cfg).await {
@@ -195,14 +202,27 @@ pub async fn run_experiment(
         }
     } else {
         let mut session = session_for(matrix.clone(), &bench_cfg);
-        tasks::register_for_plan(session.registry_mut(), &plan, &bench_cfg);
+        tasks::register_for_plan(session.registry_mut()?, &plan, &bench_cfg);
         session.install().await?;
 
-        if warmup > 0 && matches!(
-            plan.id.as_str(),
-            "bm-b0" | "bm-b1" | "bm-b2" | "bm-b3" | "bm-b5" | "bm-b6" | "bm-b7" | "bm-b8"
-                | "bm-b11" | "bm-b12" | "bm-b13" | "bm-b14" | "bm-b17"
-        ) {
+        if warmup > 0
+            && matches!(
+                plan.id.as_str(),
+                "bm-b0"
+                    | "bm-b1"
+                    | "bm-b2"
+                    | "bm-b3"
+                    | "bm-b5"
+                    | "bm-b6"
+                    | "bm-b7"
+                    | "bm-b8"
+                    | "bm-b11"
+                    | "bm-b12"
+                    | "bm-b13"
+                    | "bm-b14"
+                    | "bm-b17"
+            )
+        {
             let warm = ScenarioSpec::enqueue_only("noop", warmup as usize);
             ScenarioRunner::new(&session)
                 .run(&warm, RunMode::Benchmark)
@@ -228,17 +248,12 @@ pub async fn run_experiment(
         let metrics = ReportMetrics {
             enqueue_ms: (!enqueue_samples.is_empty())
                 .then(|| MetricStats::summarize(enqueue_samples)),
-            drain_ms: (!drain_samples.is_empty())
-                .then(|| MetricStats::summarize(drain_samples)),
+            drain_ms: (!drain_samples.is_empty()).then(|| MetricStats::summarize(drain_samples)),
             admin_read_ms: (!admin_samples.is_empty())
                 .then(|| MetricStats::summarize(admin_samples)),
             ..Default::default()
         };
-        (
-            metrics,
-            Some(result.scenario_id),
-            result.error,
-        )
+        (metrics, Some(result.scenario_id), result.error)
     };
 
     if let Some(s) = sampler.as_mut() {
@@ -252,7 +267,8 @@ pub async fn run_experiment(
 
     let nats_pipeline = if dimensions.backend == "nats" {
         Some(report::NatsPipelineDimensions {
-            enqueue_mode: std::env::var("BOSON_NATS_ENQUEUE_MODE").unwrap_or_else(|_| "dual".into()),
+            enqueue_mode: std::env::var("BOSON_NATS_ENQUEUE_MODE")
+                .unwrap_or_else(|_| "dual".into()),
             sync_ack: std::env::var("BOSON_NATS_SYNC_ACK").unwrap_or_else(|_| "1".into()),
             max_inflight: std::env::var("BOSON_NATS_MAX_INFLIGHT").unwrap_or_else(|_| "256".into()),
         })

@@ -45,7 +45,11 @@ struct Metrics {
 }
 
 /// Load scaling curve from BM-BM4 reports.
-pub fn load_scaling_curve(reports_dir: &Path, hardware: &str, backend: &str) -> Result<ScalingCurve> {
+pub fn load_scaling_curve(
+    reports_dir: &Path,
+    hardware: &str,
+    backend: &str,
+) -> Result<ScalingCurve> {
     let mut points = Vec::new();
     if reports_dir.exists() {
         for entry in std::fs::read_dir(reports_dir)? {

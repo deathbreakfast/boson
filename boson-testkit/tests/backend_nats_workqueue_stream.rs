@@ -1,5 +1,12 @@
 //! `WorkQueue` contract tests — stream-first enqueue mode.
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::print_stdout,
+    clippy::print_stderr
+)] // Integration-test helpers are not covered by clippy.toml allow-*-in-tests.
+
 use std::sync::Arc;
 
 use boson_backend_nats::{keys, EnqueueMode, NatsEnqueueConfig, NatsWorkQueueBackend};

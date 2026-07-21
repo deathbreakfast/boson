@@ -143,11 +143,7 @@ impl RedisQueueBackend {
     ///
     /// Returns an error when the connection cannot be established.
     pub async fn connect(config: RedisQueueConfig) -> Result<Self> {
-        Self::connect_with_keyspace(
-            &config.url,
-            keys::Keyspace::new(config.key_prefix),
-        )
-        .await
+        Self::connect_with_keyspace(&config.url, keys::Keyspace::new(config.key_prefix)).await
     }
 
     /// Connect to Redis at `url` (e.g. `redis://127.0.0.1:6379`).
@@ -181,8 +177,7 @@ impl RedisQueueBackend {
     /// Redis URL for tests (`BOSON_TEST_REDIS_URL` or local default).
     #[must_use]
     pub fn test_url() -> String {
-        std::env::var("BOSON_TEST_REDIS_URL")
-            .unwrap_or_else(|_| "redis://127.0.0.1:6379".into())
+        std::env::var("BOSON_TEST_REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".into())
     }
 
     /// Flush Boson keys (test isolation). Uses `SCAN` + `DEL`.
@@ -218,13 +213,18 @@ impl RedisQueueBackend {
     async fn load_job(&self, job_id: &str) -> Result<Option<Job>> {
         let mut conn = self.conn.clone();
         let raw: Option<String> = conn.get(self.keys.job(job_id)).await.map_err(map_err)?;
-        raw.map_or(Ok(None), |s| serde_json::from_str(&s).map_err(map_err).map(Some))
+        raw.map_or(Ok(None), |s| {
+            serde_json::from_str(&s).map_err(map_err).map(Some)
+        })
     }
 
     async fn save_job(&self, job: &Job) -> Result<()> {
         let mut conn = self.conn.clone();
         let json = serde_json::to_string(job).map_err(map_err)?;
-        let _: () = conn.set(self.keys.job(&job.job_id), json).await.map_err(map_err)?;
+        let _: () = conn
+            .set(self.keys.job(&job.job_id), json)
+            .await
+            .map_err(map_err)?;
         Ok(())
     }
 
@@ -263,13 +263,18 @@ impl RedisQueueBackend {
     async fn load_run(&self, run_id: &str) -> Result<Option<Run>> {
         let mut conn = self.conn.clone();
         let raw: Option<String> = conn.get(self.keys.run(run_id)).await.map_err(map_err)?;
-        raw.map_or(Ok(None), |s| serde_json::from_str(&s).map_err(map_err).map(Some))
+        raw.map_or(Ok(None), |s| {
+            serde_json::from_str(&s).map_err(map_err).map(Some)
+        })
     }
 
     async fn save_run(&self, run: &Run) -> Result<()> {
         let mut conn = self.conn.clone();
         let json = serde_json::to_string(run).map_err(map_err)?;
-        let _: () = conn.set(self.keys.run(&run.run_id), json).await.map_err(map_err)?;
+        let _: () = conn
+            .set(self.keys.run(&run.run_id), json)
+            .await
+            .map_err(map_err)?;
         Ok(())
     }
 }
@@ -305,7 +310,7 @@ return updated
 "#;
 
 fn map_err(e: impl std::fmt::Display) -> BosonError {
-    BosonError::Backend(e.to_string())
+    BosonError::Backend(format!("redis backend: {e}"))
 }
 
 #[async_trait]
@@ -346,8 +351,7 @@ impl QueueBackend for RedisQueueBackend {
                             conn.get(&idem_key).await.map_err(map_err)?;
                         if let Some(ref prior_id) = existing_id {
                             if let Some(prior) = self.load_job(prior_id).await? {
-                                if matches!(prior.status, JobStatus::Queued | JobStatus::Running)
-                                {
+                                if matches!(prior.status, JobStatus::Queued | JobStatus::Running) {
                                     return Ok((
                                         prior_id.clone(),
                                         JobEnqueueDisposition::ReusedIdempotent,
@@ -478,7 +482,10 @@ impl QueueBackend for RedisQueueBackend {
 
     async fn distinct_pools_queued(&self) -> Result<Vec<String>> {
         let mut conn = self.conn.clone();
-        let pools: Vec<String> = conn.smembers(self.keys.pools_set()).await.map_err(map_err)?;
+        let pools: Vec<String> = conn
+            .smembers(self.keys.pools_set())
+            .await
+            .map_err(map_err)?;
         let mut out = pools;
         out.sort();
         Ok(out)
@@ -488,7 +495,11 @@ impl QueueBackend for RedisQueueBackend {
         let limit = limit.max(1);
         let mut conn = self.conn.clone();
         let ids: Vec<String> = conn
-            .zrange(self.keys.ready(pool), 0, isize::try_from(limit.saturating_sub(1)).unwrap_or(0))
+            .zrange(
+                self.keys.ready(pool),
+                0,
+                isize::try_from(limit.saturating_sub(1)).unwrap_or(0),
+            )
             .await
             .map_err(map_err)?;
         if ids.is_empty() {
@@ -509,7 +520,10 @@ impl QueueBackend for RedisQueueBackend {
                     }
                 }
             } else {
-                let _: () = conn.zrem(self.keys.ready(pool), id).await.map_err(map_err)?;
+                let _: () = conn
+                    .zrem(self.keys.ready(pool), id)
+                    .await
+                    .map_err(map_err)?;
             }
         }
         Ok(jobs)
@@ -533,11 +547,7 @@ impl QueueBackend for RedisQueueBackend {
         Ok(u64::try_from(jobs.len()).unwrap_or(u64::MAX))
     }
 
-    async fn count_jobs_for_task(
-        &self,
-        task_name: &str,
-        status: Option<JobStatus>,
-    ) -> Result<u64> {
+    async fn count_jobs_for_task(&self, task_name: &str, status: Option<JobStatus>) -> Result<u64> {
         let jobs = self.list_jobs(status, 0, usize::MAX).await?;
         let count = jobs.iter().filter(|j| j.task_name == task_name).count();
         Ok(u64::try_from(count).unwrap_or(u64::MAX))
@@ -560,7 +570,10 @@ impl QueueBackend for RedisQueueBackend {
             return Ok(None);
         }
         let mut conn = self.conn.clone();
-        let job_id: Option<String> = conn.get(self.keys.idempotency(key)).await.map_err(map_err)?;
+        let job_id: Option<String> = conn
+            .get(self.keys.idempotency(key))
+            .await
+            .map_err(map_err)?;
         let Some(job_id) = job_id else {
             return Ok(None);
         };
@@ -666,8 +679,13 @@ impl QueueBackend for RedisQueueBackend {
 
     async fn get_task_config(&self, task_name: &str) -> Result<Option<TaskConfig>> {
         let mut conn = self.conn.clone();
-        let raw: Option<String> = conn.get(self.keys.task_config(task_name)).await.map_err(map_err)?;
-        raw.map_or(Ok(None), |s| serde_json::from_str(&s).map_err(map_err).map(Some))
+        let raw: Option<String> = conn
+            .get(self.keys.task_config(task_name))
+            .await
+            .map_err(map_err)?;
+        raw.map_or(Ok(None), |s| {
+            serde_json::from_str(&s).map_err(map_err).map(Some)
+        })
     }
 
     async fn upsert_task_config(&self, config: &TaskConfig) -> Result<()> {
@@ -687,7 +705,10 @@ impl QueueBackend for RedisQueueBackend {
         ttl_secs: i64,
     ) -> Result<Option<String>> {
         let mut conn = self.conn.clone();
-        let existing: Option<String> = conn.get(self.keys.lease_by_job(job_id)).await.map_err(map_err)?;
+        let existing: Option<String> = conn
+            .get(self.keys.lease_by_job(job_id))
+            .await
+            .map_err(map_err)?;
         if let Some(ref lid) = existing {
             let raw: Option<String> = conn.get(self.keys.lease(lid)).await.map_err(map_err)?;
             if let Some(s) = raw {
@@ -713,21 +734,24 @@ impl QueueBackend for RedisQueueBackend {
         if !inserted {
             return Ok(None);
         }
-        let _: () = conn.set(self.keys.lease(&lease_id), json).await.map_err(map_err)?;
+        let _: () = conn
+            .set(self.keys.lease(&lease_id), json)
+            .await
+            .map_err(map_err)?;
         Ok(Some(lease_id))
     }
 
     async fn extend_lease(&self, lease_id: &str, ttl_secs: i64) -> Result<()> {
-        let Some(mut row) = self
-            .load_lease_row(lease_id)
-            .await?
-        else {
+        let Some(mut row) = self.load_lease_row(lease_id).await? else {
             return Ok(());
         };
         row.expires_at = Utc::now() + chrono::Duration::seconds(ttl_secs);
         let mut conn = self.conn.clone();
         let json = serde_json::to_string(&row).map_err(map_err)?;
-        let _: () = conn.set(self.keys.lease(lease_id), json).await.map_err(map_err)?;
+        let _: () = conn
+            .set(self.keys.lease(lease_id), json)
+            .await
+            .map_err(map_err)?;
         Ok(())
     }
 
@@ -786,7 +810,9 @@ impl RedisQueueBackend {
     async fn load_lease_row(&self, lease_id: &str) -> Result<Option<LeaseRow>> {
         let mut conn = self.conn.clone();
         let raw: Option<String> = conn.get(self.keys.lease(lease_id)).await.map_err(map_err)?;
-        raw.map_or(Ok(None), |s| serde_json::from_str(&s).map_err(map_err).map(Some))
+        raw.map_or(Ok(None), |s| {
+            serde_json::from_str(&s).map_err(map_err).map(Some)
+        })
     }
 }
 

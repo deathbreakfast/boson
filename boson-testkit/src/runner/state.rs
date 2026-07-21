@@ -13,12 +13,16 @@ pub struct RunState {
 }
 
 impl RunState {
-    pub(crate) const fn boson(&self) -> &Boson {
-        self.boson.as_ref().expect("boson runtime not initialized")
+    pub(crate) fn boson(&self) -> Result<&Boson> {
+        self.boson
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("boson runtime not initialized"))
     }
 
-    pub(crate) const fn manual(&self) -> &ManualWorker {
-        self.manual.as_ref().expect("manual worker not initialized")
+    pub(crate) fn manual(&self) -> Result<&ManualWorker> {
+        self.manual
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("manual worker not initialized"))
     }
 }
 

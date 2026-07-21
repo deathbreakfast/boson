@@ -11,6 +11,8 @@
 //! See the crate docs:
 //! [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
 
+#![allow(clippy::print_stdout)] // Examples print status to the console.
+
 #[path = "shared/remote_ping.rs"]
 mod remote_shared_task;
 

@@ -3,7 +3,7 @@
 use boson_core::BosonError;
 
 pub fn map_err(err: impl std::fmt::Display) -> BosonError {
-    BosonError::Backend(err.to_string())
+    BosonError::Backend(format!("scylla backend: {err}"))
 }
 
 pub fn into_result<T>(

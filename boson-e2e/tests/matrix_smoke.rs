@@ -1,5 +1,12 @@
 //! Matrix smoke — bootstrap + scenario wiring.
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::print_stdout,
+    clippy::print_stderr
+)] // Integration-test helpers are not covered by clippy.toml allow-*-in-tests.
+
 use boson_testkit::{
     matrix::{matrix_isolated_lab, smoke_storage_backends, BackendAdapter},
     run_named_catalog_entry, BootstrapSession, ScenarioSpec,

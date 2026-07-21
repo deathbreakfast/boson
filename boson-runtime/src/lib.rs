@@ -12,8 +12,8 @@
 //! - [`Boson::enqueue`] — enqueue work for background execution
 //! - [`configure`] / [`default`] — process-wide default for macro `send_with` (once at boot)
 
-mod boson;
 mod bootstrap;
+mod boson;
 mod builder;
 mod global;
 mod registry;

@@ -54,11 +54,15 @@ CREATE TABLE IF NOT EXISTS boson_lease (
 pub async fn ensure_schema(backend: &SqlQueueBackend) -> Result<()> {
     let lock = backend.dialect() == SqlDialect::Postgres;
     if lock {
-        backend.run_ddl("SELECT pg_advisory_lock(872349012)").await?;
+        backend
+            .run_ddl("SELECT pg_advisory_lock(872349012)")
+            .await?;
     }
     let result = ensure_schema_tables(backend).await;
     if lock {
-        backend.run_ddl("SELECT pg_advisory_unlock(872349012)").await?;
+        backend
+            .run_ddl("SELECT pg_advisory_unlock(872349012)")
+            .await?;
     }
     result
 }

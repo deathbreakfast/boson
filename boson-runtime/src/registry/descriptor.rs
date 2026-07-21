@@ -195,14 +195,26 @@ impl std::fmt::Debug for TaskDescriptor {
             .field("signature_hash", &self.signature_hash)
             .field("default_priority", &self.default_priority)
             .field("default_pool", &self.default_pool)
-            .field("default_retry_max_attempts", &self.default_retry_max_attempts)
-            .field("default_retry_base_delay_ms", &self.default_retry_base_delay_ms)
+            .field(
+                "default_retry_max_attempts",
+                &self.default_retry_max_attempts,
+            )
+            .field(
+                "default_retry_base_delay_ms",
+                &self.default_retry_base_delay_ms,
+            )
             .field(
                 "default_retry_backoff_multiplier",
                 &self.default_retry_backoff_multiplier,
             )
-            .field("default_retry_max_delay_ms", &self.default_retry_max_delay_ms)
-            .field("default_rate_max_in_flight", &self.default_rate_max_in_flight)
+            .field(
+                "default_retry_max_delay_ms",
+                &self.default_retry_max_delay_ms,
+            )
+            .field(
+                "default_rate_max_in_flight",
+                &self.default_rate_max_in_flight,
+            )
             .field(
                 "default_rate_max_enqueue_per_second",
                 &self.default_rate_max_enqueue_per_second,

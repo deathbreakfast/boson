@@ -36,7 +36,7 @@ pub fn parse_job_status(s: &str) -> boson_core::Result<JobStatus> {
         "failed" => Ok(JobStatus::Failed),
         "canceled" => Ok(JobStatus::Canceled),
         other => Err(boson_core::BosonError::Backend(format!(
-            "unknown job status: {other}"
+            "sql backend: unknown job status: {other}"
         ))),
     }
 }
@@ -61,7 +61,7 @@ pub fn parse_run_status(s: &str) -> boson_core::Result<RunStatus> {
         "canceled" => Ok(RunStatus::Canceled),
         "timeout" => Ok(RunStatus::Timeout),
         other => Err(boson_core::BosonError::Backend(format!(
-            "unknown run status: {other}"
+            "sql backend: unknown run status: {other}"
         ))),
     }
 }
@@ -91,7 +91,8 @@ where
         idempotency_key: row.try_get("idempotency_key").map_err(|e| map_err(&e))?,
         created_at: row.try_get("created_at").map_err(|e| map_err(&e))?,
         signature_hash: u64::try_from(
-            row.try_get::<i64, _>("signature_hash").map_err(|e| map_err(&e))?,
+            row.try_get::<i64, _>("signature_hash")
+                .map_err(|e| map_err(&e))?,
         )
         .unwrap_or(0),
         attempt: row.try_get("attempt").map_err(|e| map_err(&e))?,
@@ -135,7 +136,9 @@ where
     DateTime<Utc>: sqlx::Decode<'r, R::Database> + sqlx::Type<R::Database>,
 {
     let retry_json: String = row.try_get("retry_policy_json").map_err(|e| map_err(&e))?;
-    let rate_json: String = row.try_get("rate_limit_policy_json").map_err(|e| map_err(&e))?;
+    let rate_json: String = row
+        .try_get("rate_limit_policy_json")
+        .map_err(|e| map_err(&e))?;
     let stored: StoredRateLimit = serde_json::from_str(&rate_json)?;
     Ok(TaskConfig {
         task_name: row.try_get("task_name").map_err(|e| map_err(&e))?,

@@ -18,7 +18,10 @@ macro_rules! delegate_queue_backend {
                 self.$inner.enqueue_with_policies(job, task_config).await
             }
 
-            async fn get_job(&self, job_id: &str) -> ::boson_core::Result<Option<::boson_core::Job>> {
+            async fn get_job(
+                &self,
+                job_id: &str,
+            ) -> ::boson_core::Result<Option<::boson_core::Job>> {
                 self.$inner.get_job(job_id).await
             }
 
@@ -91,7 +94,10 @@ macro_rules! delegate_queue_backend {
                 self.$inner.upsert_run(run).await
             }
 
-            async fn get_run(&self, run_id: &str) -> ::boson_core::Result<Option<::boson_core::Run>> {
+            async fn get_run(
+                &self,
+                run_id: &str,
+            ) -> ::boson_core::Result<Option<::boson_core::Run>> {
                 self.$inner.get_run(run_id).await
             }
 
@@ -159,7 +165,11 @@ macro_rules! delegate_queue_backend {
                     .await
             }
 
-            async fn extend_lease(&self, lease_id: &str, ttl_secs: i64) -> ::boson_core::Result<()> {
+            async fn extend_lease(
+                &self,
+                lease_id: &str,
+                ttl_secs: i64,
+            ) -> ::boson_core::Result<()> {
                 self.$inner.extend_lease(lease_id, ttl_secs).await
             }
 
@@ -167,9 +177,7 @@ macro_rules! delegate_queue_backend {
                 self.$inner.release_lease(lease_id).await
             }
 
-            async fn expired_lease_job_pairs(
-                &self,
-            ) -> ::boson_core::Result<Vec<(String, String)>> {
+            async fn expired_lease_job_pairs(&self) -> ::boson_core::Result<Vec<(String, String)>> {
                 self.$inner.expired_lease_job_pairs().await
             }
         }

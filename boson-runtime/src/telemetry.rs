@@ -7,10 +7,7 @@ use serde_json::json;
 pub fn record_task_enqueued(task_name: &str, runtime_label: &str) {
     ops_log().record_counter(
         "boson_tasks_enqueued",
-        &[
-            ("task_name", task_name),
-            ("runtime", runtime_label),
-        ],
+        &[("task_name", task_name), ("runtime", runtime_label)],
         1.0,
     );
 }
@@ -31,11 +28,7 @@ pub fn record_task_started(task_name: &str, job_id: &str, run_id: &str, runtime_
 
 /// Record successful task completion.
 pub fn record_task_completed(task_name: &str, job_id: &str, run_id: &str, duration_ms: i64) {
-    ops_log().record_counter(
-        "boson_tasks_completed",
-        &[("task_name", task_name)],
-        1.0,
-    );
+    ops_log().record_counter("boson_tasks_completed", &[("task_name", task_name)], 1.0);
     ops_log().record_counter(
         "boson_task_duration_ms",
         &[("task_name", task_name)],
@@ -61,11 +54,7 @@ pub fn record_task_failed(
     message: &str,
     will_retry: bool,
 ) {
-    ops_log().record_counter(
-        "boson_tasks_failed",
-        &[("task_name", task_name)],
-        1.0,
-    );
+    ops_log().record_counter("boson_tasks_failed", &[("task_name", task_name)], 1.0);
     ops_log().log_event(
         "boson_handler_error",
         &json!({

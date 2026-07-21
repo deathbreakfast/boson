@@ -73,7 +73,7 @@
 mod bootstrap;
 
 use boson_backend_sql_common::SqlQueueBackend;
-use boson_core::Result;
+use boson_core::{BosonError, Result};
 use sqlx::PgPool;
 
 pub use bootstrap::{
@@ -157,23 +157,24 @@ impl PostgresQueueBackend {
 
     /// Underlying connection pool.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics if the inner pool is not `PostgreSQL` (internal invariant violation).
-    #[must_use]
-    pub fn pool(&self) -> &PgPool {
+    /// Returns [`BosonError::Internal`] if the inner pool is not `PostgreSQL`
+    /// (internal invariant violation).
+    pub fn pool(&self) -> Result<&PgPool> {
         match self.inner.pool() {
-            boson_backend_sql_common::SqlPool::Postgres(pool) => pool,
-            boson_backend_sql_common::SqlPool::Sqlite(_) => {
-                panic!("postgres backend has non-postgres pool")
-            }
+            boson_backend_sql_common::SqlPool::Postgres(pool) => Ok(pool),
+            boson_backend_sql_common::SqlPool::Sqlite(_) => Err(BosonError::Internal(
+                "postgres backend has non-postgres pool".into(),
+            )),
         }
     }
 }
 
 impl std::fmt::Debug for PostgresQueueBackend {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("PostgresQueueBackend").finish_non_exhaustive()
+        f.debug_struct("PostgresQueueBackend")
+            .finish_non_exhaustive()
     }
 }
 

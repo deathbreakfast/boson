@@ -12,6 +12,14 @@
 //! Used by `boson-e2e` for correctness runs and `boson-bench` for performance campaigns.
 //! See `boson-bench/EXPERIMENTS.md` for benchmark matrix details.
 
+// Test harness crate: contract suites and scenario runners intentionally panic on setup failure.
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::print_stdout,
+    clippy::print_stderr
+)]
+
 pub mod backend_contract;
 pub mod bootstrap;
 pub mod fixtures;

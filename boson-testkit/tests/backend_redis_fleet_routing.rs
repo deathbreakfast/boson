@@ -1,5 +1,12 @@
 //! Redis broker fleet routing contract tests (requires 2 Redis URLs).
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::print_stdout,
+    clippy::print_stderr
+)] // Integration-test helpers are not covered by clippy.toml allow-*-in-tests.
+
 use std::sync::Arc;
 
 use boson_backend_redis::{connect_fleet_from_env, keys, RedisQueueBackend};

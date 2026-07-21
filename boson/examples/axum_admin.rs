@@ -4,16 +4,18 @@
 //!
 //! Then: `curl -X POST http://127.0.0.1:3000/api/boson/jobs/enqueue -H 'Content-Type: application/json' -d '{"task_name":"echo"}'`
 
+#![allow(clippy::print_stdout)] // Examples print status to the console.
+
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
 use axum::{extract::FromRef, Router};
+use boson::prelude::Result as BosonResult;
 use boson::{
     boson_router, Boson, BosonState, ExecutionContext, JsonExecutionContextFactory,
-    MemQueueBackend, NEST_PATH, TaskDescriptor, TaskRegistry,
+    MemQueueBackend, TaskDescriptor, TaskRegistry, NEST_PATH,
 };
-use boson::prelude::Result as BosonResult;
 
 fn echo_task(
     _ctx: Box<dyn ExecutionContext>,
@@ -36,8 +38,7 @@ impl FromRef<AppState> for BosonState {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let mut registry = TaskRegistry::new();
-    let desc: &'static TaskDescriptor =
-        Box::leak(Box::new(TaskDescriptor::new("echo", echo_task)));
+    let desc: &'static TaskDescriptor = Box::leak(Box::new(TaskDescriptor::new("echo", echo_task)));
     registry.register(desc);
 
     let boson = Arc::new(

@@ -50,7 +50,9 @@ pub fn be4_shard_curve(
 ) -> Result<()> {
     let curve = load_be4_shard_curve(reports_dir, hardware, backend)?;
     let out_path = out.unwrap_or_else(|| {
-        reports_dir.join(format!("scaling-curve-be4-shards-{hardware}-{backend}.json"))
+        reports_dir.join(format!(
+            "scaling-curve-be4-shards-{hardware}-{backend}.json"
+        ))
     });
     if let Some(parent) = out_path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -93,10 +95,7 @@ pub fn load_be4_shard_curve(
             if !fname.starts_with("bm-be4-k") {
                 continue;
             }
-            if v.pointer("/dimensions/hardware")
-                .and_then(Value::as_str)
-                != Some(hardware)
-            {
+            if v.pointer("/dimensions/hardware").and_then(Value::as_str) != Some(hardware) {
                 continue;
             }
             if v.pointer("/dimensions/backend").and_then(Value::as_str) != Some(backend) {
@@ -135,8 +134,7 @@ pub fn load_be4_shard_curve(
                 per_stream_peak = Some(per_stream_peak.map_or(rate, |prev| prev.max(rate)));
             }
 
-            best
-                .entry(pool_count)
+            best.entry(pool_count)
                 .and_modify(|(best_rate, best_c, best_layout, best_mode, best_file)| {
                     if rate > *best_rate {
                         *best_rate = rate;
@@ -146,13 +144,15 @@ pub fn load_be4_shard_curve(
                         best_file.clone_from(&fname);
                     }
                 })
-                .or_insert_with(|| (
-                    rate,
-                    client_count,
-                    layout.clone().unwrap_or_default(),
-                    enqueue_mode,
-                    fname,
-                ));
+                .or_insert_with(|| {
+                    (
+                        rate,
+                        client_count,
+                        layout.clone().unwrap_or_default(),
+                        enqueue_mode,
+                        fname,
+                    )
+                });
         }
     }
 
@@ -166,25 +166,27 @@ pub fn load_be4_shard_curve(
     let k1_peak = per_stream_peak.or_else(|| best.get(&1).map(|(r, _, _, _, _)| *r));
     let mut points: Vec<ShardPoint> = best
         .into_iter()
-        .map(|(pool_count, (peak, client_count, layout, enqueue_mode, file))| {
-            let shard_efficiency = k1_peak.filter(|p| *p > 0.0).map(|p| {
-                let ideal = p * f64::from(pool_count);
-                if ideal > 0.0 {
-                    peak / ideal
-                } else {
-                    0.0
+        .map(
+            |(pool_count, (peak, client_count, layout, enqueue_mode, file))| {
+                let shard_efficiency = k1_peak.filter(|p| *p > 0.0).map(|p| {
+                    let ideal = p * f64::from(pool_count);
+                    if ideal > 0.0 {
+                        peak / ideal
+                    } else {
+                        0.0
+                    }
+                });
+                ShardPoint {
+                    pool_count,
+                    peak_ops_per_sec: peak,
+                    client_count,
+                    pool_layout: Some(layout),
+                    enqueue_mode,
+                    shard_efficiency,
+                    report_file: file,
                 }
-            });
-            ShardPoint {
-                pool_count,
-                peak_ops_per_sec: peak,
-                client_count,
-                pool_layout: Some(layout),
-                enqueue_mode,
-                shard_efficiency,
-                report_file: file,
-            }
-        })
+            },
+        )
         .collect();
     points.sort_by_key(|p| p.pool_count);
 

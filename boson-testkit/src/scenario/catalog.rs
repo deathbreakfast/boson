@@ -76,7 +76,9 @@ pub enum RegisterKind {
 
 impl RegisterKind {
     fn apply(self, session: &mut BootstrapSession) {
-        let registry = session.registry_mut();
+        let registry = session
+            .registry_mut()
+            .expect("unique registry before install");
         match self {
             Self::Noop => register_noop_task(registry, "noop"),
             Self::Counting => {

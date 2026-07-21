@@ -26,7 +26,11 @@ struct ReportMetricsFile {
 }
 
 /// Load projection inputs from matching reports in a directory.
-pub fn load_from_dir(reports_dir: &Path, hardware: &str, backend: &str) -> Result<FleetProjectionInputs> {
+pub fn load_from_dir(
+    reports_dir: &Path,
+    hardware: &str,
+    backend: &str,
+) -> Result<FleetProjectionInputs> {
     let mut inputs = FleetProjectionInputs {
         hardware: hardware.into(),
         backend: backend.into(),
