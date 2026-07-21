@@ -2,21 +2,21 @@ use std::time::Instant;
 
 use anyhow::Result;
 
-use super::super::{RunMode, StepTiming};
 use super::super::state::RunState;
+use super::super::{RunMode, StepTiming};
 
 /// Cancel a previously enqueued job by index (`CancelJob` step).
 pub async fn run_cancel_job(state: &RunState, job_index: usize) -> Result<Option<String>> {
     let Some(job_id) = state.job_ids.get(job_index) else {
         return Ok(Some(format!("job_index {job_index} out of range")));
     };
-    state.boson().cancel_job(job_id).await?;
+    state.boson()?.cancel_job(job_id).await?;
     Ok(None)
 }
 
 /// Cancel a non-existent job id and expect [`BosonError::JobNotFound`].
 pub async fn run_cancel_missing_job(state: &RunState) -> Result<Option<String>> {
-    match state.boson().cancel_job("missing-job-id-for-test").await {
+    match state.boson()?.cancel_job("missing-job-id-for-test").await {
         Err(boson_core::BosonError::JobNotFound(_)) => Ok(None),
         Err(e) => Ok(Some(format!(
             "CancelMissingJob: expected JobNotFound, got {e}"
@@ -37,7 +37,7 @@ pub async fn run_drain(
 ) -> Result<Option<String>> {
     let start = Instant::now();
     for _ in 0..max_steps {
-        if !state.manual().try_run_next().await {
+        if !state.manual()?.try_run_next().await {
             break;
         }
     }

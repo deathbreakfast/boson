@@ -5,6 +5,13 @@
 //!
 //! Requires `BOSON_TEST_SCYLLA_CONTACT_POINTS` (CI service or cloud — not local multi-node Docker).
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::print_stdout,
+    clippy::print_stderr
+)] // Integration-test helpers are not covered by clippy.toml allow-*-in-tests.
+
 use boson_testkit::{correctness_catalog, run_named_catalog_entry, BackendAdapter};
 
 #[tokio::test(flavor = "multi_thread")]

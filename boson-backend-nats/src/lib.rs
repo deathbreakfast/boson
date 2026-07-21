@@ -89,8 +89,8 @@ pub use workqueue::{connect_auto, NatsWorkQueueBackend};
 
 use std::sync::Arc;
 
-use async_nats::jetstream::kv::Store;
 use async_nats::jetstream;
+use async_nats::jetstream::kv::Store;
 use async_trait::async_trait;
 use boson_core::{
     BosonError, IdempotencyMode, Job, JobEnqueueDisposition, JobStatus, QueueBackend, Result, Run,
@@ -204,7 +204,10 @@ impl NatsQueueBackend {
     }
 
     async fn kv_put(&self, key: &str, value: &[u8]) -> Result<()> {
-        self.kv.put(key, value.to_vec().into()).await.map_err(map_err)?;
+        self.kv
+            .put(key, value.to_vec().into())
+            .await
+            .map_err(map_err)?;
         Ok(())
     }
 
@@ -284,7 +287,7 @@ impl NatsQueueBackend {
 }
 
 fn map_err(e: impl std::fmt::Display) -> BosonError {
-    BosonError::Backend(e.to_string())
+    BosonError::Backend(format!("nats backend: {e}"))
 }
 
 #[async_trait]
@@ -322,10 +325,7 @@ impl QueueBackend for NatsQueueBackend {
                         let prior_id = String::from_utf8_lossy(&bytes).into_owned();
                         if let Some(prior) = self.load_job(&prior_id).await? {
                             if matches!(prior.status, JobStatus::Queued | JobStatus::Running) {
-                                return Ok((
-                                    prior_id,
-                                    JobEnqueueDisposition::ReusedIdempotent,
-                                ));
+                                return Ok((prior_id, JobEnqueueDisposition::ReusedIdempotent));
                             }
                         }
                         self.kv_put(&idem_key, job.job_id.as_bytes()).await?;
@@ -457,11 +457,7 @@ impl QueueBackend for NatsQueueBackend {
         Ok(u64::try_from(jobs.len()).unwrap_or(u64::MAX))
     }
 
-    async fn count_jobs_for_task(
-        &self,
-        task_name: &str,
-        status: Option<JobStatus>,
-    ) -> Result<u64> {
+    async fn count_jobs_for_task(&self, task_name: &str, status: Option<JobStatus>) -> Result<u64> {
         let jobs = self.list_jobs(status, 0, usize::MAX).await?;
         let count = jobs.iter().filter(|j| j.task_name == task_name).count();
         Ok(u64::try_from(count).unwrap_or(u64::MAX))
@@ -597,7 +593,11 @@ impl QueueBackend for NatsQueueBackend {
                 }
             }
         }
-        if self.kv_get(&self.keys.lease_by_job(job_id)).await?.is_some() {
+        if self
+            .kv_get(&self.keys.lease_by_job(job_id))
+            .await?
+            .is_some()
+        {
             return Ok(None);
         }
         let lease_id = Uuid::new_v4().to_string();

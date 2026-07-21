@@ -4,10 +4,10 @@ use anyhow::Result;
 use boson_runtime::{Boson, TaskRegistry};
 use boson_telemetry::{install_ops_log, NoOpsLog};
 
+use super::super::state::RunState;
 use crate::fixtures::register_noop_task_with_signature_hash;
 use crate::identity::StubExecutionContextFactory;
 use crate::BootstrapSession;
-use super::super::state::RunState;
 
 /// Re-register a task with a new signature hash and rebuild the in-process worker.
 pub async fn run_reregister_task_signature(

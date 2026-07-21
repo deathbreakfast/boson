@@ -78,7 +78,7 @@ mod bootstrap;
 use std::path::Path;
 
 use boson_backend_sql_common::SqlQueueBackend;
-use boson_core::Result;
+use boson_core::{BosonError, Result};
 use sqlx::SqlitePool;
 
 pub use bootstrap::install_default_sqlite_backend;
@@ -151,16 +151,16 @@ impl SqliteQueueBackend {
 
     /// Underlying connection pool.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics if the inner pool is not `SQLite` (internal invariant violation).
-    #[must_use]
-    pub fn pool(&self) -> &SqlitePool {
+    /// Returns [`BosonError::Internal`] if the inner pool is not `SQLite`
+    /// (internal invariant violation).
+    pub fn pool(&self) -> Result<&SqlitePool> {
         match self.inner.pool() {
-            boson_backend_sql_common::SqlPool::Sqlite(pool) => pool,
-            boson_backend_sql_common::SqlPool::Postgres(_) => {
-                panic!("sqlite backend has non-sqlite pool")
-            }
+            boson_backend_sql_common::SqlPool::Sqlite(pool) => Ok(pool),
+            boson_backend_sql_common::SqlPool::Postgres(_) => Err(BosonError::Internal(
+                "sqlite backend has non-sqlite pool".into(),
+            )),
         }
     }
 }

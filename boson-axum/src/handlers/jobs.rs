@@ -127,7 +127,9 @@ pub async fn list_jobs(
     let status = q.status.as_deref().and_then(parse_job_status);
     let limit = q.limit.unwrap_or(100);
     match state.boson.list_jobs(status, 0, limit).await {
-        Ok(jobs) => Json(ApiResponse::ok(jobs.into_iter().map(JobResponse::from).collect())),
+        Ok(jobs) => Json(ApiResponse::ok(
+            jobs.into_iter().map(JobResponse::from).collect(),
+        )),
         Err(e) => Json(ApiResponse::err(e.to_string())),
     }
 }

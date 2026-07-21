@@ -130,13 +130,7 @@ impl Boson {
             .await
             .map_err(|e| {
                 if matches!(e, BosonError::RateLimited(_)) {
-                    crate::telemetry::record_task_failed(
-                        task_name,
-                        "",
-                        "",
-                        &e.to_string(),
-                        false,
-                    );
+                    crate::telemetry::record_task_failed(task_name, "", "", &e.to_string(), false);
                 }
                 e
             })?;

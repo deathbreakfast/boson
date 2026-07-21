@@ -3,7 +3,7 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use boson_core::{BosonError, Job, JobStatus, Result, RunStatus, TaskConfig, RetryPolicy};
+use boson_core::{BosonError, Job, JobStatus, Result, RetryPolicy, RunStatus, TaskConfig};
 use tokio::time::sleep;
 
 use crate::telemetry;
@@ -47,46 +47,46 @@ pub async fn finish_job_execution<H: RunLifecycleHost>(
             let err_msg = e.to_string();
             let config = host.load_task_config(&job.task_name).await.ok();
             let retry_policy = config.as_ref().map(|c| &c.retry_policy);
-            let should_retry = retry_policy
-                .is_some_and(|r| job.attempt.cast_unsigned() < r.max_attempts);
-            if should_retry {
-                let policy = retry_policy.unwrap();
-                let delay_ms = compute_retry_delay_ms(policy, job.attempt);
-                let _ = host
-                    .record_run_finish(
+            match retry_policy {
+                Some(policy) if job.attempt.cast_unsigned() < policy.max_attempts => {
+                    let delay_ms = compute_retry_delay_ms(policy, job.attempt);
+                    let _ = host
+                        .record_run_finish(
+                            &run_id,
+                            RunStatus::Failed,
+                            Some(duration_ms),
+                            Some(err_msg.clone()),
+                        )
+                        .await;
+                    telemetry::record_task_failed(
+                        &job.task_name,
+                        &job.job_id,
                         &run_id,
-                        RunStatus::Failed,
-                        Some(duration_ms),
-                        Some(err_msg.clone()),
-                    )
-                    .await;
-                telemetry::record_task_failed(
-                    &job.task_name,
-                    &job.job_id,
-                    &run_id,
-                    &err_msg,
-                    true,
-                );
-                host.schedule_retry(job, delay_ms).await;
-            } else {
-                let _ = host
-                    .record_run_finish(
+                        &err_msg,
+                        true,
+                    );
+                    host.schedule_retry(job, delay_ms).await;
+                }
+                _ => {
+                    let _ = host
+                        .record_run_finish(
+                            &run_id,
+                            RunStatus::Failed,
+                            Some(duration_ms),
+                            Some(err_msg.clone()),
+                        )
+                        .await;
+                    telemetry::record_task_failed(
+                        &job.task_name,
+                        &job.job_id,
                         &run_id,
-                        RunStatus::Failed,
-                        Some(duration_ms),
-                        Some(err_msg.clone()),
-                    )
-                    .await;
-                telemetry::record_task_failed(
-                    &job.task_name,
-                    &job.job_id,
-                    &run_id,
-                    &err_msg,
-                    false,
-                );
-                let mut failed = job;
-                failed.status = JobStatus::Failed;
-                host.put_job(failed).await;
+                        &err_msg,
+                        false,
+                    );
+                    let mut failed = job;
+                    failed.status = JobStatus::Failed;
+                    host.put_job(failed).await;
+                }
             }
         }
     }
@@ -124,7 +124,6 @@ fn round_f64_to_u64_at_most(max: u64, value: f64) -> u64 {
 
 fn compute_retry_delay_ms(policy: &RetryPolicy, attempt: i32) -> u64 {
     let exponent = i32::max(attempt - 1, 0);
-    let scaled =
-        ms_u64_to_f64(policy.base_delay_ms) * policy.backoff_multiplier.powi(exponent);
+    let scaled = ms_u64_to_f64(policy.base_delay_ms) * policy.backoff_multiplier.powi(exponent);
     round_f64_to_u64_at_most(policy.max_delay_ms, scaled)
 }

@@ -34,7 +34,12 @@ fn task_config_with_rate_limit(task_name: &str, max_in_flight: u32, max_eps: u32
     config
 }
 
-fn sample_job(task_name: &str, pool: &str, priority: i32, idempotency_key: Option<&str>) -> boson_core::Job {
+fn sample_job(
+    task_name: &str,
+    pool: &str,
+    priority: i32,
+    idempotency_key: Option<&str>,
+) -> boson_core::Job {
     boson_core::Job::new(
         task_name,
         json!({"label": "test"}),
@@ -125,10 +130,7 @@ pub async fn max_in_flight_rate_limit(b: Arc<dyn QueueBackend>, _env: &BackendEn
     let job1 = sample_job("echo", "global", 1, None);
     enqueue(&*b, job1, &config).await;
     let job2 = sample_job("echo", "global", 1, None);
-    let err = b
-        .enqueue_with_policies(job2, &config)
-        .await
-        .unwrap_err();
+    let err = b.enqueue_with_policies(job2, &config).await.unwrap_err();
     assert!(matches!(err, boson_core::BosonError::RateLimited(_)));
 }
 
@@ -142,10 +144,7 @@ pub async fn max_enqueue_per_second(b: Arc<dyn QueueBackend>, _env: &BackendEnv)
     let job1 = sample_job("echo", "global", 1, None);
     enqueue(&*b, job1, &config).await;
     let job2 = sample_job("echo", "global", 1, None);
-    let err = b
-        .enqueue_with_policies(job2, &config)
-        .await
-        .unwrap_err();
+    let err = b.enqueue_with_policies(job2, &config).await.unwrap_err();
     assert!(matches!(err, boson_core::BosonError::RateLimited(_)));
 }
 
@@ -234,5 +233,7 @@ pub async fn expired_lease_pairs(b: Arc<dyn QueueBackend>, _env: &BackendEnv) {
         .unwrap()
         .expect("claim with negative ttl => already expired");
     let pairs = b.expired_lease_job_pairs().await.unwrap();
-    assert!(pairs.iter().any(|(lid, jid)| lid == &lease_id && jid == "job-3"));
+    assert!(pairs
+        .iter()
+        .any(|(lid, jid)| lid == &lease_id && jid == "job-3"));
 }

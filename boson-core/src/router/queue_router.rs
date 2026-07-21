@@ -38,13 +38,11 @@ impl QueueRouter {
 
     /// Register during initial setup (mutable bootstrap).
     ///
-    /// # Panics
-    ///
-    /// Panics if the internal lock is poisoned.
+    /// Recovers from a poisoned lock by taking the inner value.
     pub fn register(&mut self, name: &str, backend: Arc<dyn QueueBackend>) {
         self.backends
             .write()
-            .expect("queue router lock not poisoned")
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
             .insert(name.to_string(), backend);
     }
 
@@ -81,16 +79,16 @@ impl QueueRouter {
         let _ = GLOBAL_ROUTER.set(Arc::new(router));
     }
 
-    /// Global router (panics if [`Self::set_global`] was not called).
+    /// Global router installed via [`Self::set_global`].
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics when [`Self::set_global`] was not called before this function.
-    pub fn global() -> Arc<Self> {
+    /// Returns [`BosonError::Internal`] when [`Self::set_global`] was not called.
+    pub fn global() -> Result<Arc<Self>> {
         GLOBAL_ROUTER
             .get()
             .cloned()
-            .expect("QueueRouter::set_global was not called")
+            .ok_or_else(|| BosonError::Internal("QueueRouter::set_global was not called".into()))
     }
 
     /// Optional global router.

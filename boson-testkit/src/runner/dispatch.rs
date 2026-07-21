@@ -1,15 +1,16 @@
 use anyhow::Result;
 
-use super::support::ScenarioStep;
-use super::{RunMode, ScenarioRunner, StepTiming};
 use super::state::RunState;
 use super::steps::{
     run_admin_list_count, run_assert_different_job_id, run_assert_enqueue_error,
     run_assert_handler_hits, run_assert_job_count, run_assert_job_missing, run_assert_job_status,
-    run_assert_run_count, run_assert_run_outcome, run_assert_same_job_id, run_assert_task_run_stats,
-    run_cancel_job, run_cancel_missing_job, run_drain, run_enqueue, run_retry_backoff,
-    run_reregister_task_signature, run_simulate_lease_contention, run_upsert_task_config,
+    run_assert_run_count, run_assert_run_outcome, run_assert_same_job_id,
+    run_assert_task_run_stats, run_cancel_job, run_cancel_missing_job, run_drain, run_enqueue,
+    run_reregister_task_signature, run_retry_backoff, run_simulate_lease_contention,
+    run_upsert_task_config,
 };
+use super::support::ScenarioStep;
+use super::{RunMode, ScenarioRunner, StepTiming};
 
 impl ScenarioRunner<'_> {
     #[allow(clippy::too_many_lines)] // step dispatch match table
@@ -76,7 +77,12 @@ impl ScenarioRunner<'_> {
             ScenarioStep::AssertSameJobId {
                 first_index,
                 second_index,
-            } => Ok(run_assert_same_job_id(mode, state, *first_index, *second_index)),
+            } => Ok(run_assert_same_job_id(
+                mode,
+                state,
+                *first_index,
+                *second_index,
+            )),
             ScenarioStep::AssertDifferentJobId {
                 first_index,
                 second_index,
@@ -102,12 +108,13 @@ impl ScenarioRunner<'_> {
             ScenarioStep::SimulateLeaseContention { ttl_secs, .. } => {
                 run_simulate_lease_contention(state, *ttl_secs).await
             }
-            ScenarioStep::RetryBackoff { task, fail_attempts } => {
-                run_retry_backoff(mode, state, task, *fail_attempts).await
-            }
-            ScenarioStep::RemoteEnqueue { .. } => {
-                Ok(Some("RemoteEnqueue requires host HTTP coordinator wiring".into()))
-            }
+            ScenarioStep::RetryBackoff {
+                task,
+                fail_attempts,
+            } => run_retry_backoff(mode, state, task, *fail_attempts).await,
+            ScenarioStep::RemoteEnqueue { .. } => Ok(Some(
+                "RemoteEnqueue requires host HTTP coordinator wiring".into(),
+            )),
             ScenarioStep::AdminListCount { expected_count } => {
                 run_admin_list_count(step_index, mode, state, timings, *expected_count).await
             }
@@ -115,15 +122,11 @@ impl ScenarioRunner<'_> {
                 task,
                 runs_total,
                 success_count,
-            } => {
-                run_assert_task_run_stats(mode, state, task, *runs_total, *success_count).await
-            }
+            } => run_assert_task_run_stats(mode, state, task, *runs_total, *success_count).await,
             ScenarioStep::ReregisterTaskSignature {
                 task,
                 signature_hash,
-            } => {
-                run_reregister_task_signature(self.session, state, task, *signature_hash).await
-            }
+            } => run_reregister_task_signature(self.session, state, task, *signature_hash).await,
         }
     }
 }

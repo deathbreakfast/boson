@@ -29,7 +29,8 @@ See [`infra/native-aws/README.md`](../infra/native-aws/README.md).
 |-----|---------|
 | `check` | `cargo check -p uf-boson --features mem` |
 | `deny` | `cargo deny check` ([`deny.toml`](../deny.toml), [`docs/supply-chain.md`](supply-chain.md)) |
-| `clippy` | workspace clippy `-D warnings` |
+| `fmt` | `cargo fmt --all -- --check` |
+| `clippy` | workspace clippy `-D warnings` (restriction lints: no unwrap/expect/println in product code) |
 | crate jobs | testkit, mem, sqlite, sql-common, core, runtime/macros, telemetry, axum |
 | `e2e` | postgres + redis + nats services; backend contracts + `boson-e2e --include-ignored` |
 | `coverage` | non-blocking `cargo-llvm-cov` artifact |
@@ -48,6 +49,7 @@ export CARGO_BUILD_JOBS=1
 
 cargo check -p uf-boson --features mem
 cargo deny check
+cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 
 cargo test -p boson-testkit

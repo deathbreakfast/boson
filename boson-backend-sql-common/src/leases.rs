@@ -58,10 +58,7 @@ impl SqlQueueBackend {
             "SELECT lease_id, job_id FROM boson_lease WHERE expires_at <= ?",
         );
         sql_fetch_all_map!(self, &sql, |q| q.bind(now), |r| {
-            Ok((
-                r.get::<String, _>("lease_id"),
-                r.get::<String, _>("job_id"),
-            ))
+            Ok((r.get::<String, _>("lease_id"), r.get::<String, _>("job_id")))
         })
     }
 

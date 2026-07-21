@@ -1,16 +1,16 @@
 //! Fleet projection toward 10M jobs/s from collected report JSONs.
 
-mod be4_aggregate;
-mod be4_fleet_scaling;
-mod be4_multibench_scaling;
-mod be4_scaling;
-mod be4_shard_scaling;
 mod bd2_aggregate;
 mod bd2_common;
 mod bd2_fleet_scaling;
 mod bd2_multibench_scaling;
 mod bd2_shard_scaling;
 mod bd2_worker_scaling;
+mod be4_aggregate;
+mod be4_fleet_scaling;
+mod be4_multibench_scaling;
+mod be4_scaling;
+mod be4_shard_scaling;
 mod inputs;
 mod model;
 mod render;
@@ -33,9 +33,8 @@ pub fn project_fleet(
     let mut inputs = inputs::load_from_dir(reports_dir, hardware, backend)?;
     inputs.hourly_usd = hardware_hourly_usd(hardware);
     let projection = model::compute(&inputs);
-    let out_path = out.unwrap_or_else(|| {
-        reports_dir.join(format!("projection-{hardware}-{backend}.json"))
-    });
+    let out_path =
+        out.unwrap_or_else(|| reports_dir.join(format!("projection-{hardware}-{backend}.json")));
     inputs::write_projection(&out_path, &projection)?;
     println!("wrote {}", out_path.display());
     println!("{}", render::render_markdown(&projection));
@@ -50,9 +49,8 @@ pub fn project_scaling_curve(
     out: Option<PathBuf>,
 ) -> Result<()> {
     let curve = scaling::load_scaling_curve(reports_dir, hardware, backend)?;
-    let out_path = out.unwrap_or_else(|| {
-        reports_dir.join(format!("scaling-curve-{hardware}-{backend}.json"))
-    });
+    let out_path =
+        out.unwrap_or_else(|| reports_dir.join(format!("scaling-curve-{hardware}-{backend}.json")));
     if let Some(parent) = out_path.parent() {
         std::fs::create_dir_all(parent)?;
     }

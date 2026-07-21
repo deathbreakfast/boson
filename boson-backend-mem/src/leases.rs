@@ -3,14 +3,14 @@
 use chrono::{Duration, Utc};
 use uuid::Uuid;
 
-use crate::store::{LeaseRecord, Inner};
+use crate::store::{Inner, LeaseRecord};
 
 /// Remove expired leases for one job id.
 fn purge_expired_for_job(inner: &mut Inner, job_id: &str) {
     let now = Utc::now();
-    inner.leases.retain(|_, lease| {
-        !(lease.job_id == job_id && lease.expires_at <= now)
-    });
+    inner
+        .leases
+        .retain(|_, lease| !(lease.job_id == job_id && lease.expires_at <= now));
 }
 
 /// Returns true when an active lease exists for `job_id`.

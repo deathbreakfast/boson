@@ -1,13 +1,16 @@
 //! Dequeue capacity experiments BM-BD* (prefill then parallel drain).
 
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use anyhow::Result;
 use boson_core::{ExecutionContextFactory, JobStatus, QueueBackend};
 use boson_runtime::{spawn_worker, Boson, ManualWorker, TaskRegistry, WorkerSettings};
-use boson_testkit::{fixtures::{empty_params, noop_hit_count, system_actor}, BootstrapSession};
+use boson_testkit::{
+    fixtures::{empty_params, noop_hit_count, system_actor},
+    BootstrapSession,
+};
 use tokio::sync::Mutex;
 use tokio::task::JoinSet;
 
@@ -174,8 +177,14 @@ async fn drain_timeout_message(
     hits_start: usize,
 ) -> String {
     let completed = noop_hit_count().saturating_sub(hits_start);
-    let queued = backend.count_jobs(Some(JobStatus::Queued)).await.unwrap_or(u64::MAX);
-    let running = backend.count_jobs(Some(JobStatus::Running)).await.unwrap_or(u64::MAX);
+    let queued = backend
+        .count_jobs(Some(JobStatus::Queued))
+        .await
+        .unwrap_or(u64::MAX);
+    let running = backend
+        .count_jobs(Some(JobStatus::Running))
+        .await
+        .unwrap_or(u64::MAX);
     format!(
         "drain timeout: completed {completed} of {target} jobs (queued={queued} running={running})"
     )
@@ -189,7 +198,8 @@ async fn wait_for_drain(
 ) -> Result<()> {
     let deadline = Instant::now() + timeout;
     loop {
-        if u64::try_from(noop_hit_count().saturating_sub(hits_start)).unwrap_or(u64::MAX) >= target {
+        if u64::try_from(noop_hit_count().saturating_sub(hits_start)).unwrap_or(u64::MAX) >= target
+        {
             return Ok(());
         }
         if Instant::now() >= deadline {
@@ -253,7 +263,10 @@ pub async fn run_manual_drain(
                 let op_start = Instant::now();
                 if manual.try_run_next().await {
                     completed.fetch_add(1, Ordering::Relaxed);
-                    samples.lock().await.push(op_start.elapsed().as_secs_f64() * 1000.0);
+                    samples
+                        .lock()
+                        .await
+                        .push(op_start.elapsed().as_secs_f64() * 1000.0);
                 } else if noop_hit_count().saturating_sub(hits_start) as u64 >= target {
                     break;
                 } else {
@@ -274,7 +287,13 @@ pub async fn run_manual_drain(
 
     let elapsed = drain_start.elapsed().as_secs_f64();
     let drain_stats = MetricStats::summarize(samples.lock().await.clone());
-    Ok(drain_metrics(target, workers, elapsed, bench_cfg, Some(drain_stats)))
+    Ok(drain_metrics(
+        target,
+        workers,
+        elapsed,
+        bench_cfg,
+        Some(drain_stats),
+    ))
 }
 
 fn drain_metrics(

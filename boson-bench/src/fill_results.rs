@@ -38,7 +38,10 @@ pub fn fill_results(reports_dir: &Path) -> Result<()> {
             Err(_) => continue,
         };
         let status = if report.pass { "PASS" } else { "FAIL" };
-        println!("| {} | {} ({}) |", report.experiment_id, report.notes, status);
+        println!(
+            "| {} | {} ({}) |",
+            report.experiment_id, report.notes, status
+        );
     }
     println!("\nCopy rows into boson-bench/EXPERIMENTS.md experiment log.");
     Ok(())

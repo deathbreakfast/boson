@@ -2,15 +2,17 @@
 //!
 //! Run: `cargo run -p uf-boson --example idempotency_and_rate_limit --features mem`
 
+#![allow(clippy::print_stdout)] // Examples print status to the console.
+
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
+use boson::prelude::Result as BosonResult;
 use boson::{
     Boson, BosonError, ExecutionContext, JsonExecutionContextFactory, MemQueueBackend,
     RateLimitPolicy, TaskConfig, TaskDescriptor, TaskRegistry,
 };
-use boson::prelude::Result as BosonResult;
 
 fn noop_task(
     _ctx: Box<dyn ExecutionContext>,
@@ -86,7 +88,9 @@ async fn main() -> anyhow::Result<()> {
         )
         .await
     {
-        Err(BosonError::RateLimited(_)) => println!("rate limit: second enqueue rejected as expected"),
+        Err(BosonError::RateLimited(_)) => {
+            println!("rate limit: second enqueue rejected as expected")
+        }
         Ok(id) => anyhow::bail!("expected RateLimited, got job {id}"),
         Err(e) => anyhow::bail!("expected RateLimited, got {e}"),
     }

@@ -14,14 +14,17 @@ use super::OpsLog;
 pub struct ConsoleOpsLog;
 
 impl OpsLog for ConsoleOpsLog {
+    #[allow(clippy::print_stderr)] // Intentional console adapter for local/dev telemetry.
     fn record_counter(&self, name: &str, labels: &[(&str, &str)], value: f64) {
         eprintln!("[boson-telemetry] counter {name}={value} {labels:?}");
     }
 
+    #[allow(clippy::print_stderr)] // Intentional console adapter for local/dev telemetry.
     fn record_gauge(&self, name: &str, labels: &[(&str, &str)], value: f64) {
         eprintln!("[boson-telemetry] gauge {name}={value} {labels:?}");
     }
 
+    #[allow(clippy::print_stderr)] // Intentional console adapter for local/dev telemetry.
     fn log_event(&self, name: &str, payload: &serde_json::Value) {
         eprintln!("[boson-telemetry] event {name} {payload}");
     }

@@ -14,7 +14,9 @@ use boson_backend_scylla::{
 };
 use boson_backend_sqlite::SqliteQueueBackend;
 use boson_core::{ExecutionContextFactory, IdempotencyMode, QueueBackend};
-use boson_runtime::{spawn_worker, Boson, BosonBuilder, ManualWorker, TaskRegistry, WorkerSettings};
+use boson_runtime::{
+    spawn_worker, Boson, BosonBuilder, ManualWorker, TaskRegistry, WorkerSettings,
+};
 use boson_telemetry::{install_ops_log, ConsoleOpsLog, NoOpsLog};
 
 use crate::identity::StubExecutionContextFactory;
@@ -115,11 +117,12 @@ impl BootstrapSession {
 
     /// Mutable task registry (register synthetic tasks before install).
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics if the registry is shared (not uniquely owned) before install.
-    pub fn registry_mut(&mut self) -> &mut TaskRegistry {
-        Arc::get_mut(&mut self.registry).expect("unique registry before build")
+    /// Returns an error if the registry is shared (not uniquely owned) before install.
+    pub fn registry_mut(&mut self) -> anyhow::Result<&mut TaskRegistry> {
+        Arc::get_mut(&mut self.registry)
+            .ok_or_else(|| anyhow::anyhow!("unique registry before build"))
     }
 
     /// Shared registry after install.
@@ -185,16 +188,17 @@ impl BootstrapSession {
                         ..Default::default()
                     });
                 let backend = Arc::new(ScyllaQueueBackend::connect(config).await?);
-                let dyn_backend: Arc<dyn QueueBackend> = Arc::clone(&backend) as Arc<dyn QueueBackend>;
+                let dyn_backend: Arc<dyn QueueBackend> =
+                    Arc::clone(&backend) as Arc<dyn QueueBackend>;
                 boson_core::QueueRouter::set_global(boson_core::QueueRouter::with_default(
                     Arc::clone(&dyn_backend),
                 ));
                 self.backend = Some(dyn_backend);
             }
             BackendAdapter::Redis => {
-                let fleet_urls = std::env::var("BOSON_REDIS_URLS").ok().filter(|s| {
-                    s.split(',').filter(|p| !p.trim().is_empty()).count() > 1
-                });
+                let fleet_urls = std::env::var("BOSON_REDIS_URLS")
+                    .ok()
+                    .filter(|s| s.split(',').filter(|p| !p.trim().is_empty()).count() > 1);
                 let pool_routing = std::env::var("BOSON_REDIS_POOL_ROUTING")
                     .ok()
                     .filter(|s| !s.trim().is_empty());
@@ -205,9 +209,8 @@ impl BootstrapSession {
                         .or_else(|_| std::env::var("BOSON_BENCH_REDIS_URL"))
                         .unwrap_or_else(|_| "redis://127.0.0.1:6379".into());
                     let keyspace = boson_backend_redis::keys::Keyspace::isolated("boson_e2e");
-                    Arc::new(
-                        RedisQueueBackend::connect_with_keyspace(&url, keyspace).await?,
-                    ) as Arc<dyn QueueBackend>
+                    Arc::new(RedisQueueBackend::connect_with_keyspace(&url, keyspace).await?)
+                        as Arc<dyn QueueBackend>
                 };
                 let dyn_backend: Arc<dyn QueueBackend> = Arc::clone(&backend);
                 boson_core::QueueRouter::set_global(boson_core::QueueRouter::with_default(
@@ -220,9 +223,9 @@ impl BootstrapSession {
                     "BOSON_NATS_KEY_PREFIX",
                     &boson_backend_nats::keys::Keyspace::isolated_prefix("boson_e2e"),
                 ));
-                let fleet_urls = std::env::var("BOSON_NATS_URLS").ok().filter(|s| {
-                    s.split(',').filter(|p| !p.trim().is_empty()).count() > 1
-                });
+                let fleet_urls = std::env::var("BOSON_NATS_URLS")
+                    .ok()
+                    .filter(|s| s.split(',').filter(|p| !p.trim().is_empty()).count() > 1);
                 let pool_routing = std::env::var("BOSON_NATS_POOL_ROUTING")
                     .ok()
                     .filter(|s| !s.trim().is_empty());
@@ -233,7 +236,8 @@ impl BootstrapSession {
                         .unwrap_or_else(|_| "nats://127.0.0.1:4222".into());
                     connect_auto(&url).await?
                 };
-                let dyn_backend: Arc<dyn QueueBackend> = Arc::clone(&backend) as Arc<dyn QueueBackend>;
+                let dyn_backend: Arc<dyn QueueBackend> =
+                    Arc::clone(&backend) as Arc<dyn QueueBackend>;
                 boson_core::QueueRouter::set_global(boson_core::QueueRouter::with_default(
                     Arc::clone(&dyn_backend),
                 ));

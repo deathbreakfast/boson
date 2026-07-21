@@ -164,11 +164,7 @@ pub trait QueueBackend: Send + Sync + Debug {
     async fn count_jobs(&self, status_filter: Option<JobStatus>) -> Result<u64>;
 
     /// Count jobs for one task, optionally filtered by status.
-    async fn count_jobs_for_task(
-        &self,
-        task_name: &str,
-        status: Option<JobStatus>,
-    ) -> Result<u64>;
+    async fn count_jobs_for_task(&self, task_name: &str, status: Option<JobStatus>) -> Result<u64>;
 
     /// Count active (`queued` + `running`) jobs for rate-limit checks.
     async fn count_active_jobs_for_task(&self, task_name: &str) -> Result<u32>;
@@ -179,10 +175,7 @@ pub trait QueueBackend: Send + Sync + Debug {
     /// [`JobEnqueueDisposition::ReusedIdempotent`](JobEnqueueDisposition::ReusedIdempotent)
     /// when a job with the same key is still `queued` or `running`. Returns `None` when no
     /// matching non-terminal job exists.
-    async fn find_nonterminal_by_idempotency_key(
-        &self,
-        key: &str,
-    ) -> Result<Option<String>>;
+    async fn find_nonterminal_by_idempotency_key(&self, key: &str) -> Result<Option<String>>;
 
     // --- Runs ---
 
@@ -260,8 +253,6 @@ pub trait QueueBackend: Send + Sync + Debug {
 /// was not installed via [`QueueRouter::set_global`](crate::QueueRouter::set_global).
 /// Propagates [`QueueRouter::resolve`](crate::QueueRouter::resolve) errors for the default name.
 pub fn default_backend_from_global() -> Result<Arc<dyn QueueBackend>> {
-    let router = crate::QueueRouter::try_global().ok_or_else(|| {
-        crate::BosonError::Internal("QueueRouter::set_global was not called".into())
-    })?;
+    let router = crate::QueueRouter::global()?;
     router.resolve(DEFAULT_BACKEND_NAME)
 }

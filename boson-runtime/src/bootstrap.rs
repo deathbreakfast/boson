@@ -2,9 +2,7 @@
 
 use std::sync::Arc;
 
-use boson_core::{
-    default_backend_from_global, BosonError, QueueBackend, Result,
-};
+use boson_core::{default_backend_from_global, BosonError, QueueBackend, Result};
 use boson_telemetry::{install_ops_log, NoOpsLog, OpsLog};
 
 use crate::registry::TaskRegistry;

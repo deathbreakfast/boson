@@ -108,10 +108,7 @@ pub fn load_be4_publisher_curve(
             if !fname.starts_with("bm-be4-c") {
                 continue;
             }
-            if v.pointer("/dimensions/hardware")
-                .and_then(Value::as_str)
-                != Some(hardware)
-            {
+            if v.pointer("/dimensions/hardware").and_then(Value::as_str) != Some(hardware) {
                 continue;
             }
             if v.pointer("/dimensions/backend").and_then(Value::as_str) != Some(backend) {
@@ -155,24 +152,27 @@ pub fn load_be4_publisher_curve(
             if common_layout.is_none() {
                 common_layout.clone_from(&layout);
             }
-            best
-                .entry(client_count)
-                .and_modify(|(best_rate, best_pool, best_layout, best_mode, best_file)| {
-                    if rate > *best_rate {
-                        *best_rate = rate;
-                        *best_pool = pool_count;
-                        *best_layout = layout.clone().unwrap_or_default();
-                        best_mode.clone_from(&enqueue_mode);
-                        best_file.clone_from(&fname);
-                    }
-                })
-                .or_insert_with(|| (
-                    rate,
-                    pool_count,
-                    layout.clone().unwrap_or_default(),
-                    enqueue_mode,
-                    fname,
-                ));
+            best.entry(client_count)
+                .and_modify(
+                    |(best_rate, best_pool, best_layout, best_mode, best_file)| {
+                        if rate > *best_rate {
+                            *best_rate = rate;
+                            *best_pool = pool_count;
+                            *best_layout = layout.clone().unwrap_or_default();
+                            best_mode.clone_from(&enqueue_mode);
+                            best_file.clone_from(&fname);
+                        }
+                    },
+                )
+                .or_insert_with(|| {
+                    (
+                        rate,
+                        pool_count,
+                        layout.clone().unwrap_or_default(),
+                        enqueue_mode,
+                        fname,
+                    )
+                });
         }
     }
 
@@ -186,7 +186,8 @@ pub fn load_be4_publisher_curve(
     let baseline_c1 = best.get(&1).map(|(r, _, _, _, _)| *r);
     let mut points: Vec<PublisherPoint> = best
         .into_iter()
-        .map(|(client_count, (peak, pool_count, layout, enqueue_mode, file))| {
+        .map(
+            |(client_count, (peak, pool_count, layout, enqueue_mode, file))| {
                 let ops_per_client = peak / f64::from(client_count.max(1));
                 let vs_client_1 = baseline_c1.filter(|b| *b > 0.0).map(|b| peak / b);
                 PublisherPoint {
@@ -307,8 +308,7 @@ fn classify_bottleneck(
     if points.len() >= 2 {
         let first = &points[0];
         let last = points.last().expect("len >= 2");
-        let expected_linear = first.peak_ops_per_sec
-            * f64::from(last.client_count)
+        let expected_linear = first.peak_ops_per_sec * f64::from(last.client_count)
             / f64::from(first.client_count.max(1));
         if expected_linear > 0.0 && last.peak_ops_per_sec / expected_linear > 0.85 {
             return "linear_scaling".into();
@@ -323,7 +323,10 @@ pub fn render_be4_markdown(curve: &Be4PublisherCurve) -> String {
         String::new(),
         format!("- hardware: `{}`", curve.hardware),
         format!("- backend: `{}`", curve.backend),
-        format!("- peak: **{:.0} ops/s** at C={}", curve.peak_ops_per_sec, curve.peak_client_count),
+        format!(
+            "- peak: **{:.0} ops/s** at C={}",
+            curve.peak_ops_per_sec, curve.peak_client_count
+        ),
     ];
     if let Some(k) = curve.pool_count {
         lines.push(format!("- pool_count (K): {k}"));
@@ -332,7 +335,9 @@ pub fn render_be4_markdown(curve: &Be4PublisherCurve) -> String {
         lines.push(format!("- pool_layout: `{l}`"));
     }
     if let Some(c) = curve.saturation_client_count {
-        lines.push(format!("- saturation (est.): C≥{c} (<5% gain when scaling publishers)"));
+        lines.push(format!(
+            "- saturation (est.): C≥{c} (<5% gain when scaling publishers)"
+        ));
     }
     if let Some(b) = curve.nats_bench_peak {
         lines.push(format!("- nats bench pub peak: {b:.0} ops/s"));

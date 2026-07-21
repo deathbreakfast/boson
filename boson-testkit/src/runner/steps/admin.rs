@@ -2,8 +2,8 @@ use std::time::Instant;
 
 use anyhow::Result;
 
-use super::super::{RunMode, StepTiming};
 use super::super::state::RunState;
+use super::super::{RunMode, StepTiming};
 
 /// Assert admin list/count APIs return the expected job count (`AdminListCount` step).
 pub async fn run_admin_list_count(
@@ -14,8 +14,8 @@ pub async fn run_admin_list_count(
     expected_count: u64,
 ) -> Result<Option<String>> {
     let start = Instant::now();
-    let jobs = state.boson().list_jobs(None, 0, 10_000).await?;
-    let count = state.boson().count_jobs(None).await?;
+    let jobs = state.boson()?.list_jobs(None, 0, 10_000).await?;
+    let count = state.boson()?.count_jobs(None).await?;
     if mode == RunMode::Benchmark {
         timings.push(StepTiming {
             step_index,
@@ -50,7 +50,7 @@ pub async fn run_assert_task_run_stats(
     if mode == RunMode::Benchmark {
         return Ok(None);
     }
-    let run_stats = state.boson().task_run_stats(task).await?;
+    let run_stats = state.boson()?.task_run_stats(task).await?;
     if run_stats.runs_total != runs_total {
         return Ok(Some(format!(
             "AssertTaskRunStats: task {task} expected runs_total {runs_total}, got {}",

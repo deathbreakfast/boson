@@ -59,11 +59,7 @@ impl QueueBackend for SqlQueueBackend {
         self.count_jobs_impl(status_filter).await
     }
 
-    async fn count_jobs_for_task(
-        &self,
-        task_name: &str,
-        status: Option<JobStatus>,
-    ) -> Result<u64> {
+    async fn count_jobs_for_task(&self, task_name: &str, status: Option<JobStatus>) -> Result<u64> {
         self.count_jobs_for_task_impl(task_name, status).await
     }
 

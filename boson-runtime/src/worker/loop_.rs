@@ -60,12 +60,7 @@ impl WorkerEngine {
         let start = Utc::now();
         let result = execute_job(&self.registry, &self.identity, &job).await;
         if let Err(ref e) = result {
-            telemetry::record_handler_error(
-                &job.task_name,
-                &job.job_id,
-                &run_id,
-                &e.to_string(),
-            );
+            telemetry::record_handler_error(&job.task_name, &job.job_id, &run_id, &e.to_string());
         }
         let duration_ms = (Utc::now() - start).num_milliseconds();
         finish_job_execution(self.as_ref(), run_id, job, result, duration_ms).await;

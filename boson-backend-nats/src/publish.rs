@@ -3,8 +3,8 @@
 use std::sync::Arc;
 
 use async_nats::jetstream::context::PublishAckFuture;
-use bytes::Bytes;
 use boson_core::{BosonError, Result};
+use bytes::Bytes;
 use tokio::sync::Semaphore;
 
 use crate::config::NatsEnqueueConfig;

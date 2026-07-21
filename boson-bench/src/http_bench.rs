@@ -13,8 +13,8 @@ use axum::{
 use boson_axum::{boson_router, BosonState, NEST_PATH};
 use boson_backend_mem::MemQueueBackend;
 use boson_runtime::{Boson, TaskRegistry};
-use boson_testkit::{fixtures::register_noop_task, StubExecutionContextFactory};
 use boson_telemetry::{install_ops_log, NoOpsLog};
+use boson_testkit::{fixtures::register_noop_task, StubExecutionContextFactory};
 use http_body_util::BodyExt;
 use tower::ServiceExt;
 

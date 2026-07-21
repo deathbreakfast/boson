@@ -39,16 +39,46 @@ macro_rules! backend_contract_suite {
         $crate::__backend_contract_one!($setup, $label, expired_lease_pairs);
     };
     ($setup:ident, $label:literal, ignore = $ignore_msg:literal) => {
-        $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, enqueue_inserts_and_lists);
-        $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, idempotency_reuses_nonterminal);
+        $crate::__backend_contract_one_ignored!(
+            $setup,
+            $label,
+            $ignore_msg,
+            enqueue_inserts_and_lists
+        );
+        $crate::__backend_contract_one_ignored!(
+            $setup,
+            $label,
+            $ignore_msg,
+            idempotency_reuses_nonterminal
+        );
         $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, try_claim_atomic);
         $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, pool_priority_order);
-        $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, max_in_flight_rate_limit);
-        $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, max_enqueue_per_second);
+        $crate::__backend_contract_one_ignored!(
+            $setup,
+            $label,
+            $ignore_msg,
+            max_in_flight_rate_limit
+        );
+        $crate::__backend_contract_one_ignored!(
+            $setup,
+            $label,
+            $ignore_msg,
+            max_enqueue_per_second
+        );
         $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, run_lifecycle);
-        $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, global_router_resolves);
+        $crate::__backend_contract_one_ignored!(
+            $setup,
+            $label,
+            $ignore_msg,
+            global_router_resolves
+        );
         $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, lease_contention);
-        $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, extend_lease_refreshes_ttl);
+        $crate::__backend_contract_one_ignored!(
+            $setup,
+            $label,
+            $ignore_msg,
+            extend_lease_refreshes_ttl
+        );
         $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, expired_lease_pairs);
     };
 }

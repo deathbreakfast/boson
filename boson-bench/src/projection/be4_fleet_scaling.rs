@@ -88,10 +88,7 @@ pub fn load_be4_fleet_curve(
             if fname.contains("-aggregate-") || fname.contains("-bc") {
                 continue;
             }
-            if v.pointer("/dimensions/hardware")
-                .and_then(Value::as_str)
-                != Some(hardware)
-            {
+            if v.pointer("/dimensions/hardware").and_then(Value::as_str) != Some(hardware) {
                 continue;
             }
             if v.pointer("/dimensions/backend").and_then(Value::as_str) != Some(backend) {
@@ -128,8 +125,7 @@ pub fn load_be4_fleet_curve(
                 n1_peak = Some(n1_peak.map_or(rate, |p| p.max(rate)));
             }
 
-            best
-                .entry(fleet_size)
+            best.entry(fleet_size)
                 .and_modify(|(best_rate, pc, cc, best_file)| {
                     if rate > *best_rate {
                         *best_rate = rate;
@@ -206,7 +202,8 @@ pub fn load_be4_fleet_curve(
         peak_fleet_size,
         scaling_verdict: Some(scaling_verdict),
         brokers_for_target,
-        disclaimer: "fleet_efficiency = agg_throughput / (N × n1_peak); standalone NATS per pool.".into(),
+        disclaimer: "fleet_efficiency = agg_throughput / (N × n1_peak); standalone NATS per pool."
+            .into(),
     })
 }
 
@@ -269,7 +266,9 @@ pub fn render_fleet_markdown(curve: &Be4FleetCurve) -> String {
     lines.push(String::new());
     lines.push("**brokers_for_target** (per-broker N=1 peak as ceiling):".into());
     for (target, brokers) in &curve.brokers_for_target {
-        lines.push(format!("- {target} ops/s → {brokers} standalone NATS brokers"));
+        lines.push(format!(
+            "- {target} ops/s → {brokers} standalone NATS brokers"
+        ));
     }
     lines.push(String::new());
     lines.push(curve.disclaimer.clone());

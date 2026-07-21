@@ -61,7 +61,9 @@ fn validate_return_type(sig: &Signature) -> syn::Result<()> {
 fn is_execution_context_param(ty: &Type) -> bool {
     match ty {
         Type::Path(type_path) => is_box_dyn_execution_context(type_path),
-        Type::TraitObject(type_trait_object) => trait_object_has_execution_context(type_trait_object),
+        Type::TraitObject(type_trait_object) => {
+            trait_object_has_execution_context(type_trait_object)
+        }
         _ => false,
     }
 }
@@ -73,14 +75,18 @@ fn is_box_dyn_execution_context(type_path: &TypePath) -> bool {
     if segment.ident != "Box" {
         return false;
     }
-    let PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. }) = &segment.arguments else {
+    let PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. }) =
+        &segment.arguments
+    else {
         return false;
     };
     let Some(GenericArgument::Type(inner)) = args.first() else {
         return false;
     };
     match inner {
-        Type::TraitObject(type_trait_object) => trait_object_has_execution_context(type_trait_object),
+        Type::TraitObject(type_trait_object) => {
+            trait_object_has_execution_context(type_trait_object)
+        }
         _ => false,
     }
 }

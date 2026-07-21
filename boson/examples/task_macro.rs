@@ -7,6 +7,8 @@
 //!
 //! Run: `cargo run -p uf-boson --example task_macro --features mem`
 
+#![allow(clippy::print_stdout)] // Examples print status to the console.
+
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 

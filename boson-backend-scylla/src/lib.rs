@@ -93,7 +93,6 @@ pub struct ScyllaQueueBackend {
     select_task_config: scylla::statement::prepared::PreparedStatement,
 }
 
-
 #[derive(DeserializeRow)]
 struct JobRow {
     job_id: String,
@@ -198,7 +197,10 @@ impl ScyllaQueueBackend {
         if let (Some(user), Some(pass)) = (&config.username, &config.password) {
             builder = builder.user(user.clone(), pass.clone());
         }
-        if let Some(n) = config.pool_per_shard.and_then(|n| NonZeroUsize::new(n.max(1) as usize)) {
+        if let Some(n) = config
+            .pool_per_shard
+            .and_then(|n| NonZeroUsize::new(n.max(1) as usize))
+        {
             builder = builder.pool_size(PoolSize::PerShard(n));
         }
         let session = Box::pin(builder.build()).await.map_err(map_err)?;
@@ -556,7 +558,10 @@ impl QueueBackend for ScyllaQueueBackend {
             if let Some(ref key) = job.idempotency_key {
                 if !key.is_empty() {
                     let result = self
-                        .exec(&self.insert_idempotency, (key.as_str(), job.job_id.as_str()))
+                        .exec(
+                            &self.insert_idempotency,
+                            (key.as_str(), job.job_id.as_str()),
+                        )
                         .await?;
                     if !lwt_applied(result) {
                         let existing = self.exec(&self.select_idempotency, (key.as_str(),)).await?;
@@ -644,10 +649,7 @@ impl QueueBackend for ScyllaQueueBackend {
             let rows = self
                 .exec(
                     &self.select_status_idx,
-                    (
-                        status.to_string(),
-                        i32::try_from(fetch).unwrap_or(i32::MAX),
-                    ),
+                    (status.to_string(), i32::try_from(fetch).unwrap_or(i32::MAX)),
                 )
                 .await?;
             for idx in collect_rows::<StatusIdxRow>(rows) {
@@ -670,11 +672,7 @@ impl QueueBackend for ScyllaQueueBackend {
         let from = job.status;
         self.exec(
             &self.update_job_status,
-            (
-                JobStatus::Canceled.to_string(),
-                job.attempt,
-                job_id,
-            ),
+            (JobStatus::Canceled.to_string(), job.attempt, job_id),
         )
         .await?;
         self.move_status_idx(job_id, job.created_at, from, JobStatus::Canceled)
@@ -715,8 +713,13 @@ impl QueueBackend for ScyllaQueueBackend {
             status_res?;
             let _ = ready_res;
         } else {
-            self.move_status_idx(job_id, job.created_at, JobStatus::Queued, JobStatus::Running)
-                .await?;
+            self.move_status_idx(
+                job_id,
+                job.created_at,
+                JobStatus::Queued,
+                JobStatus::Running,
+            )
+            .await?;
             let _ = self.delete_ready_row(&job).await;
         }
         Ok(Some(job))
@@ -740,8 +743,13 @@ impl QueueBackend for ScyllaQueueBackend {
             )
             .await?;
         if lwt_applied(result) {
-            self.move_status_idx(job_id, job.created_at, JobStatus::Running, JobStatus::Queued)
-                .await?;
+            self.move_status_idx(
+                job_id,
+                job.created_at,
+                JobStatus::Running,
+                JobStatus::Queued,
+            )
+            .await?;
             let mut queued = job;
             queued.status = JobStatus::Queued;
             self.insert_ready_row(&queued).await?;
@@ -782,9 +790,7 @@ impl QueueBackend for ScyllaQueueBackend {
         let per_shard = i32::try_from(limit).unwrap_or(i32::MAX);
         let concurrency = self.shard_concurrency.max(1) as usize;
         let shards: Vec<i32> = (0..shard_count)
-            .map(|i| {
-                i32::try_from((start + u64::from(i)) % u64::from(shard_count)).unwrap_or(0)
-            })
+            .map(|i| i32::try_from((start + u64::from(i)) % u64::from(shard_count)).unwrap_or(0))
             .collect();
 
         let mut candidates: Vec<(i32, i64, String)> = Vec::new();
@@ -824,18 +830,16 @@ impl QueueBackend for ScyllaQueueBackend {
         Ok(u64::try_from(jobs.len()).unwrap_or(u64::MAX))
     }
 
-    async fn count_jobs_for_task(
-        &self,
-        task_name: &str,
-        status: Option<JobStatus>,
-    ) -> Result<u64> {
+    async fn count_jobs_for_task(&self, task_name: &str, status: Option<JobStatus>) -> Result<u64> {
         let jobs = self.list_jobs(status, 0, 100_000).await?;
         let count = jobs.iter().filter(|j| j.task_name == task_name).count();
         Ok(u64::try_from(count).unwrap_or(u64::MAX))
     }
 
     async fn count_active_jobs_for_task(&self, task_name: &str) -> Result<u32> {
-        let queued = self.count_jobs_for_task(task_name, Some(JobStatus::Queued)).await?;
+        let queued = self
+            .count_jobs_for_task(task_name, Some(JobStatus::Queued))
+            .await?;
         let running = self
             .count_jobs_for_task(task_name, Some(JobStatus::Running))
             .await?;
@@ -877,7 +881,9 @@ impl QueueBackend for ScyllaQueueBackend {
 
     async fn get_run(&self, run_id: &str) -> Result<Option<Run>> {
         let rows = self.exec(&self.select_run, (run_id,)).await?;
-        Ok(maybe_first_row::<RunRow>(rows).map(run_from_row).transpose()?)
+        Ok(maybe_first_row::<RunRow>(rows)
+            .map(run_from_row)
+            .transpose()?)
     }
 
     async fn list_runs(
@@ -1006,13 +1012,7 @@ impl QueueBackend for ScyllaQueueBackend {
         let steal = self
             .exec(
                 &self.steal_lease,
-                (
-                    lease_id.as_str(),
-                    worker_id,
-                    expires_at,
-                    job_id,
-                    now_ms,
-                ),
+                (lease_id.as_str(), worker_id, expires_at, job_id, now_ms),
             )
             .await?;
         if lwt_applied(steal) {
@@ -1087,12 +1087,7 @@ impl ScyllaQueueBackend {
         Ok(())
     }
 
-    async fn record_lease(
-        &self,
-        job_id: &str,
-        lease_id: &str,
-        expires_at_ms: i64,
-    ) -> Result<()> {
+    async fn record_lease(&self, job_id: &str, lease_id: &str, expires_at_ms: i64) -> Result<()> {
         self.exec(&self.insert_lease_by_id, (lease_id, job_id))
             .await?;
         self.insert_expiry_index(job_id, lease_id, expires_at_ms)

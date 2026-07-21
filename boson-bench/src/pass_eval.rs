@@ -5,17 +5,18 @@ use crate::report::ReportMetrics;
 const MAX_ERROR_RATE: f64 = 0.001;
 
 /// Evaluate pass criteria for a completed run.
-pub fn evaluate(experiment_id: &str, metrics: &ReportMetrics, run_error: Option<&str>) -> (bool, String) {
+pub fn evaluate(
+    experiment_id: &str,
+    metrics: &ReportMetrics,
+    run_error: Option<&str>,
+) -> (bool, String) {
     if let Some(err) = run_error {
         return (false, format!("FAIL: {err}"));
     }
 
     if let Some(rate) = metrics.error_rate {
         if rate >= MAX_ERROR_RATE {
-            return (
-                false,
-                format!("err={rate:.4}% FAIL (>=0.1%)"),
-            );
+            return (false, format!("err={rate:.4}% FAIL (>=0.1%)"));
         }
     }
 
@@ -44,8 +45,10 @@ pub fn evaluate(experiment_id: &str, metrics: &ReportMetrics, run_error: Option<
             format!("soak/enqueue {achieved:.0}/s p99={p99:.3}ms err={err:.4}% PASS")
         }
         "bm-b0" | "bm-b1" | "bm-b5" => {
-            let enq = metrics
-                .enqueue_ms.map_or_else(|| "no enqueue samples".into(), |s| format!("p50={:.3}ms p99={:.3}ms", s.p50, s.p99));
+            let enq = metrics.enqueue_ms.map_or_else(
+                || "no enqueue samples".into(),
+                |s| format!("p50={:.3}ms p99={:.3}ms", s.p50, s.p99),
+            );
             format!("{enq} PASS")
         }
         _ => "PASS".into(),

@@ -2,15 +2,17 @@
 //!
 //! Run: `cargo run -p uf-boson --example minimal_enqueue --features mem`
 
+#![allow(clippy::print_stdout)] // Examples print status to the console.
+
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
+use boson::prelude::Result as BosonResult;
 use boson::{
     Boson, ExecutionContext, JsonExecutionContextFactory, MemQueueBackend, TaskDescriptor,
     TaskRegistry,
 };
-use boson::prelude::Result as BosonResult;
 
 fn echo_task(
     ctx: Box<dyn ExecutionContext>,
@@ -25,8 +27,7 @@ fn echo_task(
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let mut registry = TaskRegistry::new();
-    let desc: &'static TaskDescriptor =
-        Box::leak(Box::new(TaskDescriptor::new("echo", echo_task)));
+    let desc: &'static TaskDescriptor = Box::leak(Box::new(TaskDescriptor::new("echo", echo_task)));
     registry.register(desc);
 
     let boson = Boson::builder()

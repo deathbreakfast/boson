@@ -10,9 +10,7 @@ impl Keyspace {
     /// Default prefix (`boson`) or `BOSON_NATS_KEY_PREFIX` when set.
     #[must_use]
     pub fn from_env() -> Self {
-        Self::new(
-            std::env::var("BOSON_NATS_KEY_PREFIX").unwrap_or_else(|_| "boson".into()),
-        )
+        Self::new(std::env::var("BOSON_NATS_KEY_PREFIX").unwrap_or_else(|_| "boson".into()))
     }
 
     /// Explicit prefix (isolated tests).
@@ -123,11 +121,7 @@ impl Keyspace {
     /// Job id index for lease lookup: `{prefix}.lease_by_job.{job_id}`.
     #[must_use]
     pub fn lease_by_job(&self, job_id: &str) -> String {
-        format!(
-            "{}.lease_by_job.{}",
-            self.prefix,
-            sanitize_kv_token(job_id)
-        )
+        format!("{}.lease_by_job.{}", self.prefix, sanitize_kv_token(job_id))
     }
 
     /// Pool marker key: `{prefix}.pool.{pool}`.

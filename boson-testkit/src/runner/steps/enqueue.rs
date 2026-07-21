@@ -3,9 +3,9 @@ use std::time::Instant;
 use anyhow::{anyhow, Result};
 use boson_core::BosonError;
 
+use super::super::state::RunState;
 use super::super::support::{empty_params, system_actor, EnqueueErrorKind};
 use super::super::{RunMode, StepTiming};
-use super::super::state::RunState;
 
 /// Enqueue `count` jobs for `task` (`EnqueueN` step); records benchmark timings when applicable.
 pub async fn run_enqueue(
@@ -21,7 +21,7 @@ pub async fn run_enqueue(
     for _ in 0..count {
         let start = Instant::now();
         let id = state
-            .boson()
+            .boson()?
             .enqueue(
                 task,
                 system_actor(),
@@ -56,7 +56,7 @@ pub async fn run_assert_enqueue_error(
         return Ok(None);
     }
     match state
-        .boson()
+        .boson()?
         .enqueue(task, system_actor(), empty_params(), None)
         .await
     {
@@ -90,7 +90,7 @@ pub async fn run_upsert_task_config(
     max_attempts: Option<u32>,
     base_delay_ms: Option<u64>,
 ) -> Result<Option<String>> {
-    let mut config = state.boson().get_task_config(task).await?;
+    let mut config = state.boson()?.get_task_config(task).await?;
     if let Some(v) = max_in_flight {
         config.rate_limit_policy.max_in_flight = v;
     }
@@ -103,6 +103,6 @@ pub async fn run_upsert_task_config(
     if let Some(v) = base_delay_ms {
         config.retry_policy.base_delay_ms = v;
     }
-    state.boson().upsert_task_config(config).await?;
+    state.boson()?.upsert_task_config(config).await?;
     Ok(None)
 }

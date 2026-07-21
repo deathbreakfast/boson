@@ -20,7 +20,11 @@ struct CellKey {
 
 fn cell_key(v: &Value) -> Option<CellKey> {
     let dims = v.get("dimensions")?;
-    if dims.get("aggregate").and_then(Value::as_bool).unwrap_or(false) {
+    if dims
+        .get("aggregate")
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+    {
         return None;
     }
     if v.get("experiment_id").and_then(|e| e.as_str()) != Some(BD2_EXPERIMENT) {
@@ -34,10 +38,7 @@ fn cell_key(v: &Value) -> Option<CellKey> {
         return None;
     }
     Some(CellKey {
-        fleet_size: dims
-            .get("fleet_size")
-            .and_then(Value::as_u64)
-            .unwrap_or(4) as u32,
+        fleet_size: dims.get("fleet_size").and_then(Value::as_u64).unwrap_or(4) as u32,
         pool_count: v
             .pointer("/metrics/pool_count")
             .or_else(|| v.pointer("/bench_config/publisher/pool_count"))
@@ -111,9 +112,8 @@ pub fn aggregate_bd2(
                 continue;
             }
         }
-        let idx = client_index(&v, fname).with_context(|| {
-            format!("multibench report missing bench_client_index: {fname}")
-        })?;
+        let idx = client_index(&v, fname)
+            .with_context(|| format!("multibench report missing bench_client_index: {fname}"))?;
         groups
             .entry(key)
             .or_default()
@@ -147,16 +147,16 @@ pub fn aggregate_bd2(
                 bail!("zero drain rate for bench_client_index={i} ({fname})");
             }
             total += rate;
-            per_client.push(json!({"bench_client_index": i, "drain_ops_per_sec": rate, "report_file": fname}));
+            per_client.push(
+                json!({"bench_client_index": i, "drain_ops_per_sec": rate, "report_file": fname}),
+            );
         }
 
         let template = clients[&0].1.clone();
-        let out_name = template
-            .replace("-i0-", "-aggregate-")
-            .replace(
-                &format!("-k{}-", key.pool_count),
-                &format!("-k{}-bc{count}-", key.pool_count),
-            );
+        let out_name = template.replace("-i0-", "-aggregate-").replace(
+            &format!("-k{}-", key.pool_count),
+            &format!("-k{}-bc{count}-", key.pool_count),
+        );
         let out_path = out_dir.join(&out_name);
 
         let aggregate = json!({
