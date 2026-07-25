@@ -6,7 +6,7 @@
 
 Implements [`QueueBackend`](https://docs.rs/boson-core/latest/boson_core/trait.QueueBackend.html) using Redis ZSET ready queues and JSON job bodies. Supports single-node and multi-broker fleet routing by logical pool.
 
-This crate is a **separate workspace dependency** — not enabled via the `boson` facade features (`mem`, `sqlite`, `postgres`). Depend on it directly when you need Redis persistence.
+This crate is a **separate workspace dependency** — not enabled via the `boson` crate features (`mem`, `sqlite`, `postgres`). Depend on it directly when you need Redis persistence.
 
 ## Compose
 
@@ -74,4 +74,4 @@ See **How to implement** on [`QueueBackend`](https://docs.rs/boson-core/latest/b
 
 - [`boson-core`](https://docs.rs/boson-core) — `QueueBackend` trait definition
 - [`boson-backend-nats`](https://docs.rs/boson-backend-nats) — NATS JetStream alternative
-- [`boson`](https://docs.rs/uf-boson) — runtime facade (use `mem`/`sqlite`/`postgres` for simpler setups)
+- [`boson`](https://docs.rs/uf-boson) — runtime public crate (use `mem`/`sqlite`/`postgres` for simpler setups)

@@ -1,10 +1,10 @@
 # boson-e2e Quality Gates
 
-Sentrux MCP structure-health signal for matrix correctness integration tests.
+Cargo quality gates for for matrix correctness integration tests.
 
 ## Baseline (Phase 5)
 
-- `scan(path="boson-e2e")` → `quality_signal`: **10000**
+- `scan(path="boson-e2e")` → `cargo` fmt/clippy/test/doc gates
 - Tests: `cargo test -p boson-e2e`
 - CI: upstream `.github/workflows/boson-matrix.yml`
 

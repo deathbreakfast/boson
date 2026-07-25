@@ -109,7 +109,7 @@ flowchart TD
 
 ## Quick start
 
-Add the facade crate with the in-memory backend for local evaluation. The crates.io
+Add the public crate with the in-memory backend for local evaluation. The crates.io
 package is **`uf-boson`** (the name `boson` is taken); imports stay `use boson::…`:
 
 ```toml

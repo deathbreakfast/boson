@@ -1,10 +1,10 @@
 # boson-axum Quality Gates
 
-Sentrux structure-health signal for this crate.
+Cargo quality gates for this crate (`fmt` / `clippy` / `test` / `doc`).
 
 ## Baseline (Phase 3)
 
-- `scan(path="boson-axum")` → `quality_signal`: **7008**
+- `scan(path="boson-axum")` → `cargo` fmt/clippy/test/doc gates
 - Tests: `cargo test -p boson-axum`
 - Clippy: `cargo clippy -p boson-axum --all-targets -- -D warnings`
 
@@ -21,6 +21,6 @@ cargo doc -p boson-axum --no-deps
 
 ## Targets
 
-- Preserve or improve Sentrux `quality_signal`
+- Preserve or improve quality review `cargo` fmt/clippy/test/doc gates
 - Handlers split per resource; no god files
 - Layering: depends on `boson-runtime`, `boson-core`, `axum` only

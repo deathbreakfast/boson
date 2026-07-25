@@ -9,7 +9,7 @@ Implements [`QueueBackend`](https://docs.rs/boson-core/latest/boson_core/trait.Q
 - **`NatsQueueBackend`** — KV-backed (default when `BOSON_NATS_QUEUE_MODE` is unset)
 - **`NatsWorkQueueBackend`** — WorkQueue stream mode (`BOSON_NATS_QUEUE_MODE=workqueue` or `wq`)
 
-This crate is a **separate workspace dependency** — not enabled via the `boson` facade features. Depend on it directly when you need NATS persistence.
+This crate is a **separate workspace dependency** — not enabled via the `boson` crate features. Depend on it directly when you need NATS persistence.
 
 ## Compose
 
@@ -85,4 +85,4 @@ See **How to implement** on [`QueueBackend`](https://docs.rs/boson-core/latest/b
 
 - [`boson-core`](https://docs.rs/boson-core) — `QueueBackend` trait definition
 - [`boson-backend-redis`](https://docs.rs/boson-backend-redis) — Redis alternative
-- [`boson`](https://docs.rs/uf-boson) — runtime facade (use `mem`/`sqlite`/`postgres` for simpler setups)
+- [`boson`](https://docs.rs/uf-boson) — runtime public crate (use `mem`/`sqlite`/`postgres` for simpler setups)

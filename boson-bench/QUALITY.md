@@ -1,6 +1,6 @@
 # boson-bench Quality Gates
 
-Sentrux MCP structure-health signal for the BM-B* benchmark CLI.
+Cargo quality gates for for the BM-B* benchmark CLI.
 
 ## Baseline
 

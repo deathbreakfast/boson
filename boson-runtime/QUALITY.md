@@ -1,10 +1,10 @@
 # boson-runtime Quality Gates
 
-Sentrux structure-health signal for this crate.
+Cargo quality gates for this crate (`fmt` / `clippy` / `test` / `doc`).
 
 ## Baseline (Phase 3)
 
-- `scan` on `boson-runtime` → `quality_signal`: **7278**
+- `scan` on `boson-runtime` → `cargo` fmt/clippy/test/doc gates
 - Tests: `cargo test -p boson-runtime`
 - Clippy: `cargo clippy -p boson-runtime --all-targets -- -D warnings`
 
@@ -21,7 +21,7 @@ cargo doc -p boson-runtime --no-deps
 
 ## Targets
 
-- Preserve or improve Sentrux `quality_signal`
+- Preserve or improve quality review `cargo` fmt/clippy/test/doc gates
 - Zero circular dependencies; no file > 450 LOC; max CC ≤ 25 per function
 - `#![deny(missing_docs)]` on public API
 - Layering: depends on `boson-core`, `boson-telemetry`, `quark` only

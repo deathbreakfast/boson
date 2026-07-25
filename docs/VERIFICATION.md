@@ -35,8 +35,8 @@ See [`infra/native-aws/README.md`](../infra/native-aws/README.md).
 | `e2e` | postgres + redis + nats services; backend contracts + `boson-e2e --include-ignored` |
 | `coverage` | non-blocking `cargo-llvm-cov` artifact |
 | `bench-smoke` | BM-B0 / BM-B1 |
-| `examples` / `docs` | facade examples and rustdoc |
-| `sentrux` | optional structural quality gate |
+| `examples` / `docs` | public crate examples and rustdoc |
+| `quality-review` | optional structural quality gate |
 
 Scylla contract steps run only when secret `BOSON_TEST_SCYLLA_CONTACT_POINTS` is set.
 

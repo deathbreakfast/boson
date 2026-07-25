@@ -1,10 +1,10 @@
 # boson-core Quality Gates
 
-Sentrux structure-health signal for this crate.
+Cargo quality gates for this crate (`fmt` / `clippy` / `test` / `doc`).
 
 ## Baseline (modularity pass)
 
-- `scan(path="boson-core")` → `quality_signal`: **7320**
+- `scan(path="boson-core")` → `cargo` fmt/clippy/test/doc gates
 - Workspace: **7268** (`cross_module_edges`: 53)
 - Tests: `cargo test -p boson-core`
 - Clippy: `cargo clippy -p boson-core --all-targets -- -D warnings`
@@ -21,6 +21,6 @@ cargo doc -p boson-core --no-deps
 
 ## Targets
 
-- Preserve or improve Sentrux `quality_signal`
+- Preserve or improve quality review `cargo` fmt/clippy/test/doc gates
 - Zero circular dependencies; no file > 450 LOC
 - `#![deny(missing_docs)]` via workspace `[lints]` inheritance

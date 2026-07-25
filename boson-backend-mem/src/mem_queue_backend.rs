@@ -44,7 +44,7 @@ impl MemQueueBackend {
     /// # Examples
     ///
     /// Wire into [`Boson::builder`](https://docs.rs/boson-runtime/latest/boson_runtime/struct.Boson.html#method.builder)
-    /// (feature `mem` on the `boson` facade):
+    /// (feature `mem` on the `boson` crate):
     ///
     /// ```rust
     /// use std::sync::Arc;

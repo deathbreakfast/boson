@@ -28,7 +28,7 @@ Status after the Photon-bar maturity pass (split PR CI, coverage artifact, mem c
 | mem contract suite | `boson-backend-mem/tests/mem_queue_backend.rs` | `backend_contract_suite!` |
 | CI split | `boson-matrix.yml` | Parallel PR jobs + full broker e2e on every PR |
 | Coverage artifact | `boson-matrix.yml` coverage job | `scripts/coverage.sh`, `docs/VERIFICATION.md` |
-| Examples in CI | `boson-matrix.yml` examples job | 4 facade examples |
+| Examples in CI | `boson-matrix.yml` examples job | 4 public crate examples |
 
 ## Remaining — Priority 1 (host integrations)
 

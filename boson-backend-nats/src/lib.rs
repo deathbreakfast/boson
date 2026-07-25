@@ -1,7 +1,7 @@
 //! `NATS` `JetStream` [`QueueBackend`] for fleet-scale deployments (Mode 2 remote / multi-host).
 //!
 //! **When to use:** broker-backed fleets with NATS `JetStream` (KV and/or workqueue). Not a
-//! `boson` facade feature — depend on this crate directly. Mode 2 workers need unique
+//! `boson` public crate feature — depend on this crate directly. Mode 2 workers need unique
 //! `worker_id` and `lease_ttl_secs > 0`.
 //!
 //! Getting started:

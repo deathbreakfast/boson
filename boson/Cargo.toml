@@ -10,7 +10,7 @@ readme = "README.md"
 keywords.workspace = true
 categories.workspace = true
 documentation = "https://docs.rs/uf-boson"
-description = "Public Boson facade — async work engine"
+description = "Public Boson crate — async work engine"
 
 [package.metadata.docs.rs]
 all-features = true

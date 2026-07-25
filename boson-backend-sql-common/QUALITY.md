@@ -1,6 +1,6 @@
 # boson-backend-sql-common Quality Gates
 
-Sentrux structure-health signal for this crate.
+Cargo quality gates for this crate (`fmt` / `clippy` / `test` / `doc`).
 
 ## Local commands
 
@@ -15,6 +15,6 @@ cargo doc -p boson-backend-sql-common --no-deps
 
 ## Targets
 
-- Preserve or improve Sentrux `quality_signal`
+- Preserve or improve quality review `cargo` fmt/clippy/test/doc gates
 - `#![deny(missing_docs)]` via workspace `[lints]` inheritance
 - Layering: depends on `boson-core` and `sqlx` only

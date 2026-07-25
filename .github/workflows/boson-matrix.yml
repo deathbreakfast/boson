@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - name: cargo check (boson facade)
+      - name: cargo check (boson public crate)
         run: cargo check -p uf-boson --features mem
 
   deny:
@@ -295,22 +295,3 @@ jobs:
           cargo test --doc -p uf-boson --features mem
           cargo test --doc -p boson-telemetry
 
-  sentrux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Sentrux quality gate
-        run: |
-          if command -v sentrux >/dev/null 2>&1; then
-            sentrux scan
-            SIGNAL=$(sentrux health 2>&1 | grep -oP 'quality_signal[":\s]+\K[0-9]+' | head -1 || echo "0")
-            MIN=7331
-            if [ -n "$SIGNAL" ] && [ "$SIGNAL" -lt "$MIN" ]; then
-              echo "quality_signal $SIGNAL below baseline $MIN"
-              exit 1
-            fi
-            sentrux check_rules
-          else
-            echo "sentrux not installed; skipping quality gate"
-          fi

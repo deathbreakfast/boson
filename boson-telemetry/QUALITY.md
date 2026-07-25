@@ -1,10 +1,10 @@
 # boson-telemetry Quality Gates
 
-Sentrux structure-health signal for this crate.
+Cargo quality gates for this crate (`fmt` / `clippy` / `test` / `doc`).
 
 ## Baseline (Phase 1)
 
-- `scan(path="boson-telemetry")` → `quality_signal`: **7805**
+- `scan(path="boson-telemetry")` → `cargo` fmt/clippy/test/doc gates
 - Tests: `cargo test -p boson-telemetry`
 - Clippy: `cargo clippy -p boson-telemetry --all-targets -- -D warnings`
 
@@ -20,5 +20,5 @@ cargo doc -p boson-telemetry --no-deps
 
 ## Targets
 
-- Preserve or improve Sentrux `quality_signal`
+- Preserve or improve quality review `cargo` fmt/clippy/test/doc gates
 - Keep crate free of product persistence deps

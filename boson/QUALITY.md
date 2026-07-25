@@ -1,10 +1,10 @@
 # boson Quality Gates
 
-Sentrux structure-health signal for this crate.
+Cargo quality gates for this crate (`fmt` / `clippy` / `test` / `doc`).
 
 ## Baseline (Phase 3)
 
-- `scan(path="boson")` → `quality_signal`: **9574**
+- `scan(path="boson")` → `cargo` fmt/clippy/test/doc gates
 - Check: `cargo check -p uf-boson --features mem,telemetry-console,axum`
 
 ## Local commands
