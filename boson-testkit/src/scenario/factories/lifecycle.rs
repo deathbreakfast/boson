@@ -92,6 +92,53 @@ impl ScenarioSpec {
         }
     }
 
+    /// Cancel a long-running job while it is executing → terminal `Canceled`.
+    #[must_use]
+    pub fn cancel_running_job(task: &str) -> Self {
+        Self {
+            id: "cancel_running_job".into(),
+            steps: vec![
+                ScenarioStep::EnqueueN {
+                    task: task.to_string(),
+                    count: 1,
+                    idempotency_key: None,
+                },
+                ScenarioStep::CancelWhileDraining {
+                    job_index: 0,
+                    wait_ms: 200,
+                },
+                ScenarioStep::AssertJobStatus {
+                    job_index: 0,
+                    status: JobStatus::Canceled,
+                },
+            ],
+        }
+    }
+
+    /// Long sleep under a short lease TTL — heartbeat keeps a single successful execution.
+    #[must_use]
+    pub fn long_job_lease_heartbeat_drain(task: &str) -> Self {
+        Self {
+            id: "long_job_lease_heartbeat_drain".into(),
+            steps: vec![
+                ScenarioStep::EnqueueN {
+                    task: task.to_string(),
+                    count: 1,
+                    idempotency_key: None,
+                },
+                ScenarioStep::DrainUntilIdle { max_steps: 32 },
+                ScenarioStep::AssertJobStatus {
+                    job_index: 0,
+                    status: JobStatus::Success,
+                },
+                ScenarioStep::AssertHandlerHits {
+                    task: task.to_string(),
+                    count: 1,
+                },
+            ],
+        }
+    }
+
     /// `get_job` for a missing id returns `None`.
     #[must_use]
     pub fn get_job_not_found() -> Self {

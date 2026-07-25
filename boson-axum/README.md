@@ -4,20 +4,45 @@ HTTP admin API for Boson under [`/api/boson`](https://docs.rs/boson-axum/latest/
 
 ## Role
 
-- Job enqueue, list, get, and cancel
-- Run inspection and task config CRUD
+- Job enqueue, list, get, and cancel (list `limit` capped at 500)
+- Run inspection and task config CRUD (retry fields capped on upsert)
 - [`boson_router`](https://docs.rs/boson-axum/latest/boson_axum/fn.boson_router.html) — mountable Axum router
-- [`BosonState`](https://docs.rs/boson-axum/latest/boson_axum/struct.BosonState.html) — shared handler state (`FromRef` into host router)
+- [`BosonState`](https://docs.rs/boson-axum/latest/boson_axum/struct.BosonState.html) / builder — shared state + optional [`AdminAuth`](https://docs.rs/boson-axum/latest/boson_axum/trait.AdminAuth.html)
+- Default HTTP enqueue actor is non-System: `{"Service":{"name":"boson_api"}}`
+
+Set `BOSON_REQUIRE_ADMIN_AUTH=1` and install an `AdminAuth` verifier for production mounts.
 
 ## Mount
 
 ```rust
-use axum::Router;
-use boson_axum::{boson_router, BosonState, NEST_PATH};
+use std::sync::Arc;
 
+use axum::{extract::FromRef, Router};
+use boson_axum::{
+    boson_router, BosonState, StaticTokenAdminAuth, NEST_PATH,
+};
+
+#[derive(Clone)]
+struct AppState {
+    boson: BosonState,
+}
+
+impl FromRef<AppState> for BosonState {
+    fn from_ref(state: &AppState) -> Self {
+        state.boson.clone()
+    }
+}
+
+# fn mount(boson: std::sync::Arc<boson_runtime::Boson>) -> Result<Router<AppState>, String> {
+let state = BosonState::builder(boson)
+    .admin_auth(Arc::new(StaticTokenAdminAuth::new("lab-token")))
+    .require_admin_auth(true)
+    .build()?;
 let app = Router::new()
     .nest(NEST_PATH, boson_router())
-    .with_state(BosonState { boson: shared_boson });
+    .with_state(AppState { boson: state });
+# Ok(app)
+# }
 ```
 
 Enable via the `boson` crate's `axum` feature:
@@ -36,7 +61,7 @@ boson = { package = "uf-boson", version = "0.1.1", features = ["mem", "axum"] }
 | `POST` | `/jobs/{id}/cancel` | Cancel job |
 | `GET` | `/runs` | List runs |
 | `GET` | `/tasks` | List registered tasks |
-| `GET/PUT` | `/tasks/{name}/config` | Task configuration |
+| `GET/POST` | `/tasks/{name}/config` | Task configuration |
 
 ## Related crates
 

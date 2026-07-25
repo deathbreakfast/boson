@@ -124,6 +124,12 @@ impl Keyspace {
         format!("{}.lease_by_job.{}", self.prefix, sanitize_kv_token(job_id))
     }
 
+    /// Exclusive claim marker: `{prefix}.claim.{job_id}` (KV create for CAS).
+    #[must_use]
+    pub fn claim_marker(&self, job_id: &str) -> String {
+        format!("{}.claim.{}", self.prefix, sanitize_kv_token(job_id))
+    }
+
     /// Pool marker key: `{prefix}.pool.{pool}`.
     #[must_use]
     pub fn pool_marker(&self, pool: &str) -> String {

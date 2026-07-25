@@ -3,8 +3,8 @@
 use std::sync::Arc;
 
 use boson_core::{
-    BosonError, IdempotencyMode, Job, JobEnqueueDisposition, JobStatus, QueueBackend, Result, Run,
-    TaskConfig, TaskRunStats,
+    ActorJsonPolicy, BosonError, EnqueueTrust, IdempotencyMode, Job, JobEnqueueDisposition,
+    JobStatus, QueueBackend, RejectExternalSystemActor, Result, Run, TaskConfig, TaskRunStats,
 };
 use chrono::{DateTime, Utc};
 
@@ -19,6 +19,8 @@ pub struct Boson {
     worker: WorkerSettings,
     /// Runtime default when [`TaskConfig::idempotency_mode`] is unset.
     idempotency_mode: IdempotencyMode,
+    /// Optional actor JSON policy (defaults to [`RejectExternalSystemActor`]).
+    actor_policy: Option<Arc<dyn ActorJsonPolicy>>,
 }
 
 impl Boson {
@@ -43,6 +45,24 @@ impl Boson {
             registry,
             worker,
             idempotency_mode,
+            actor_policy: Some(Arc::new(RejectExternalSystemActor)),
+        }
+    }
+
+    /// Construct with idempotency mode and actor policy.
+    pub fn from_parts_full(
+        backend: Arc<dyn QueueBackend>,
+        registry: Arc<TaskRegistry>,
+        worker: WorkerSettings,
+        idempotency_mode: IdempotencyMode,
+        actor_policy: Option<Arc<dyn ActorJsonPolicy>>,
+    ) -> Self {
+        Self {
+            backend,
+            registry,
+            worker,
+            idempotency_mode,
+            actor_policy,
         }
     }
 
@@ -140,7 +160,7 @@ impl Boson {
         Ok(job_id)
     }
 
-    /// Enqueue a job.
+    /// Enqueue a job with [`EnqueueTrust::Internal`] (in-process callers).
     ///
     /// Priority and pool come from persisted [`TaskConfig`](boson_core::TaskConfig) merged with
     /// [`TaskDescriptor`](crate::registry::TaskDescriptor) defaults. Optional `idempotency_key`
@@ -149,7 +169,8 @@ impl Boson {
     ///
     /// # Errors
     ///
-    /// Returns an error if the task is unknown, rate limits apply, or the backend fails.
+    /// Returns an error if the task is unknown, rate limits apply, actor policy rejects, or the
+    /// backend fails.
     pub async fn enqueue(
         &self,
         task_name: &str,
@@ -157,6 +178,35 @@ impl Boson {
         params_json: serde_json::Value,
         idempotency_key: Option<String>,
     ) -> Result<String> {
+        self.enqueue_with_trust(
+            task_name,
+            actor_json,
+            params_json,
+            idempotency_key,
+            EnqueueTrust::Internal,
+        )
+        .await
+    }
+
+    /// Enqueue with an explicit trust level for [`ActorJsonPolicy`].
+    ///
+    /// Use [`EnqueueTrust::External`] for HTTP admin / untrusted surfaces.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if policy rejects the actor, the task is unknown, rate limits apply, or
+    /// the backend fails.
+    pub async fn enqueue_with_trust(
+        &self,
+        task_name: &str,
+        actor_json: serde_json::Value,
+        params_json: serde_json::Value,
+        idempotency_key: Option<String>,
+        trust: EnqueueTrust,
+    ) -> Result<String> {
+        if let Some(ref policy) = self.actor_policy {
+            policy.validate(trust, &actor_json)?;
+        }
         self.enqueue_internal(task_name, actor_json, params_json, idempotency_key)
             .await
     }

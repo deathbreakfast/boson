@@ -28,6 +28,8 @@ Boson is a **typed job queue runtime** with pluggable storage adapters. Tier 3 h
 
 **Not measured:** Subscriber-style fanout at queue rates; Redis bc=4 multibench (16 vCPU quota); JetStream cluster drain (D4); Redis read-replica claim path (D6).
 
+**Post-security-hardening note:** Redis structured claim CAS, NATS claim markers, and in-handler lease heartbeats add work on the claim/lease path. Treat pre-hardening BD2 curves as historical; re-measure before citing new decision-grade drain numbers. Isolated-lab benches with `lease_ttl_secs = 0` skip heartbeats (unchanged).
+
 Full benchmark ladders: Cursor canvas `boson-bench-aws-c6i-all` (local IDE artifact; not checked into this repo).
 
 ---

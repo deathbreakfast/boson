@@ -507,14 +507,28 @@ impl QueueBackend for NatsWorkQueueBackend {
     }
 
     async fn try_claim_job(&self, job_id: &str) -> Result<Option<Job>> {
+        let claim_key = self.keys.claim_marker(job_id);
+        match self
+            .kv
+            .create(&claim_key, bytes::Bytes::from_static(b"1"))
+            .await
+        {
+            Ok(_) => {}
+            Err(_) => return Ok(None),
+        }
         let Some(mut job) = self.load_job(job_id).await? else {
+            let _ = self.kv_delete(&claim_key).await;
             return Ok(None);
         };
         if job.status != JobStatus::Queued {
+            let _ = self.kv_delete(&claim_key).await;
             return Ok(None);
         }
         job.status = JobStatus::Running;
-        self.save_job(&job).await?;
+        if let Err(e) = self.save_job(&job).await {
+            let _ = self.kv_delete(&claim_key).await;
+            return Err(e);
+        }
         Ok(Some(job))
     }
 
@@ -527,6 +541,7 @@ impl QueueBackend for NatsWorkQueueBackend {
         }
         job.status = JobStatus::Queued;
         self.save_job(&job).await?;
+        let _ = self.kv_delete(&self.keys.claim_marker(job_id)).await;
         self.publish_job(&job).await
     }
 

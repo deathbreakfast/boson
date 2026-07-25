@@ -398,14 +398,29 @@ impl QueueBackend for NatsQueueBackend {
     }
 
     async fn try_claim_job(&self, job_id: &str) -> Result<Option<Job>> {
+        // Atomic claim via JetStream KV create (fails if key exists).
+        let claim_key = self.keys.claim_marker(job_id);
+        match self
+            .kv
+            .create(&claim_key, bytes::Bytes::from_static(b"1"))
+            .await
+        {
+            Ok(_) => {}
+            Err(_) => return Ok(None),
+        }
         let Some(mut job) = self.load_job(job_id).await? else {
+            let _ = self.kv_delete(&claim_key).await;
             return Ok(None);
         };
         if job.status != JobStatus::Queued {
+            let _ = self.kv_delete(&claim_key).await;
             return Ok(None);
         }
         job.status = JobStatus::Running;
-        self.save_job(&job).await?;
+        if let Err(e) = self.save_job(&job).await {
+            let _ = self.kv_delete(&claim_key).await;
+            return Err(e);
+        }
         self.remove_ready_for_job(&job).await?;
         Ok(Some(job))
     }
@@ -419,6 +434,7 @@ impl QueueBackend for NatsQueueBackend {
         }
         job.status = JobStatus::Queued;
         self.save_job(&job).await?;
+        let _ = self.kv_delete(&self.keys.claim_marker(job_id)).await;
         self.add_ready(&job).await
     }
 
@@ -585,20 +601,17 @@ impl QueueBackend for NatsQueueBackend {
         worker_id: &str,
         ttl_secs: i64,
     ) -> Result<Option<String>> {
-        if let Some(bytes) = self.kv_get(&self.keys.lease_by_job(job_id)).await? {
+        let by_job = self.keys.lease_by_job(job_id);
+        if let Some(bytes) = self.kv_get(&by_job).await? {
             let lid = String::from_utf8_lossy(&bytes).into_owned();
             if let Some(row) = self.load_lease_row(&lid).await? {
                 if row.expires_at > Utc::now() {
                     return Ok(None);
                 }
             }
-        }
-        if self
-            .kv_get(&self.keys.lease_by_job(job_id))
-            .await?
-            .is_some()
-        {
-            return Ok(None);
+            // Steal expired lease mapping.
+            let _ = self.kv_delete(&by_job).await;
+            let _ = self.kv_delete(&self.keys.lease(&lid)).await;
         }
         let lease_id = Uuid::new_v4().to_string();
         let row = LeaseRow {
@@ -608,8 +621,15 @@ impl QueueBackend for NatsQueueBackend {
             expires_at: Utc::now() + chrono::Duration::seconds(ttl_secs),
         };
         let json = serde_json::to_vec(&row).map_err(map_err)?;
-        self.kv_put(&self.keys.lease_by_job(job_id), lease_id.as_bytes())
-            .await?;
+        // Prefer create for atomicity when JetStream supports it.
+        match self
+            .kv
+            .create(&by_job, bytes::Bytes::copy_from_slice(lease_id.as_bytes()))
+            .await
+        {
+            Ok(_) => {}
+            Err(_) => return Ok(None),
+        }
         self.kv_put(&self.keys.lease(&lease_id), &json).await?;
         Ok(Some(lease_id))
     }

@@ -9,8 +9,8 @@ use boson_core::IdempotencyMode;
 use crate::fixtures::{
     register_counting_task, register_fail_exhaustion_task, register_fail_n_then_ok_task,
     register_fail_task, register_noop_task, register_noop_task_with_priority,
-    register_rate_limited_eps_task, register_rate_limited_in_flight_task, reset_counting_hits,
-    reset_noop_hits,
+    register_rate_limited_eps_task, register_rate_limited_in_flight_task, register_sleep_task,
+    reset_counting_hits, reset_noop_hits, reset_sleep_hits,
 };
 use crate::matrix::{
     matrix_isolated_lab, matrix_isolated_lab_console, matrix_split_boson_server, BackendAdapter,
@@ -72,6 +72,8 @@ pub enum RegisterKind {
     None,
     /// Noop registered with signature hash `1` (signature versioning tests).
     SignatureNoop,
+    /// Long-running `sleep` task (cancel / heartbeat scenarios).
+    Sleep,
 }
 
 impl RegisterKind {
@@ -102,6 +104,10 @@ impl RegisterKind {
             Self::None => {}
             Self::SignatureNoop => {
                 crate::fixtures::register_noop_task_with_signature_hash(registry, "noop", 1);
+            }
+            Self::Sleep => {
+                reset_sleep_hits();
+                register_sleep_task(registry, "sleep");
             }
         }
     }
@@ -267,6 +273,22 @@ pub fn correctness_catalog() -> &'static [CatalogEntry] {
             spec: ScenarioSpec::cancel_missing_job,
         },
         CatalogEntry {
+            id: "cancel_running_job",
+            path: PathKind::Happy,
+            topology: CatalogTopology::IsolatedLab,
+            register: RegisterKind::Sleep,
+            idempotency_mode: None,
+            spec: || ScenarioSpec::cancel_running_job("sleep"),
+        },
+        CatalogEntry {
+            id: "long_job_lease_heartbeat_drain",
+            path: PathKind::Happy,
+            topology: CatalogTopology::SplitBosonServer,
+            register: RegisterKind::Sleep,
+            idempotency_mode: None,
+            spec: || ScenarioSpec::long_job_lease_heartbeat_drain("sleep"),
+        },
+        CatalogEntry {
             id: "restart_runtime_drain",
             path: PathKind::Happy,
             topology: CatalogTopology::IsolatedLab,
@@ -428,6 +450,10 @@ pub async fn run_catalog_entry(backend: BackendAdapter, entry: &CatalogEntry) {
     let mut session = BootstrapSession::new(matrix);
     if let Some(mode) = entry.idempotency_mode {
         session = session.with_idempotency_mode(mode);
+    }
+    // TTL (2s) < default sleep (2s+) so heartbeat must refresh the lease for success.
+    if entry.id == "long_job_lease_heartbeat_drain" {
+        session = session.with_lease_ttl_secs(2);
     }
     entry.register.apply(&mut session);
     session

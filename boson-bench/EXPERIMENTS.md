@@ -6,6 +6,16 @@ Pre-registered experiment IDs, phase status, and runner commands.
 
 ---
 
+## Security / correctness note (L0 hardening)
+
+Claim-path and lease-heartbeat changes (structured Redis CAS, NATS KV claim markers, worker
+`extend_lease` heartbeat) can affect BD2 drain numbers. Re-baseline dequeue capacity after this
+branch if comparing to pre-hardening curves. Heartbeats are **off** when `lease_ttl_secs = 0`
+(isolated-lab); decision-grade Mode 2 / split topologies should keep TTL > 0.
+
+Optional BM-B7-style soak: long handler duration ≫ lease TTL must remain single-execution under
+heartbeat (covered by catalog `long_job_lease_heartbeat_drain`).
+
 ## Validation status
 
 | Tier | Backend | Status | Authoritative hardware |

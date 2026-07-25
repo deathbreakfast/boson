@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Run Scylla contract + catalog E2E on the bench host.
 # Prefer prebuilt binaries under CARGO_TARGET_DIR when cargo cannot fetch private git deps.
+# Security campaign: lease LWT + catalog cancel/heartbeat rows via scenarios_full.
 set -euo pipefail
 
 export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-target-boson-scylla}"

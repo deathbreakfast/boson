@@ -279,17 +279,23 @@ impl RedisQueueBackend {
     }
 }
 
-const CLAIM_SCRIPT: &str = r#"
+/// CAS job status via structured JSON (`cjson`), never substring search on the blob.
+/// Payload fields such as `params_json` may contain the text `"status":"queued"`; that must
+/// not affect claim eligibility.
+const CLAIM_SCRIPT: &str = r"
 local raw = redis.call('GET', KEYS[1])
 if not raw then return nil end
-if not string.find(raw, '"status":"queued"', 1, true) then return nil end
-local updated = string.gsub(raw, '"status":"queued"', '"status":"running"', 1)
+local ok, job = pcall(cjson.decode, raw)
+if not ok or type(job) ~= 'table' then return nil end
+if job['status'] ~= 'queued' then return nil end
+job['status'] = 'running'
+local updated = cjson.encode(job)
 redis.call('SET', KEYS[1], updated)
 redis.call('ZREM', KEYS[2], ARGV[1])
 return updated
-"#;
+";
 
-const POP_CLAIM_SCRIPT: &str = r#"
+const POP_CLAIM_SCRIPT: &str = r"
 local ids = redis.call('ZRANGE', KEYS[1], 0, 0)
 if #ids == 0 then return nil end
 local job_id = ids[1]
@@ -299,15 +305,21 @@ if not raw then
   redis.call('ZREM', KEYS[1], job_id)
   return nil
 end
-if not string.find(raw, '"status":"queued"', 1, true) then
+local ok, job = pcall(cjson.decode, raw)
+if not ok or type(job) ~= 'table' then
   redis.call('ZREM', KEYS[1], job_id)
   return nil
 end
-local updated = string.gsub(raw, '"status":"queued"', '"status":"running"', 1)
+if job['status'] ~= 'queued' then
+  redis.call('ZREM', KEYS[1], job_id)
+  return nil
+end
+job['status'] = 'running'
+local updated = cjson.encode(job)
 redis.call('SET', job_key, updated)
 redis.call('ZREM', KEYS[1], job_id)
 return updated
-"#;
+";
 
 fn map_err(e: impl std::fmt::Display) -> BosonError {
     BosonError::Backend(format!("redis backend: {e}"))
@@ -705,10 +717,8 @@ impl QueueBackend for RedisQueueBackend {
         ttl_secs: i64,
     ) -> Result<Option<String>> {
         let mut conn = self.conn.clone();
-        let existing: Option<String> = conn
-            .get(self.keys.lease_by_job(job_id))
-            .await
-            .map_err(map_err)?;
+        let by_job = self.keys.lease_by_job(job_id);
+        let existing: Option<String> = conn.get(&by_job).await.map_err(map_err)?;
         if let Some(ref lid) = existing {
             let raw: Option<String> = conn.get(self.keys.lease(lid)).await.map_err(map_err)?;
             if let Some(s) = raw {
@@ -718,6 +728,9 @@ impl QueueBackend for RedisQueueBackend {
                     }
                 }
             }
+            // Steal expired: clear stale lease_by_job mapping before SET NX.
+            let _: () = conn.del(&by_job).await.map_err(map_err)?;
+            let _: () = conn.del(self.keys.lease(lid)).await.map_err(map_err)?;
         }
         let lease_id = Uuid::new_v4().to_string();
         let row = LeaseRow {
@@ -728,7 +741,7 @@ impl QueueBackend for RedisQueueBackend {
         };
         let json = serde_json::to_string(&row).map_err(map_err)?;
         let inserted: bool = conn
-            .set_nx(self.keys.lease_by_job(job_id), lease_id.as_str())
+            .set_nx(&by_job, lease_id.as_str())
             .await
             .map_err(map_err)?;
         if !inserted {

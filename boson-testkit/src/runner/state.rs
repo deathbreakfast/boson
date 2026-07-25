@@ -1,7 +1,7 @@
 use anyhow::Result;
 use boson_runtime::{Boson, ManualWorker};
 
-use super::support::{counting_hit_count, noop_hit_count};
+use super::support::{counting_hit_count, noop_hit_count, sleep_hit_count};
 use super::ScenarioRunner;
 
 pub struct RunState {
@@ -10,6 +10,7 @@ pub struct RunState {
     pub(crate) job_ids: Vec<String>,
     pub(crate) noop_hits_at_start: usize,
     pub(crate) counting_hits_at_start: usize,
+    pub(crate) sleep_hits_at_start: usize,
 }
 
 impl RunState {
@@ -35,6 +36,7 @@ impl ScenarioRunner<'_> {
             job_ids: Vec::new(),
             noop_hits_at_start: noop_hit_count(),
             counting_hits_at_start: counting_hit_count(),
+            sleep_hits_at_start: sleep_hit_count(),
         })
     }
 

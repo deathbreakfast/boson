@@ -10,6 +10,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
 use super::response::ApiResponse;
+use crate::auth::RequireAdmin;
 use crate::state::BosonState;
 
 /// Task config returned by the HTTP admin API.
@@ -60,6 +61,7 @@ pub struct UpdateTaskConfigRequest {
 
 /// `GET /tasks/:name/config` — load persisted [`TaskConfig`](boson_core::TaskConfig).
 pub async fn get_task_config(
+    _admin: RequireAdmin,
     State(state): State<BosonState>,
     Path(name): Path<String>,
 ) -> (StatusCode, Json<ApiResponse<TaskConfigResponse>>) {
@@ -71,6 +73,7 @@ pub async fn get_task_config(
 
 /// `POST /tasks/:name/config` — merge partial update into task config.
 pub async fn update_task_config(
+    _admin: RequireAdmin,
     State(state): State<BosonState>,
     Path(name): Path<String>,
     Json(req): Json<UpdateTaskConfigRequest>,
@@ -88,7 +91,15 @@ pub async fn update_task_config(
         config.pool = p;
     }
     if let Some(r) = req.retry_policy {
-        config.retry_policy = r;
+        match crate::limits::clamp_retry_policy(r) {
+            Ok(clamped) => config.retry_policy = clamped,
+            Err(msg) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(ApiResponse::err(msg.to_string())),
+                );
+            }
+        }
     }
     if let Some(r) = req.rate_limit_policy {
         config.rate_limit_policy = r;
@@ -108,6 +119,7 @@ pub async fn update_task_config(
 /// Revision history is not persisted yet. Use [`get_task_config`] for the current config.
 /// This endpoint is reserved for a future audit trail; do not rely on it for production workflows.
 pub async fn get_task_config_revisions(
+    _admin: RequireAdmin,
     State(_state): State<BosonState>,
     Path(_name): Path<String>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {

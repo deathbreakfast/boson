@@ -2,11 +2,23 @@
 
 use std::sync::Arc;
 
-use boson_core::{ExecutionContextFactory, QueueBackend};
+use boson_core::{ActorJsonPolicy, ExecutionContextFactory, QueueBackend};
 use boson_telemetry::{ConsoleOpsLog, OpsLog};
 
 use crate::registry::TaskRegistry;
 use crate::Boson;
+
+/// Builder choice for enqueue [`ActorJsonPolicy`].
+#[derive(Default)]
+pub(crate) enum ActorPolicyChoice {
+    /// Install [`RejectExternalSystemActor`](boson_core::RejectExternalSystemActor).
+    #[default]
+    DefaultRejectExternalSystem,
+    /// No policy checks.
+    Disabled,
+    /// Host-supplied policy.
+    Custom(Arc<dyn ActorJsonPolicy>),
+}
 
 /// Builder for [`Boson`].
 ///
@@ -87,6 +99,7 @@ pub struct BosonBuilder {
     pub(crate) worker_pools: Option<Vec<String>>,
     pub(crate) worker_poll_interval_ms: Option<u64>,
     pub(crate) idempotency_mode: boson_core::IdempotencyMode,
+    pub(crate) actor_policy: ActorPolicyChoice,
 }
 
 impl BosonBuilder {
@@ -226,6 +239,20 @@ impl BosonBuilder {
         factory: Arc<dyn ExecutionContextFactory>,
     ) -> Self {
         self.execution_context_factory = Some(factory);
+        self
+    }
+
+    /// Install an [`ActorJsonPolicy`] for enqueue validation (default rejects System on External).
+    #[must_use]
+    pub fn actor_json_policy(mut self, policy: impl ActorJsonPolicy + 'static) -> Self {
+        self.actor_policy = ActorPolicyChoice::Custom(Arc::new(policy));
+        self
+    }
+
+    /// Disable actor JSON policy checks at enqueue.
+    #[must_use]
+    pub fn without_actor_json_policy(mut self) -> Self {
+        self.actor_policy = ActorPolicyChoice::Disabled;
         self
     }
 

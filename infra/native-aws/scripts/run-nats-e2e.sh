@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Run NATS contract + catalog E2E (mirror run-scylla-e2e.sh).
 # Prefer prebuilt binaries under CARGO_TARGET_DIR when cargo cannot fetch private git deps.
+# Security campaign: atomic claim contracts + cancel_running_job / long_job_lease_heartbeat_drain.
 set -euo pipefail
 
 export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-target-boson-nats}"

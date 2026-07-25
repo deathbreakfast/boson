@@ -1,8 +1,9 @@
 //! Job HTTP handlers.
 //!
-//! Enqueue uses a fixed system actor JSON (not caller-supplied):
-//! `{"System": {"operation": "boson_api_enqueue"}}`. Map HTTP auth to your app's
-//! [`ExecutionContext`](boson_core::ExecutionContext) in a custom route if needed.
+//! Enqueue uses a non-System service actor by default:
+//! [`default_http_enqueue_actor`](boson_core::default_http_enqueue_actor)
+//! (`{"Service":{"name":"boson_api"}}`). Override via
+//! [`BosonStateBuilder::http_enqueue_actor`](crate::BosonStateBuilder::http_enqueue_actor).
 //!
 //! See [`Boson::enqueue`](boson_runtime::Boson::enqueue) for programmatic enqueue.
 
@@ -15,11 +16,13 @@ use boson_core::{BosonError, JobStatus};
 use serde::{Deserialize, Serialize};
 
 use super::response::ApiResponse;
+use crate::auth::RequireAdmin;
 use crate::state::BosonState;
 
 /// Enqueue request body for `POST /jobs/enqueue`.
 ///
-/// Maps to [`Boson::enqueue`](boson_runtime::Boson::enqueue) with a fixed system actor JSON.
+/// Maps to [`Boson::enqueue_with_trust`](boson_runtime::Boson::enqueue_with_trust) with the
+/// HTTP service actor (or a host override).
 #[derive(Debug, Deserialize, Serialize)]
 pub struct EnqueueRequest {
     /// Registered task name (must match a [`TaskDescriptor`](boson_runtime::TaskDescriptor) in the worker registry).
@@ -73,7 +76,7 @@ impl From<boson_core::Job> for JobResponse {
 pub struct ListJobsQuery {
     /// Filter by status: `queued`, `running`, `success`, `failed`, or `canceled`.
     pub status: Option<String>,
-    /// Max rows to return (default `100`).
+    /// Max rows to return (default `100`, hard-capped at [`crate::MAX_LIST_LIMIT`]).
     pub limit: Option<usize>,
 }
 
@@ -90,16 +93,23 @@ fn parse_job_status(s: &str) -> Option<JobStatus> {
 
 /// `POST /jobs/enqueue` — enqueue a background job.
 ///
-/// Uses actor `{"System": {"operation": "boson_api_enqueue"}}`. Returns `429` when
-/// [`BosonError::RateLimited`](boson_core::BosonError::RateLimited).
+/// Uses [`BosonState::enqueue_actor_json`] (default non-System service marker). Returns `429`
+/// when [`BosonError::RateLimited`](boson_core::BosonError::RateLimited).
 pub async fn enqueue(
+    _admin: RequireAdmin,
     State(state): State<BosonState>,
     Json(req): Json<EnqueueRequest>,
 ) -> (StatusCode, Json<ApiResponse<EnqueueResponse>>) {
-    let actor_json = serde_json::json!({"System": {"operation": "boson_api_enqueue"}});
+    let actor_json = state.enqueue_actor_json();
     match state
         .boson
-        .enqueue(&req.task_name, actor_json, req.params, req.idempotency_key)
+        .enqueue_with_trust(
+            &req.task_name,
+            actor_json,
+            req.params,
+            req.idempotency_key,
+            boson_core::EnqueueTrust::External,
+        )
         .await
     {
         Ok(job_id) => (
@@ -121,11 +131,12 @@ pub async fn enqueue(
 
 /// `GET /jobs` — list jobs with optional [`ListJobsQuery::status`] filter.
 pub async fn list_jobs(
+    _admin: RequireAdmin,
     State(state): State<BosonState>,
     Query(q): Query<ListJobsQuery>,
 ) -> Json<ApiResponse<Vec<JobResponse>>> {
     let status = q.status.as_deref().and_then(parse_job_status);
-    let limit = q.limit.unwrap_or(100);
+    let limit = crate::limits::clamp_list_limit(q.limit);
     match state.boson.list_jobs(status, 0, limit).await {
         Ok(jobs) => Json(ApiResponse::ok(
             jobs.into_iter().map(JobResponse::from).collect(),
@@ -136,6 +147,7 @@ pub async fn list_jobs(
 
 /// `GET /jobs/:id` — fetch one job by id.
 pub async fn get_job(
+    _admin: RequireAdmin,
     State(state): State<BosonState>,
     Path(id): Path<String>,
 ) -> (StatusCode, Json<ApiResponse<JobResponse>>) {
@@ -154,6 +166,7 @@ pub async fn get_job(
 
 /// `POST /jobs/:id/cancel` — cancel an active job ([`Boson::cancel_job`](boson_runtime::Boson::cancel_job)).
 pub async fn cancel_job(
+    _admin: RequireAdmin,
     State(state): State<BosonState>,
     Path(id): Path<String>,
 ) -> (StatusCode, Json<ApiResponse<()>>) {

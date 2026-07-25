@@ -18,6 +18,11 @@ pub const NEST_PATH: &str = "/api/boson";
 
 /// Create the Boson API router (mount at [`NEST_PATH`]).
 ///
+/// Handlers extract [`RequireAdmin`](crate::RequireAdmin), which enforces
+/// [`AdminAuth`](crate::AdminAuth) / [`REQUIRE_ADMIN_AUTH_ENV`](crate::REQUIRE_ADMIN_AUTH_ENV).
+/// Configure [`BosonState::builder`] with a verifier when require-auth is set, or leave unset
+/// for local development (fail-open only when require is false).
+///
 /// Host apps nest this under [`NEST_PATH`] and provide [`BosonState`] via [`FromRef`].
 /// Runnable: `cargo run -p uf-boson --example axum_admin --features mem,axum`.
 pub fn boson_router<S>() -> Router<S>
@@ -101,5 +106,22 @@ mod tests {
         let _ = AppState {
             boson: BosonState::new(boson),
         };
+    }
+
+    #[test]
+    fn builder_requires_auth_when_flagged() {
+        let boson = Arc::new(
+            Boson::builder()
+                .queue_backend(Arc::new(MemQueueBackend::new()))
+                .execution_context_factory(TestFactory)
+                .without_worker()
+                .build()
+                .expect("build"),
+        );
+        let result = BosonState::builder(boson).require_admin_auth(true).build();
+        let Err(err) = result else {
+            panic!("must fail without AdminAuth");
+        };
+        assert!(err.contains("AdminAuth"));
     }
 }

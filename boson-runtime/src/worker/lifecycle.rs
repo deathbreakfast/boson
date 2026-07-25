@@ -3,7 +3,9 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use boson_core::{BosonError, Job, JobStatus, Result, RetryPolicy, RunStatus, TaskConfig};
+use boson_core::{
+    sanitize_error_message, BosonError, Job, JobStatus, Result, RetryPolicy, RunStatus, TaskConfig,
+};
 use tokio::time::sleep;
 
 use crate::telemetry;
@@ -44,7 +46,22 @@ pub async fn finish_job_execution<H: RunLifecycleHost>(
             host.put_job(finished).await;
         }
         Err(e) => {
-            let err_msg = e.to_string();
+            let err_msg = sanitize_error_message(&e.to_string());
+            // Cooperative cancel: do not retry; keep job Canceled.
+            if err_msg.contains("job canceled") {
+                let _ = host
+                    .record_run_finish(
+                        &run_id,
+                        RunStatus::Canceled,
+                        Some(duration_ms),
+                        Some(err_msg),
+                    )
+                    .await;
+                let mut canceled = job;
+                canceled.status = JobStatus::Canceled;
+                host.put_job(canceled).await;
+                return;
+            }
             let config = host.load_task_config(&job.task_name).await.ok();
             let retry_policy = config.as_ref().map(|c| &c.retry_policy);
             match retry_policy {

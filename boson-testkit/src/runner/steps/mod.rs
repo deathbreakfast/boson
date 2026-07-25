@@ -16,7 +16,7 @@ pub use asserts::{
     run_assert_job_missing, run_assert_job_status, run_assert_run_count, run_assert_run_outcome,
     run_assert_same_job_id,
 };
-pub use drain::{run_cancel_job, run_cancel_missing_job, run_drain};
+pub use drain::{run_cancel_job, run_cancel_missing_job, run_cancel_while_draining, run_drain};
 pub use enqueue::{run_assert_enqueue_error, run_enqueue, run_upsert_task_config};
 pub use lease::run_simulate_lease_contention;
 pub use registry::run_reregister_task_signature;

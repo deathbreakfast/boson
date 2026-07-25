@@ -104,6 +104,38 @@ pub async fn try_claim_atomic(b: Arc<dyn QueueBackend>, _env: &BackendEnv) {
     assert!(b.try_claim_job(&job_id).await.unwrap().is_none());
 }
 
+/// Asserts claim CAS keys off structured job status, not a substring in `params_json`.
+///
+/// Regression for Redis substring `"status":"queued"` matching inside attacker-controlled params.
+///
+/// # Panics
+///
+/// Panics if backend operations fail or contract assertions are violated.
+pub async fn claim_ignores_status_in_params(b: Arc<dyn QueueBackend>, _env: &BackendEnv) {
+    let config = task_config("echo");
+    let mut job = sample_job("echo", "global", 1, None);
+    let poisoned = json!({
+        "note": "attacker \"status\":\"queued\" in params",
+        "nested": { "status": "queued" },
+    });
+    job.params_json = poisoned.clone();
+    let (job_id, _) = enqueue(&*b, job, &config).await;
+    let claimed = b
+        .try_claim_job(&job_id)
+        .await
+        .unwrap()
+        .expect("first claim must succeed despite poisoned params");
+    assert_eq!(claimed.status, JobStatus::Running);
+    assert_eq!(claimed.params_json, poisoned);
+    assert!(
+        b.try_claim_job(&job_id).await.unwrap().is_none(),
+        "second claim must fail"
+    );
+    let loaded = b.get_job(&job_id).await.unwrap().expect("job");
+    assert_eq!(loaded.status, JobStatus::Running);
+    assert_eq!(loaded.params_json, poisoned);
+}
+
 /// Asserts pool priority ordering for queued jobs.
 ///
 /// # Panics

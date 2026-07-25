@@ -12,12 +12,18 @@
 //!
 //! Hosts inject a `QueueBackend` implementation at build time; this crate has no I/O.
 
+pub mod actor_policy;
 pub mod backend;
 pub mod error;
 pub mod identity;
 pub mod models;
 pub mod router;
+pub mod sanitize;
 
+pub use actor_policy::{
+    default_http_enqueue_actor, is_system_shaped_actor, ActorJsonPolicy, EnqueueTrust,
+    RejectExternalSystemActor,
+};
 pub use backend::{default_backend_from_global, JobEnqueueDisposition, QueueBackend};
 pub use error::{BosonError, IdentityError, Result};
 pub use identity::{ExecutionContext, ExecutionContextFactory, JsonExecutionContextFactory};
@@ -26,3 +32,4 @@ pub use models::{
     TaskRunStats,
 };
 pub use router::QueueRouter;
+pub use sanitize::{sanitize_error_message, MAX_ERROR_MESSAGE_CHARS};

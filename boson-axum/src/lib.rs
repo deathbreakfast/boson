@@ -8,7 +8,16 @@
 //! ## Entry points
 //!
 //! - [`boson_router`] — mount under [`NEST_PATH`] (`/api/boson`)
-//! - [`BosonState`] — shared Axum state holding [`boson_runtime::Boson`]
+//! - [`BosonState`] / [`BosonStateBuilder`] — shared Axum state, optional [`AdminAuth`]
+//! - [`AdminAuth`], [`StaticTokenAdminAuth`], [`REQUIRE_ADMIN_AUTH_ENV`] — host auth seam
+//! - [`MAX_LIST_LIMIT`] — hard cap for list query `limit`
+//!
+//! ## Owns / does not own
+//!
+//! **Owns:** route table, DTO shaping (no `actor_json` / `params_json` on wire), list caps,
+//! default non-System HTTP enqueue actor, optional admin auth middleware.
+//!
+//! **Does not own:** Soliton HMAC, mTLS, session cookies — hosts implement [`AdminAuth`].
 //!
 //! ## Handlers
 //!
@@ -22,13 +31,15 @@
 //!
 //! See `examples/axum_admin.rs` in the `boson` crate for a runnable server.
 //!
-//! ## Example
+//! ## Example — completed setup with admin auth
 //!
 //! ```rust,no_run
 //! use std::sync::Arc;
 //!
 //! use axum::{extract::FromRef, Router};
-//! use boson_axum::{boson_router, BosonState, NEST_PATH};
+//! use boson_axum::{
+//!     boson_router, BosonState, StaticTokenAdminAuth, NEST_PATH,
+//! };
 //! use boson_runtime::Boson;
 //!
 //! #[derive(Clone)]
@@ -42,18 +53,30 @@
 //!     }
 //! }
 //!
-//! fn mount(boson: Boson) -> Router<AppState> {
-//!     Router::new()
+//! fn mount(boson: Boson) -> Result<Router<AppState>, String> {
+//!     let state = BosonState::builder(Arc::new(boson))
+//!         .admin_auth(Arc::new(StaticTokenAdminAuth::new("lab-token")))
+//!         .require_admin_auth(true)
+//!         .build()?;
+//!     Ok(Router::new()
 //!         .nest(NEST_PATH, boson_router())
-//!         .with_state(AppState {
-//!             boson: BosonState::new(Arc::new(boson)),
-//!         })
+//!         .with_state(AppState { boson: state }))
 //! }
 //! ```
 
+mod auth;
 mod handlers;
+mod limits;
 mod router;
 mod state;
 
+pub use auth::{
+    require_admin_auth_from_env, AdminAuth, AdminAuthError, AllowAllAdminAuth, RequireAdmin,
+    StaticTokenAdminAuth, REQUIRE_ADMIN_AUTH_ENV,
+};
+pub use limits::{
+    clamp_list_limit, clamp_retry_policy, DEFAULT_LIST_LIMIT, MAX_LIST_LIMIT, MAX_RETRY_ATTEMPTS,
+    MAX_RETRY_DELAY_MS, MIN_RETRY_DELAY_MS,
+};
 pub use router::{boson_router, NEST_PATH};
-pub use state::BosonState;
+pub use state::{BosonState, BosonStateBuilder, HttpEnqueueActorProvider};

@@ -54,6 +54,13 @@ pub enum ScenarioStep {
         /// Job id index from prior enqueue steps.
         job_index: usize,
     },
+    /// Drain one job while canceling it after `wait_ms` (cooperative mid-run cancel).
+    CancelWhileDraining {
+        /// Job id index from prior enqueue steps.
+        job_index: usize,
+        /// Delay before cancel while the handler is running.
+        wait_ms: u64,
+    },
     /// Cancel a job id that does not exist — expect [`boson_core::BosonError::JobNotFound`].
     CancelMissingJob,
     /// Assert `get_job` returns `None` for an unknown id.

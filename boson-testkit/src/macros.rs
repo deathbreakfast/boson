@@ -29,6 +29,7 @@ macro_rules! backend_contract_suite {
         $crate::__backend_contract_one!($setup, $label, enqueue_inserts_and_lists);
         $crate::__backend_contract_one!($setup, $label, idempotency_reuses_nonterminal);
         $crate::__backend_contract_one!($setup, $label, try_claim_atomic);
+        $crate::__backend_contract_one!($setup, $label, claim_ignores_status_in_params);
         $crate::__backend_contract_one!($setup, $label, pool_priority_order);
         $crate::__backend_contract_one!($setup, $label, max_in_flight_rate_limit);
         $crate::__backend_contract_one!($setup, $label, max_enqueue_per_second);
@@ -52,6 +53,12 @@ macro_rules! backend_contract_suite {
             idempotency_reuses_nonterminal
         );
         $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, try_claim_atomic);
+        $crate::__backend_contract_one_ignored!(
+            $setup,
+            $label,
+            $ignore_msg,
+            claim_ignores_status_in_params
+        );
         $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, pool_priority_order);
         $crate::__backend_contract_one_ignored!(
             $setup,
@@ -155,6 +162,8 @@ macro_rules! matrix_scenario_suite {
             retry_exhaustion,
             cancel_queued_job,
             cancel_missing_job,
+            cancel_running_job,
+            long_job_lease_heartbeat_drain,
             restart_runtime_drain,
             pool_priority_drain,
             list_and_count_jobs,

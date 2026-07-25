@@ -7,6 +7,7 @@ use axum::{
 };
 
 use super::response::ApiResponse;
+use crate::auth::RequireAdmin;
 use crate::state::BosonState;
 
 /// Registered task metadata from the worker registry.
@@ -25,7 +26,10 @@ pub struct TaskResponse {
 }
 
 /// `GET /tasks` — list all registered tasks in the worker process.
-pub async fn list_tasks(State(state): State<BosonState>) -> Json<ApiResponse<Vec<TaskResponse>>> {
+pub async fn list_tasks(
+    _admin: RequireAdmin,
+    State(state): State<BosonState>,
+) -> Json<ApiResponse<Vec<TaskResponse>>> {
     let list: Vec<TaskResponse> = state
         .boson
         .registry()
@@ -43,6 +47,7 @@ pub async fn list_tasks(State(state): State<BosonState>) -> Json<ApiResponse<Vec
 
 /// `GET /tasks/:name` — load one task descriptor. Returns `200` or `404` when not registered.
 pub async fn get_task(
+    _admin: RequireAdmin,
     State(state): State<BosonState>,
     Path(name): Path<String>,
 ) -> (StatusCode, Json<ApiResponse<TaskResponse>>) {

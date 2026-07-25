@@ -15,7 +15,7 @@ use axum::{
     http::{Request, StatusCode},
     Router,
 };
-use boson_axum::{boson_router, BosonState, NEST_PATH};
+use boson_axum::{boson_router, BosonState, StaticTokenAdminAuth, MAX_LIST_LIMIT, NEST_PATH};
 use boson_backend_mem::{install_default_mem_backend, MemQueueBackend};
 use boson_runtime::{Boson, ManualWorker, TaskRegistry};
 use boson_telemetry::{install_ops_log, NoOpsLog};
@@ -46,6 +46,13 @@ struct HttpTestApp {
 
 impl HttpTestApp {
     fn new(register: impl FnOnce(&mut TaskRegistry)) -> Self {
+        Self::with_state(register, BosonState::new)
+    }
+
+    fn with_state(
+        register: impl FnOnce(&mut TaskRegistry),
+        state_fn: impl FnOnce(Arc<Boson>) -> BosonState,
+    ) -> Self {
         let _ = install_default_mem_backend();
         install_ops_log(Arc::new(NoOpsLog));
         let mut registry = TaskRegistry::new();
@@ -61,7 +68,7 @@ impl HttpTestApp {
             .expect("build_manual");
         let boson = Arc::new(boson);
         let state = AppState {
-            boson: BosonState::new(Arc::clone(&boson)),
+            boson: state_fn(Arc::clone(&boson)),
         };
         let router = Router::new()
             .nest(NEST_PATH, boson_router::<AppState>())
@@ -370,5 +377,117 @@ async fn get_run_not_found_404() {
         .expect("request");
     let (status, body) = app.request(req).await;
     assert_eq!(status, StatusCode::NOT_FOUND);
+    assert_eq!(body["success"], false);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn admin_auth_missing_token_401() {
+    let app = HttpTestApp::with_state(
+        |registry| register_noop_task(registry, "noop"),
+        |boson| {
+            BosonState::builder(boson)
+                .admin_auth(Arc::new(StaticTokenAdminAuth::new("secret")))
+                .require_admin_auth(true)
+                .build()
+                .expect("state")
+        },
+    );
+    let (status, body) = enqueue_via_http(&app, "noop").await;
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+    assert_eq!(body["success"], false);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn admin_auth_valid_token_200() {
+    let app = HttpTestApp::with_state(
+        |registry| register_noop_task(registry, "noop"),
+        |boson| {
+            BosonState::builder(boson)
+                .admin_auth(Arc::new(StaticTokenAdminAuth::new("secret")))
+                .require_admin_auth(true)
+                .build()
+                .expect("state")
+        },
+    );
+    let req = Request::builder()
+        .method("POST")
+        .uri(format!("{NEST_PATH}/jobs/enqueue"))
+        .header("content-type", "application/json")
+        .header("x-boson-admin-token", "secret")
+        .body(Body::from(
+            json!({
+                "task_name": "noop",
+                "params": {},
+            })
+            .to_string(),
+        ))
+        .expect("request");
+    let (status, body) = app.request(req).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["success"], true);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn http_enqueue_persists_non_system_actor() {
+    let app = HttpTestApp::new(|registry| register_noop_task(registry, "noop"));
+    let (_, body) = enqueue_via_http(&app, "noop").await;
+    let job_id = body["data"]["job_id"].as_str().expect("job_id");
+    let job = app
+        .boson
+        .get_job(job_id)
+        .await
+        .expect("get_job")
+        .expect("job");
+    assert!(job.actor_json.get("System").is_none());
+    assert_eq!(job.actor_json["Service"]["name"], "boson_api");
+
+    let req = Request::builder()
+        .uri(format!("{NEST_PATH}/jobs/{job_id}"))
+        .body(Body::empty())
+        .expect("request");
+    let (_, wire) = app.request(req).await;
+    assert!(wire["data"].get("actor_json").is_none());
+    assert!(wire["data"].get("params_json").is_none());
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn list_jobs_clamps_huge_limit() {
+    let app = HttpTestApp::new(|registry| register_noop_task(registry, "noop"));
+    for _ in 0..3 {
+        enqueue_via_http(&app, "noop").await;
+    }
+    let req = Request::builder()
+        .uri(format!("{NEST_PATH}/jobs?limit=1000000"))
+        .body(Body::empty())
+        .expect("request");
+    let (status, body) = app.request(req).await;
+    assert_eq!(status, StatusCode::OK);
+    let jobs = body["data"].as_array().expect("jobs");
+    assert!(jobs.len() <= MAX_LIST_LIMIT);
+    assert_eq!(jobs.len(), 3);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn post_task_config_rejects_huge_max_attempts() {
+    let app = HttpTestApp::new(|registry| register_noop_task(registry, "noop"));
+    enqueue_via_http(&app, "noop").await;
+    let req = Request::builder()
+        .method("POST")
+        .uri(format!("{NEST_PATH}/tasks/noop/config"))
+        .header("content-type", "application/json")
+        .body(Body::from(
+            json!({
+                "retry_policy": {
+                    "max_attempts": 10_000,
+                    "base_delay_ms": 100,
+                    "backoff_multiplier": 2.0,
+                    "max_delay_ms": 1000
+                }
+            })
+            .to_string(),
+        ))
+        .expect("request");
+    let (status, body) = app.request(req).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
     assert_eq!(body["success"], false);
 }

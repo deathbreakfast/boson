@@ -1,8 +1,21 @@
-//! Mount the Boson HTTP admin API on Axum.
+//! Mount the Boson HTTP admin API on Axum with optional admin auth.
 //!
 //! Run: `cargo run -p uf-boson --example axum_admin --features mem,axum`
 //!
-//! Then: `curl -X POST http://127.0.0.1:3000/api/boson/jobs/enqueue -H 'Content-Type: application/json' -d '{"task_name":"echo"}'`
+//! Auth (recommended for any reachable port):
+//! - `BOSON_REQUIRE_ADMIN_AUTH=1`
+//! - `BOSON_ADMIN_TOKEN=lab-token` (example verifier header `x-boson-admin-token`)
+//!
+//! Then:
+//! ```bash
+//! curl -X POST http://127.0.0.1:3000/api/boson/jobs/enqueue \
+//!   -H 'Content-Type: application/json' \
+//!   -H 'x-boson-admin-token: lab-token' \
+//!   -d '{"task_name":"echo"}'
+//! ```
+//!
+//! HTTP enqueue persists a non-System actor (`Service/boson_api`). Set `BOSON_EXAMPLE_SERVE=1`
+//! to keep listening (default exits after bind for CI).
 
 #![allow(clippy::print_stdout)] // Examples print status to the console.
 
@@ -14,7 +27,7 @@ use axum::{extract::FromRef, Router};
 use boson::prelude::Result as BosonResult;
 use boson::{
     boson_router, Boson, BosonState, ExecutionContext, JsonExecutionContextFactory,
-    MemQueueBackend, TaskDescriptor, TaskRegistry, NEST_PATH,
+    MemQueueBackend, StaticTokenAdminAuth, TaskDescriptor, TaskRegistry, NEST_PATH,
 };
 
 fn echo_task(
@@ -49,11 +62,19 @@ async fn main() -> anyhow::Result<()> {
             .build()?,
     );
 
+    let mut builder = BosonState::builder(Arc::clone(&boson));
+    if let Ok(token) = std::env::var("BOSON_ADMIN_TOKEN") {
+        if !token.is_empty() {
+            builder = builder
+                .admin_auth(Arc::new(StaticTokenAdminAuth::new(token)))
+                .require_admin_auth(true);
+        }
+    }
+    let boson_state = builder.build().map_err(anyhow::Error::msg)?;
+
     let app = Router::new()
         .nest(NEST_PATH, boson_router())
-        .with_state(AppState {
-            boson: BosonState::new(boson),
-        });
+        .with_state(AppState { boson: boson_state });
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await?;
     println!("listening on http://127.0.0.1:3000{NEST_PATH}");

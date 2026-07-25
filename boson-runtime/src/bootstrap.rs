@@ -5,12 +5,24 @@ use std::sync::Arc;
 use boson_core::{default_backend_from_global, BosonError, QueueBackend, Result};
 use boson_telemetry::{install_ops_log, NoOpsLog, OpsLog};
 
+use crate::builder::ActorPolicyChoice;
 use crate::registry::TaskRegistry;
 use crate::telemetry::log_runtime_ready;
 use crate::worker::{spawn_worker, ManualWorker, WorkerSettings};
 use crate::{Boson, BosonBuilder};
 
 impl BosonBuilder {
+    pub(crate) fn resolve_actor_policy(&self) -> Option<Arc<dyn boson_core::ActorJsonPolicy>> {
+        match &self.actor_policy {
+            ActorPolicyChoice::DefaultRejectExternalSystem => {
+                Some(Arc::new(boson_core::RejectExternalSystemActor)
+                    as Arc<dyn boson_core::ActorJsonPolicy>)
+            }
+            ActorPolicyChoice::Disabled => None,
+            ActorPolicyChoice::Custom(p) => Some(Arc::clone(p)),
+        }
+    }
+
     pub(crate) fn resolve_backend(&self) -> Result<Arc<dyn QueueBackend>> {
         if let Some(ref b) = self.queue_backend {
             return Ok(Arc::clone(b));
@@ -98,11 +110,13 @@ impl BosonBuilder {
         let worker = self.resolve_worker_settings();
         let spawn_worker_flag = self.spawn_worker;
 
-        let boson = Boson::from_parts_with_idempotency(
+        let actor_policy = self.resolve_actor_policy();
+        let boson = Boson::from_parts_full(
             Arc::clone(&backend),
             Arc::clone(&registry),
             worker.clone(),
             self.idempotency_mode,
+            actor_policy,
         );
         log_runtime_ready(&worker.runtime_label);
 
@@ -162,11 +176,13 @@ impl BosonBuilder {
         let backend = self.resolve_backend()?;
         let registry = self.resolve_registry();
         let worker = self.resolve_worker_settings();
-        let boson = Boson::from_parts_with_idempotency(
+        let actor_policy = self.resolve_actor_policy();
+        let boson = Boson::from_parts_full(
             Arc::clone(&backend),
             Arc::clone(&registry),
             worker.clone(),
             self.idempotency_mode,
+            actor_policy,
         );
         let manual = ManualWorker::new(backend, registry, identity, worker);
         Ok((boson, manual))

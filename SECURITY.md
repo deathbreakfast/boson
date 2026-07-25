@@ -32,3 +32,19 @@ surface. Reports that matter most:
 
 Memory-safety bugs in safe Rust code are welcome, but prefer reports that show a
 reachable path from public APIs or adapters.
+
+## Operator hardening (L0)
+
+| Area | Guidance |
+|------|----------|
+| HTTP admin | Install a host `AdminAuth` verifier. Set `BOSON_REQUIRE_ADMIN_AUTH=1` so mounts fail closed without one. Boson does not ship Soliton HMAC/mTLS. |
+| HTTP enqueue actor | Default `actor_json` is `{"Service":{"name":"boson_api"}}` (not System). Host identity kits must not elevate this marker. |
+| Actor provenance | Optional `ActorJsonPolicy` / `RejectExternalSystemActor` rejects System-shaped JSON on `EnqueueTrust::External`. In-process enqueue remains trusted. |
+| List limits | HTTP list `limit` is clamped to 500 (`MAX_LIST_LIMIT`). |
+| Leases | Mode 2: `lease_ttl_secs > 0` + unique `worker_id`. Workers heartbeat `extend_lease` during handlers. |
+| Cancel | Cancel is cooperative: in-flight handlers are aborted via status watch; finish does not overwrite to Success. |
+| Errors | Handler errors are sanitized/truncated before run rows and telemetry; do not log `params_json` / `actor_json`. |
+| Rate limits | Enqueue rate limits are process-local unless the backend provides shared counters. Retry fields via HTTP config are capped. |
+| Lab infra | Bench Redis `protected-mode no` / Postgres password `bench` under `infra/` are lab-only — not production templates. |
+
+See also crate docs on `uf-boson` (§ Features / § 5 Mount HTTP admin).

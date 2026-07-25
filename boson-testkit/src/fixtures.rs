@@ -3,10 +3,12 @@
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
+use std::time::Duration;
 
 use boson_core::{BosonError, ExecutionContext};
 use boson_core::{RateLimitPolicy, RetryPolicy};
 use boson_runtime::{InvokeFn, TaskDefaults, TaskDescriptor, TaskRegistry};
+use tokio::time::sleep;
 
 const TESTKIT_POOL: &str = "global";
 const UNLIMITED_RATE: u32 = 0;
@@ -49,6 +51,7 @@ pub fn empty_params() -> serde_json::Value {
 
 static NOOP_HITS: AtomicUsize = AtomicUsize::new(0);
 static COUNTING_HITS: AtomicUsize = AtomicUsize::new(0);
+static SLEEP_HITS: AtomicUsize = AtomicUsize::new(0);
 static FAIL_REMAINING: AtomicU32 = AtomicU32::new(0);
 
 /// Number of times the shared noop handler ran (test introspection).
@@ -71,6 +74,16 @@ pub fn reset_counting_hits() {
     COUNTING_HITS.store(0, Ordering::SeqCst);
 }
 
+/// Number of times the shared sleep handler ran.
+pub fn sleep_hit_count() -> usize {
+    SLEEP_HITS.load(Ordering::SeqCst)
+}
+
+/// Reset sleep handler hit counter.
+pub fn reset_sleep_hits() {
+    SLEEP_HITS.store(0, Ordering::SeqCst);
+}
+
 /// Remaining fail invocations for [`register_fail_n_then_ok_task`].
 pub fn fail_remaining() -> u32 {
     FAIL_REMAINING.load(Ordering::SeqCst)
@@ -87,8 +100,10 @@ pub fn handler_hit_count(task: &str) -> usize {
     match task {
         "noop" => noop_hit_count(),
         "counting" => counting_hit_count(),
+        "sleep" => sleep_hit_count(),
         _ if task.starts_with("counting") => counting_hit_count(),
         _ if task.starts_with("noop") => noop_hit_count(),
+        _ if task.starts_with("sleep") => sleep_hit_count(),
         _ => 0,
     }
 }
@@ -109,6 +124,21 @@ fn counting_invoke(
 ) -> Pin<Box<dyn Future<Output = boson_core::Result<()>> + Send + 'static>> {
     Box::pin(async {
         COUNTING_HITS.fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    })
+}
+
+fn sleep_invoke(
+    _ctx: Box<dyn ExecutionContext>,
+    params: serde_json::Value,
+) -> Pin<Box<dyn Future<Output = boson_core::Result<()>> + Send + 'static>> {
+    Box::pin(async move {
+        SLEEP_HITS.fetch_add(1, Ordering::SeqCst);
+        let ms = params
+            .get("ms")
+            .and_then(serde_json::Value::as_u64)
+            .unwrap_or(5_000);
+        sleep(Duration::from_millis(ms)).await;
         Ok(())
     })
 }
@@ -178,6 +208,11 @@ pub fn register_noop_task_with_priority(
 /// Register a handler that increments [`counting_hit_count`].
 pub fn register_counting_task(registry: &mut TaskRegistry, name: &'static str) {
     register_task_with_policy(registry, name, counting_invoke, TaskPolicy::default());
+}
+
+/// Register a handler that sleeps (`params.ms`, default 2000) then succeeds.
+pub fn register_sleep_task(registry: &mut TaskRegistry, name: &'static str) {
+    register_task_with_policy(registry, name, sleep_invoke, TaskPolicy::default());
 }
 
 /// Register a handler that always fails.

@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use boson_core::JobStatus;
 
 use super::super::state::RunState;
-use super::super::support::{counting_hit_count, noop_hit_count};
+use super::super::support::{counting_hit_count, noop_hit_count, sleep_hit_count};
 use super::super::RunMode;
 
 /// Assert a job's status by enqueue index (`AssertJobStatus` step).
@@ -110,10 +110,14 @@ fn handler_hits_since_start(state: &RunState, task: &str) -> usize {
     match task {
         "noop" => noop_hit_count().saturating_sub(state.noop_hits_at_start),
         "counting" => counting_hit_count().saturating_sub(state.counting_hits_at_start),
+        "sleep" => sleep_hit_count().saturating_sub(state.sleep_hits_at_start),
         _ if task.starts_with("counting") => {
             counting_hit_count().saturating_sub(state.counting_hits_at_start)
         }
         _ if task.starts_with("noop") => noop_hit_count().saturating_sub(state.noop_hits_at_start),
+        _ if task.starts_with("sleep") => {
+            sleep_hit_count().saturating_sub(state.sleep_hits_at_start)
+        }
         _ => 0,
     }
 }

@@ -8,6 +8,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use super::response::ApiResponse;
+use crate::auth::RequireAdmin;
 use crate::state::BosonState;
 
 /// Run summary for list and detail responses.
@@ -52,15 +53,17 @@ pub struct ListRunsQuery {
     /// Filter runs by parent job id.
     pub job_id: Option<String>,
     /// Max rows to return (default `100`).
+    /// Max rows (default `100`, hard-capped at [`crate::MAX_LIST_LIMIT`]).
     pub limit: Option<usize>,
 }
 
 /// `GET /runs` — list run history. Returns `200` with runs or `500` on backend error.
 pub async fn list_runs(
+    _admin: RequireAdmin,
     State(state): State<BosonState>,
     Query(q): Query<ListRunsQuery>,
 ) -> Json<ApiResponse<Vec<RunResponse>>> {
-    let limit = q.limit.unwrap_or(100);
+    let limit = crate::limits::clamp_list_limit(q.limit);
     match state.boson.list_runs(q.job_id.as_deref(), 0, limit).await {
         Ok(runs) => Json(ApiResponse::ok(
             runs.into_iter().map(RunResponse::from).collect(),
@@ -71,6 +74,7 @@ pub async fn list_runs(
 
 /// `GET /runs/:id` — load one run. Returns `200`, `404` when missing, or `500` on error.
 pub async fn get_run(
+    _admin: RequireAdmin,
     State(state): State<BosonState>,
     Path(id): Path<String>,
 ) -> (StatusCode, Json<ApiResponse<RunResponse>>) {

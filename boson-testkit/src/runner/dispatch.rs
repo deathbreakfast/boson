@@ -5,9 +5,9 @@ use super::steps::{
     run_admin_list_count, run_assert_different_job_id, run_assert_enqueue_error,
     run_assert_handler_hits, run_assert_job_count, run_assert_job_missing, run_assert_job_status,
     run_assert_run_count, run_assert_run_outcome, run_assert_same_job_id,
-    run_assert_task_run_stats, run_cancel_job, run_cancel_missing_job, run_drain, run_enqueue,
-    run_reregister_task_signature, run_retry_backoff, run_simulate_lease_contention,
-    run_upsert_task_config,
+    run_assert_task_run_stats, run_cancel_job, run_cancel_missing_job, run_cancel_while_draining,
+    run_drain, run_enqueue, run_reregister_task_signature, run_retry_backoff,
+    run_simulate_lease_contention, run_upsert_task_config,
 };
 use super::support::ScenarioStep;
 use super::{RunMode, ScenarioRunner, StepTiming};
@@ -60,6 +60,9 @@ impl ScenarioRunner<'_> {
                 .await
             }
             ScenarioStep::CancelJob { job_index } => run_cancel_job(state, *job_index).await,
+            ScenarioStep::CancelWhileDraining { job_index, wait_ms } => {
+                run_cancel_while_draining(state, *job_index, *wait_ms).await
+            }
             ScenarioStep::CancelMissingJob => run_cancel_missing_job(state).await,
             ScenarioStep::AssertJobMissing { job_id } => {
                 run_assert_job_missing(mode, state, job_id).await

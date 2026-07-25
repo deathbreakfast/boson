@@ -57,15 +57,51 @@ impl WorkerEngine {
             &run_id,
             &self.worker.runtime_label,
         );
+        let heartbeat = self.spawn_lease_heartbeat(lease_id.as_deref());
         let start = Utc::now();
-        let result = execute_job(&self.registry, &self.identity, &job).await;
+        let result = execute_job(&self.registry, &self.identity, &self.backend, &job).await;
+        if let Some(handle) = heartbeat {
+            handle.abort();
+        }
+        let result = self.apply_cancel_if_needed(&job.job_id, result).await;
         if let Err(ref e) = result {
-            telemetry::record_handler_error(&job.task_name, &job.job_id, &run_id, &e.to_string());
+            let msg = boson_core::sanitize_error_message(&e.to_string());
+            telemetry::record_handler_error(&job.task_name, &job.job_id, &run_id, &msg);
         }
         let duration_ms = (Utc::now() - start).num_milliseconds();
         finish_job_execution(self.as_ref(), run_id, job, result, duration_ms).await;
         if let Some(ref lid) = lease_id {
             let _ = self.backend.release_lease(lid).await;
+        }
+    }
+
+    fn spawn_lease_heartbeat(&self, lease_id: Option<&str>) -> Option<tokio::task::JoinHandle<()>> {
+        let lease_id = lease_id?.to_string();
+        let ttl = self.worker.lease_ttl_secs;
+        if ttl <= 0 {
+            return None;
+        }
+        let backend = Arc::clone(&self.backend);
+        let interval_secs = u64::try_from((ttl / 3).max(1)).unwrap_or(1);
+        Some(tokio::spawn(async move {
+            loop {
+                sleep(Duration::from_secs(interval_secs)).await;
+                if backend.extend_lease(&lease_id, ttl).await.is_err() {
+                    break;
+                }
+            }
+        }))
+    }
+
+    /// If the job was canceled while running, convert Ok into a cancel error so finish
+    /// does not overwrite status to Success.
+    async fn apply_cancel_if_needed(&self, job_id: &str, result: Result<()>) -> Result<()> {
+        result?;
+        match self.backend.get_job(job_id).await {
+            Ok(Some(j)) if j.status == JobStatus::Canceled => Err(
+                boson_core::BosonError::Internal("job canceled during execution".into()),
+            ),
+            _ => Ok(()),
         }
     }
 
@@ -78,7 +114,8 @@ impl WorkerEngine {
             &self.worker.runtime_label,
         );
         let start = Utc::now();
-        let result = execute_job(&self.registry, &self.identity, &job).await;
+        let result = execute_job(&self.registry, &self.identity, &self.backend, &job).await;
+        let result = self.apply_cancel_if_needed(&job.job_id, result).await;
         let duration_ms = (Utc::now() - start).num_milliseconds();
         match result {
             Ok(()) => {
@@ -88,19 +125,15 @@ impl WorkerEngine {
                 self.upsert_job(finished).await;
             }
             Err(e) => {
-                telemetry::record_handler_error(
-                    &job.task_name,
-                    &job.job_id,
-                    &run_id,
-                    &e.to_string(),
-                );
-                telemetry::record_task_failed(
-                    &job.task_name,
-                    &job.job_id,
-                    &run_id,
-                    &e.to_string(),
-                    false,
-                );
+                let msg = boson_core::sanitize_error_message(&e.to_string());
+                telemetry::record_handler_error(&job.task_name, &job.job_id, &run_id, &msg);
+                if msg.contains("job canceled") {
+                    let mut canceled = job;
+                    canceled.status = JobStatus::Canceled;
+                    self.upsert_job(canceled).await;
+                    return;
+                }
+                telemetry::record_task_failed(&job.task_name, &job.job_id, &run_id, &msg, false);
                 let _ = self.backend.revert_job_to_queued(&job.job_id).await;
             }
         }

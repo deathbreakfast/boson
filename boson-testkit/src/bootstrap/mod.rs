@@ -32,6 +32,8 @@ pub struct BootstrapSession {
     postgres_schema: Option<String>,
     /// Runtime default idempotency policy (`None` = builder default `Lwt`).
     idempotency_mode: Option<IdempotencyMode>,
+    /// Optional lease TTL override (seconds); `None` uses [`MatrixSpec::lease_ttl_secs`].
+    lease_ttl_secs: Option<i64>,
     scylla_config: Option<ScyllaQueueConfig>,
     redis_config: Option<RedisQueueConfig>,
     env_guard: Option<env_guard::EnvGuard>,
@@ -58,10 +60,18 @@ impl BootstrapSession {
             sqlite_temp: None,
             postgres_schema: None,
             idempotency_mode: None,
+            lease_ttl_secs: None,
             scylla_config: None,
             redis_config: None,
             env_guard: None,
         }
+    }
+
+    /// Override lease TTL for this session (call before build).
+    #[must_use]
+    pub const fn with_lease_ttl_secs(mut self, secs: i64) -> Self {
+        self.lease_ttl_secs = Some(secs);
+        self
     }
 
     /// Override Scylla connection/tuning for this session (call before [`install`](Self::install)).
@@ -261,9 +271,12 @@ impl BootstrapSession {
     }
 
     fn configure_builder(&self, builder: BosonBuilder) -> BosonBuilder {
+        let lease_ttl = self
+            .lease_ttl_secs
+            .unwrap_or_else(|| self.matrix.lease_ttl_secs());
         let mut builder = builder
             .worker_id(self.matrix.worker_id())
-            .lease_ttl_secs(self.matrix.lease_ttl_secs())
+            .lease_ttl_secs(lease_ttl)
             .runtime_label(self.matrix.runtime_label());
         if let Some(mode) = self.idempotency_mode {
             builder = builder.idempotency_mode(mode);
@@ -341,7 +354,9 @@ impl BootstrapSession {
                 Arc::clone(&identity),
                 WorkerSettings {
                     worker_id: format!("{}-{i}", self.matrix.worker_id()),
-                    lease_ttl_secs: self.matrix.lease_ttl_secs(),
+                    lease_ttl_secs: self
+                        .lease_ttl_secs
+                        .unwrap_or_else(|| self.matrix.lease_ttl_secs()),
                     runtime_label: self.matrix.runtime_label().to_string(),
                     worker_pools: None,
                     worker_poll_interval_ms: poll_interval_ms,

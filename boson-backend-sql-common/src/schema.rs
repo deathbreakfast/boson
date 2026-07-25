@@ -102,7 +102,7 @@ async fn ensure_schema_tables(backend: &SqlQueueBackend) -> Result<()> {
         .await?;
 
     backend
-        .run_ddl("CREATE INDEX IF NOT EXISTS boson_lease_job_id ON boson_lease (job_id)")
+        .run_ddl("CREATE UNIQUE INDEX IF NOT EXISTS boson_lease_job_id ON boson_lease (job_id)")
         .await?;
     backend
         .run_ddl("CREATE INDEX IF NOT EXISTS boson_lease_expires_at ON boson_lease (expires_at)")

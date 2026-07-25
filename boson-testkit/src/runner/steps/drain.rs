@@ -1,6 +1,7 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use anyhow::Result;
+use tokio::time::sleep;
 
 use super::super::state::RunState;
 use super::super::{RunMode, StepTiming};
@@ -11,6 +12,25 @@ pub async fn run_cancel_job(state: &RunState, job_index: usize) -> Result<Option
         return Ok(Some(format!("job_index {job_index} out of range")));
     };
     state.boson()?.cancel_job(job_id).await?;
+    Ok(None)
+}
+
+/// Run one drain concurrently with a delayed cancel (`CancelWhileDraining` step).
+pub async fn run_cancel_while_draining(
+    state: &RunState,
+    job_index: usize,
+    wait_ms: u64,
+) -> Result<Option<String>> {
+    let Some(job_id) = state.job_ids.get(job_index).cloned() else {
+        return Ok(Some(format!("job_index {job_index} out of range")));
+    };
+    let boson = state.boson()?;
+    let manual = state.manual()?;
+    let (_drained, cancel_result) = tokio::join!(manual.try_run_next(), async {
+        sleep(Duration::from_millis(wait_ms)).await;
+        boson.cancel_job(&job_id).await
+    });
+    cancel_result?;
     Ok(None)
 }
 

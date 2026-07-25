@@ -18,7 +18,11 @@
 //! - **Leases and pools** — multi-process coordination via [`BosonBuilder::lease_ttl_secs`] and
 //!   [`WorkerSettings`]
 //! - **HTTP admin (optional)** — nest [`boson_router`] at [`NEST_PATH`] when the `axum` feature
-//!   is enabled
+//!   is enabled; install [`AdminAuth`] and set `BOSON_REQUIRE_ADMIN_AUTH=1`
+//!   for fail-closed production mounts
+//! - **Lease heartbeats** — workers refresh leases during long handlers when `lease_ttl_secs > 0`
+//! - **Actor provenance** — HTTP enqueue uses a non-System service marker; optional
+//!   [`ActorJsonPolicy`] rejects System-shaped actors on external paths
 //!
 //! *Background jobs without locking you into one queue store.*
 //!
@@ -28,7 +32,7 @@
 //! - `sqlite` — [`SqliteQueueBackend`] durable single-host (or shared-file Mode 2)
 //! - `postgres` — [`PostgresQueueBackend`](https://docs.rs/boson-backend-postgres) shared durable state
 //! - `telemetry-console` — marker for console ops log ([`ConsoleOpsLog`] is always re-exported)
-//! - `axum` — HTTP admin API ([`boson_router`], [`BosonState`], [`NEST_PATH`])
+//! - `axum` — HTTP admin API ([`boson_router`], [`BosonState`], [`AdminAuth`], [`NEST_PATH`])
 //!
 //! Fleet backends (`boson-backend-redis`, `boson-backend-nats`) are separate workspace crates.
 //!
@@ -273,17 +277,27 @@
 //!
 //! ## 5. Mount HTTP admin (optional)
 //!
-//! With feature `axum`, nest [`boson_router`] at [`NEST_PATH`] (`/api/boson`) using [`BosonState`]:
+//! With feature `axum`, nest [`boson_router`] at [`NEST_PATH`] (`/api/boson`) using [`BosonState`].
+//! Install a host [`AdminAuth`] verifier and set `BOSON_REQUIRE_ADMIN_AUTH=1`
+//! (or [`BosonStateBuilder::require_admin_auth`])
+//! so production mounts fail closed without a verifier. HTTP enqueue stamps
+//! `{"Service":{"name":"boson_api"}}` (not System). List `limit` is hard-capped at 500.
 //!
 //! Runnable: `cargo run -p uf-boson --example axum_admin --features mem,axum`
-//! (`BOSON_EXAMPLE_SERVE=1` to listen).
+//! (`BOSON_EXAMPLE_SERVE=1` to listen; set `BOSON_ADMIN_TOKEN` for the example verifier).
 //!
 //! ## Prerequisites and gotchas
 //!
 //! - Enable the backend feature (or fleet crate) that matches your topology — `mem` is Mode 1 only.
 //! - Mode 2 workers need **`lease_ttl_secs > 0`** and unique [`worker_id`](BosonBuilder::worker_id) values.
+//! - With leases enabled, workers heartbeats `extend_lease` during handlers; set TTL=0 only for
+//!   single-process labs (heartbeats are skipped).
+//! - Do not treat HTTP admin as authenticated unless you installed [`AdminAuth`]
+//!   (and preferably `BOSON_REQUIRE_ADMIN_AUTH=1`).
 //! - Worker binaries must **link** every crate that submits `#[task]` inventory.
 //! - [`configure`] is required in any process that calls macro `send_with` (including enqueue-only hosts).
+//! - Host identity kits that map `actor_json` → privileges must not elevate the HTTP service marker
+//!   to System; see [`SECURITY.md`](https://github.com/unified-field-dev/boson/blob/main/SECURITY.md).
 //!
 //! ## Configuration precedence
 //!
@@ -316,9 +330,10 @@
 pub mod prelude;
 
 pub use boson_core::{
-    default_backend_from_global, BosonError, ExecutionContext, ExecutionContextFactory,
-    IdentityError, Job, JobEnqueueDisposition, JobStatus, JsonExecutionContextFactory,
-    QueueBackend, QueueRouter, RateLimitPolicy, RetryPolicy, Run, RunStatus, TaskConfig,
+    default_backend_from_global, default_http_enqueue_actor, ActorJsonPolicy, BosonError,
+    EnqueueTrust, ExecutionContext, ExecutionContextFactory, IdentityError, Job,
+    JobEnqueueDisposition, JobStatus, JsonExecutionContextFactory, QueueBackend, QueueRouter,
+    RateLimitPolicy, RejectExternalSystemActor, RetryPolicy, Run, RunStatus, TaskConfig,
     TaskRunStats,
 };
 /// Background task handler — typed params, `send_with` enqueue, and link-time registration.
@@ -385,4 +400,8 @@ pub use boson_backend_postgres::{
 };
 
 #[cfg(feature = "axum")]
-pub use boson_axum::{boson_router, BosonState, NEST_PATH};
+pub use boson_axum::{
+    boson_router, require_admin_auth_from_env, AdminAuth, AdminAuthError, AllowAllAdminAuth,
+    BosonState, BosonStateBuilder, RequireAdmin, StaticTokenAdminAuth, MAX_LIST_LIMIT, NEST_PATH,
+    REQUIRE_ADMIN_AUTH_ENV,
+};
