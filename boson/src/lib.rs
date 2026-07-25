@@ -290,7 +290,7 @@
 //!
 //! - Enable the backend feature (or fleet crate) that matches your topology — `mem` is Mode 1 only.
 //! - Mode 2 workers need **`lease_ttl_secs > 0`** and unique [`worker_id`](BosonBuilder::worker_id) values.
-//! - With leases enabled, workers heartbeats `extend_lease` during handlers; set TTL=0 only for
+//! - With leases enabled, workers heartbeat via `extend_lease` during handlers; set TTL=0 only for
 //!   single-process labs (heartbeats are skipped).
 //! - Do not treat HTTP admin as authenticated unless you installed [`AdminAuth`]
 //!   (and preferably `BOSON_REQUIRE_ADMIN_AUTH=1`).

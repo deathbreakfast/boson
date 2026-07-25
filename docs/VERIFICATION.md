@@ -94,7 +94,7 @@ Smoke scenario ids: `enqueue_and_drain`, `enqueue_only`, `run_lifecycle`, `idemp
 | Layer | ID / assert | Where |
 |-------|-------------|--------|
 | Contract | `contract_claim_ignores_status_in_params` | `backend_contract_suite!` (all adapters) |
-| Contract | `contract_try_claim_atomic`, lease contention/extend/expire | existing suite |
+| Contract | `contract_try_claim_atomic`, `contract_try_claim_parallel`, lease contention/extend/expire | suite |
 | Catalog | `cancel_running_job` | mid-run cooperative cancel → `Canceled` |
 | Catalog | `long_job_lease_heartbeat_drain` | TTL 2s < sleep 5s; single success |
 | Axum | admin 401/200, non-System actor, list clamp, retry cap | `boson-testkit/tests/axum_http_api.rs` |
@@ -138,5 +138,5 @@ golden fixtures when needed for assertions. Report directory:
 
 ## Backend contract suites
 
-Each adapter expands `backend_contract_suite!` (12 checks, including
-`claim_ignores_status_in_params`). See [`boson-testkit`](../boson-testkit/README.md).
+Each adapter expands `backend_contract_suite!` (13 checks, including
+`claim_ignores_status_in_params` and `try_claim_parallel`). See [`boson-testkit`](../boson-testkit/README.md).

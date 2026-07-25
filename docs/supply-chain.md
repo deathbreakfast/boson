@@ -27,8 +27,9 @@ To add a Git dependency:
 ## Advisory ignores
 
 Ignored advisories must include a `reason` in `deny.toml`. Prefer fixing or upgrading
-when a safe path exists. Current ignores target transitive broker SDK / `async-nats`
-lines that cannot be bumped without a coordinated adapter upgrade.
+when a safe path exists. As of `async-nats` 0.49, the prior `rustls-webpki` 0.102
+RUSTSEC-2026-* ignores were removed (dependency now pulls `rustls-webpki` 0.103).
+Remaining ignore: unmaintained `paste` via broker SDK transitive edges.
 
 ## Verification
 

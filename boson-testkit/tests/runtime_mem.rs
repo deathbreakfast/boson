@@ -14,9 +14,10 @@ use std::sync::Arc;
 
 use boson_backend_mem::MemQueueBackend;
 use boson_core::{
-    ExecutionContext, ExecutionContextFactory, IdentityError, JobStatus, QueueBackend,
+    EnqueueTrust, ExecutionContext, ExecutionContextFactory, IdentityError, JobStatus,
+    QueueBackend, RateLimitPolicy, RetryPolicy,
 };
-use boson_runtime::{Boson, TaskDescriptor, TaskRegistry};
+use boson_runtime::{Boson, TaskDefaults, TaskDescriptor, TaskRegistry};
 
 static MANUAL_RUNS: AtomicUsize = AtomicUsize::new(0);
 static SPAWN_RUNS: AtomicUsize = AtomicUsize::new(0);
@@ -138,4 +139,110 @@ async fn spawn_worker_completes_job() {
         tokio::time::sleep(std::time::Duration::from_millis(20)).await;
     }
     panic!("job did not complete in time");
+}
+
+#[tokio::test]
+async fn external_system_actor_rejected_no_job_row() {
+    let backend: Arc<dyn QueueBackend> = Arc::new(MemQueueBackend::new());
+    let mut registry = TaskRegistry::new();
+    register_task(&mut registry, "echo", echo_task_manual);
+    let (boson, _manual) = Boson::builder()
+        .queue_backend(Arc::clone(&backend))
+        .execution_context_factory(TestFactory)
+        .registry(Arc::new(registry))
+        .without_worker()
+        .build_manual()
+        .expect("build");
+
+    let err = boson
+        .enqueue_with_trust(
+            "echo",
+            serde_json::json!({"System": {"operation": "spoof"}}),
+            serde_json::json!({}),
+            None,
+            EnqueueTrust::External,
+        )
+        .await
+        .expect_err("must reject System on External");
+    assert!(
+        err.to_string().contains("System"),
+        "unexpected error: {err}"
+    );
+    let listed = boson
+        .list_jobs(None, 0, 100)
+        .await
+        .expect("list_jobs");
+    assert!(
+        listed.is_empty(),
+        "rejected enqueue must not insert a job row"
+    );
+}
+
+fn leak_secret_fail_task(
+    _ctx: Box<dyn ExecutionContext>,
+    _params: serde_json::Value,
+) -> Pin<Box<dyn Future<Output = boson_core::Result<()>> + Send + 'static>> {
+    Box::pin(async {
+        Err(boson_core::BosonError::Internal(
+            "db failed password=hunter2 more".into(),
+        ))
+    })
+}
+
+#[tokio::test]
+async fn handler_error_sanitized_in_run_row() {
+    let backend: Arc<dyn QueueBackend> = Arc::new(MemQueueBackend::new());
+    let mut registry = TaskRegistry::new();
+    let defaults = TaskDefaults {
+        priority: 1,
+        pool: "global",
+        retry: RetryPolicy {
+            max_attempts: 1,
+            base_delay_ms: 0,
+            backoff_multiplier: 2.0,
+            max_delay_ms: 1000,
+        },
+        rate: RateLimitPolicy {
+            max_in_flight: 0,
+            max_enqueue_per_second: 0,
+        },
+    };
+    let desc: &'static TaskDescriptor = Box::leak(Box::new(TaskDescriptor::with_defaults(
+        "leak",
+        leak_secret_fail_task,
+        "{}",
+        0,
+        defaults,
+    )));
+    registry.register(desc);
+    let (boson, manual) = Boson::builder()
+        .queue_backend(backend)
+        .execution_context_factory(TestFactory)
+        .registry(Arc::new(registry))
+        .without_worker()
+        .build_manual()
+        .expect("build");
+
+    let job_id = boson
+        .enqueue(
+            "leak",
+            serde_json::json!({"Service": {"name": "test"}}),
+            serde_json::json!({}),
+            None,
+        )
+        .await
+        .expect("enqueue");
+    assert!(manual.try_run_next().await);
+
+    let runs = boson.list_runs(Some(&job_id), 0, 8).await.expect("runs");
+    let run = runs.last().expect("run row");
+    let msg = run.error_message.as_deref().unwrap_or("");
+    assert!(
+        !msg.contains("hunter2"),
+        "secret must not be stored raw: {msg}"
+    );
+    assert!(
+        msg.contains("[redacted]") || msg.contains("password"),
+        "expected sanitized message, got: {msg}"
+    );
 }

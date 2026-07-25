@@ -29,6 +29,7 @@ macro_rules! backend_contract_suite {
         $crate::__backend_contract_one!($setup, $label, enqueue_inserts_and_lists);
         $crate::__backend_contract_one!($setup, $label, idempotency_reuses_nonterminal);
         $crate::__backend_contract_one!($setup, $label, try_claim_atomic);
+        $crate::__backend_contract_one!($setup, $label, try_claim_parallel);
         $crate::__backend_contract_one!($setup, $label, claim_ignores_status_in_params);
         $crate::__backend_contract_one!($setup, $label, pool_priority_order);
         $crate::__backend_contract_one!($setup, $label, max_in_flight_rate_limit);
@@ -53,6 +54,7 @@ macro_rules! backend_contract_suite {
             idempotency_reuses_nonterminal
         );
         $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, try_claim_atomic);
+        $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, try_claim_parallel);
         $crate::__backend_contract_one_ignored!(
             $setup,
             $label,

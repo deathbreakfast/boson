@@ -104,6 +104,30 @@ pub async fn try_claim_atomic(b: Arc<dyn QueueBackend>, _env: &BackendEnv) {
     assert!(b.try_claim_job(&job_id).await.unwrap().is_none());
 }
 
+/// Asserts two concurrent claimers produce exactly one success.
+///
+/// # Panics
+///
+/// Panics if backend operations fail or contract assertions are violated.
+pub async fn try_claim_parallel(b: Arc<dyn QueueBackend>, _env: &BackendEnv) {
+    let config = task_config("echo");
+    let job = sample_job("echo", "global", 1, None);
+    let (job_id, _) = enqueue(&*b, job, &config).await;
+    let b1 = Arc::clone(&b);
+    let b2 = Arc::clone(&b);
+    let id1 = job_id.clone();
+    let id2 = job_id.clone();
+    let (r1, r2) = tokio::join!(b1.try_claim_job(&id1), b2.try_claim_job(&id2));
+    let c1 = r1.expect("claimer a");
+    let c2 = r2.expect("claimer b");
+    let wins = usize::from(c1.is_some()) + usize::from(c2.is_some());
+    assert_eq!(wins, 1, "exactly one parallel claimer must win");
+    assert!(
+        b.try_claim_job(&job_id).await.unwrap().is_none(),
+        "third claim must fail"
+    );
+}
+
 /// Asserts claim CAS keys off structured job status, not a substring in `params_json`.
 ///
 /// Regression for Redis substring `"status":"queued"` matching inside attacker-controlled params.

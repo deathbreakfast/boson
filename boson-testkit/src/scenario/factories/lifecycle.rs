@@ -111,6 +111,10 @@ impl ScenarioSpec {
                     job_index: 0,
                     status: JobStatus::Canceled,
                 },
+                ScenarioStep::AssertRunOutcome {
+                    job_index: 0,
+                    run_status: RunStatus::Canceled,
+                },
             ],
         }
     }

@@ -468,6 +468,22 @@ async fn list_jobs_clamps_huge_limit() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn list_jobs_respects_small_limit() {
+    let app = HttpTestApp::new(|registry| register_noop_task(registry, "noop"));
+    for _ in 0..15 {
+        enqueue_via_http(&app, "noop").await;
+    }
+    let req = Request::builder()
+        .uri(format!("{NEST_PATH}/jobs?limit=10"))
+        .body(Body::empty())
+        .expect("request");
+    let (status, body) = app.request(req).await;
+    assert_eq!(status, StatusCode::OK);
+    let jobs = body["data"].as_array().expect("jobs");
+    assert_eq!(jobs.len(), 10);
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn post_task_config_rejects_huge_max_attempts() {
     let app = HttpTestApp::new(|registry| register_noop_task(registry, "noop"));
     enqueue_via_http(&app, "noop").await;
