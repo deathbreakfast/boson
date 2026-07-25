@@ -1,18 +1,18 @@
-//! Remote-worker process — claims and runs jobs from a shared `SQLite` database.
+//! Remote-worker process — claims and runs jobs from a shared `PostgreSQL` database.
 //!
-//! Pair with `remote_enqueue` against the same `BOSON_SQLITE_PATH`.
+//! Pair with `postgres_enqueue` against the same `DATABASE_URL`.
 //!
 //! ```bash
-//! export BOSON_SQLITE_PATH=/tmp/boson-remote.db
+//! export DATABASE_URL=postgres://localhost/boson
 //!
 //! # Terminal 1 — worker A
-//! BOSON_WORKER_ID=worker-a cargo run -p uf-boson --example remote_worker --features sqlite
+//! BOSON_WORKER_ID=worker-a cargo run -p uf-boson --example postgres_worker --features postgres
 //!
 //! # Terminal 2 — worker B (optional)
-//! BOSON_WORKER_ID=worker-b cargo run -p uf-boson --example remote_worker --features sqlite
+//! BOSON_WORKER_ID=worker-b cargo run -p uf-boson --example postgres_worker --features postgres
 //!
 //! # Terminal 3 — enqueue
-//! cargo run -p uf-boson --example remote_enqueue --features sqlite
+//! cargo run -p uf-boson --example postgres_enqueue --features postgres
 //! ```
 //!
 //! Stop workers with Ctrl-C. For scripted smoke, set `BOSON_WORKER_RUN_SECS`.
@@ -28,18 +28,20 @@ mod remote_shared_task;
 use std::sync::Arc;
 use std::time::Duration;
 
-use boson::{Boson, JsonExecutionContextFactory, SqliteQueueBackend};
+use boson::{Boson, JsonExecutionContextFactory, PostgresQueueBackend};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let path = std::env::var("BOSON_SQLITE_PATH").unwrap_or_else(|_| "/tmp/boson-remote.db".into());
-    let worker_id = std::env::var("BOSON_WORKER_ID").unwrap_or_else(|_| "remote-worker-1".into());
+    let url = std::env::var("DATABASE_URL")
+        .or_else(|_| std::env::var("BOSON_POSTGRES_URL"))
+        .unwrap_or_else(|_| "postgres://localhost/boson".into());
+    let worker_id = std::env::var("BOSON_WORKER_ID").unwrap_or_else(|_| "postgres-worker-1".into());
     let lease_ttl: i64 = std::env::var("BOSON_LEASE_TTL_SECS")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(30);
 
-    let backend = SqliteQueueBackend::new(&path).await?;
+    let backend = PostgresQueueBackend::connect(&url).await?;
     let _boson = Boson::builder()
         .queue_backend(Arc::new(backend))
         .execution_context_factory(JsonExecutionContextFactory)
@@ -48,7 +50,7 @@ async fn main() -> anyhow::Result<()> {
         .auto_registry()
         .build()?;
 
-    println!("worker {worker_id} listening (path={path}, lease_ttl_secs={lease_ttl})");
+    println!("worker {worker_id} listening (lease_ttl_secs={lease_ttl})");
 
     // Keep the process alive so the background worker loop can drain jobs.
     if let Ok(s) = std::env::var("BOSON_WORKER_RUN_SECS") {

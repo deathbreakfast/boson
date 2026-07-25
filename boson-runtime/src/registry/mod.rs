@@ -16,8 +16,8 @@
 //! [`BosonBuilder::auto_registry`](crate::BosonBuilder::auto_registry) must depend on every crate
 //! that defines tasks (enqueue needs descriptors; workers need handlers).
 //! See the [`boson`](https://docs.rs/uf-boson) crate
-//! [Mode 1](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary) /
-//! [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
+//! [Embedded](https://docs.rs/uf-boson/latest/boson/index.html#embedded-one-binary) /
+//! [Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#remote-worker-two-binaries).
 //!
 //! ## Manual registration (tests and advanced)
 //!

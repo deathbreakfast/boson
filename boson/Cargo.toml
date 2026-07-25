@@ -41,7 +41,7 @@ telemetry-console = []
 axum = ["dep:boson-axum"]
 
 [dev-dependencies]
-tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "signal"] }
 anyhow = { workspace = true }
 serde_json = { workspace = true }
 axum = { workspace = true }
@@ -71,6 +71,14 @@ required-features = ["sqlite"]
 [[example]]
 name = "remote_worker"
 required-features = ["sqlite"]
+
+[[example]]
+name = "postgres_enqueue"
+required-features = ["postgres"]
+
+[[example]]
+name = "postgres_worker"
+required-features = ["postgres"]
 
 [lints]
 workspace = true

@@ -14,13 +14,13 @@ use crate::store::{read, write, write_fallible, Inner};
 
 /// Process-local queue backend (not durable).
 ///
-/// **When to use:** Mode 1 embedded apps, CI, and unit tests. **Not** for Mode 2 remote workers —
+/// **When to use:** Embedded apps, CI, and unit tests. **Not** for remote workers —
 /// another process cannot see this memory. Prefer
 /// [`SqliteQueueBackend`](https://docs.rs/boson-backend-sqlite) or
 /// [`PostgresQueueBackend`](https://docs.rs/boson-backend-postgres) when processes share a queue.
 ///
 /// Getting started:
-/// [Mode 1](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary).
+/// [Embedded](https://docs.rs/uf-boson/latest/boson/index.html#embedded-one-binary).
 ///
 /// Thread-safe via [`std::sync::RwLock`].
 ///

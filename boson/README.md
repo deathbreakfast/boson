@@ -10,8 +10,8 @@ The crates.io package is **`uf-boson`** (`boson` is already taken). With `[lib] 
 imports stay `use boson::…`.
 
 **Source of truth:** `cargo doc -p uf-boson --features mem,axum --open` — guided get-started with
-[Mode 1 (embedded)](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary) and
-[Mode 2 (remote worker)](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
+[Embedded](https://docs.rs/uf-boson/latest/boson/index.html#embedded-one-binary) and
+[Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#remote-worker-two-binaries).
 Published docs: https://docs.rs/uf-boson
 
 ## Role
@@ -34,7 +34,87 @@ Published docs: https://docs.rs/uf-boson
 
 This crate ships with **no default features** (`default = []`).
 
-## Boot a worker (Mode 1)
+## How to run examples
+
+Canonical teaching path (start here). Topology docs:
+[Embedded](https://docs.rs/uf-boson/latest/boson/index.html#embedded-one-binary) /
+[Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#remote-worker-two-binaries).
+
+### 1. Embedded — `task_macro` (standalone)
+
+One process, in-memory backend. No external services.
+
+```bash
+cargo run -p uf-boson --example task_macro --features mem
+```
+
+Success: stdout prints `greet world (actor=…)`.
+
+### 2. Remote worker — SQLite (multi-process — run as a set)
+
+Enqueue host and workers share one database file. They are **not** useful alone.
+
+| Rule | Detail |
+|------|--------|
+| Shared env | Same `BOSON_SQLITE_PATH` on every process |
+| Start order | Worker(s) first, then enqueue |
+| Workers | Each needs a unique `BOSON_WORKER_ID`; `lease_ttl_secs > 0` (default 30 in the example) |
+| Stop | Ctrl-C on each worker (or set `BOSON_WORKER_RUN_SECS` for scripted smoke) |
+
+**Local SQLite** — 1–2 workers + enqueue:
+
+```bash
+export BOSON_SQLITE_PATH=/tmp/boson-remote.db
+
+# Terminal 1 — worker A
+BOSON_WORKER_ID=worker-a cargo run -p uf-boson --example remote_worker --features sqlite
+
+# Terminal 2 — worker B (optional)
+BOSON_WORKER_ID=worker-b cargo run -p uf-boson --example remote_worker --features sqlite
+
+# Terminal 3 — enqueue
+cargo run -p uf-boson --example remote_enqueue --features sqlite
+```
+
+### 3. Remote worker — Postgres (multi-process — run as a set)
+
+Same pattern against a shared database URL (production-shaped durable backend).
+
+| Rule | Detail |
+|------|--------|
+| Shared env | Same `DATABASE_URL` (or `BOSON_POSTGRES_URL`) on every process |
+| Start order | Worker(s) first, then enqueue |
+| Workers | Unique `BOSON_WORKER_ID`; positive lease TTL |
+
+```bash
+export DATABASE_URL=postgres://localhost/boson
+
+# Terminal 1 — worker A
+BOSON_WORKER_ID=worker-a cargo run -p uf-boson --example postgres_worker --features postgres
+
+# Terminal 2 — worker B (optional)
+BOSON_WORKER_ID=worker-b cargo run -p uf-boson --example postgres_worker --features postgres
+
+# Terminal 3 — enqueue
+cargo run -p uf-boson --example postgres_enqueue --features postgres
+```
+
+Stop with Ctrl-C on each worker. Real apps put `#[task]` handlers in a shared crate and
+`use my_tasks as _;` from the worker binary.
+
+### Other examples
+
+| Example | Topology | Features | Notes |
+|---------|----------|----------|-------|
+| `minimal_enqueue` | Embedded | `mem` | Manual registry + `Boson::enqueue` |
+| `idempotency_and_rate_limit` | Embedded | `mem` | Idempotency key + `max_in_flight` |
+| `axum_admin` | Embedded + HTTP admin | `mem,axum` | Nest `/api/boson`; `BOSON_EXAMPLE_SERVE=1` to listen |
+
+**Production:** Boson does not authenticate `/api/boson/*` by itself. Install host
+[`AdminAuth`](https://docs.rs/uf-boson/latest/boson/trait.AdminAuth.html) and prefer
+`BOSON_REQUIRE_ADMIN_AUTH=1` — see repository [`SECURITY.md`](../SECURITY.md).
+
+## Boot a worker (embedded)
 
 ```toml
 [dependencies]
@@ -63,8 +143,6 @@ configure(boson);
 
 With HTTP admin: `features = ["mem", "axum"]`. Full walkthrough: crate rustdoc Getting started and
 [`task_macro`](https://github.com/unified-field-dev/boson/blob/main/boson/examples/task_macro.rs).
-
-Mode 2 (enqueue host + worker): `remote_enqueue` / `remote_worker` examples (`--features sqlite`).
 
 ## Define handlers and enqueue
 

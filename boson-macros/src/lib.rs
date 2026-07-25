@@ -5,8 +5,8 @@
 //! - a typed params struct (`<FnName>Params`),
 //! - a typed enqueue handle (`<TaskName>::send_with`),
 //! - and link-time registration (see
-//!   [Mode 1](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary) /
-//!   [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries)
+//!   [Embedded](https://docs.rs/uf-boson/latest/boson/index.html#embedded-one-binary) /
+//!   [Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#remote-worker-two-binaries)
 //!   on the [`boson`](https://docs.rs/uf-boson) crate for worker vs enqueue-host boot).
 //!
 //! # Define a task
@@ -32,8 +32,8 @@
 //! # Enqueue work
 //!
 //! After **any process** that will call `send_with` has called
-//! [`configure`](https://docs.rs/boson-runtime/latest/boson_runtime/fn.configure.html) (Mode 1
-//! embedded **or** Mode 2 enqueue-only host):
+//! [`configure`](https://docs.rs/boson-runtime/latest/boson_runtime/fn.configure.html) (embedded
+//! **or** remote-worker enqueue-only host):
 //!
 //! ```ignore
 //! let job_id = NotifyUser::send_with(
@@ -76,8 +76,8 @@
 //!
 //! Registration for worker dispatch is emitted at compile time; boot-time collection is described
 //! on [`TaskRegistry`](https://docs.rs/boson-runtime/latest/boson_runtime/struct.TaskRegistry.html) and in the [`boson`](https://docs.rs/uf-boson) crate
-//! [Mode 1](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary) /
-//! [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries) sections.
+//! [Embedded](https://docs.rs/uf-boson/latest/boson/index.html#embedded-one-binary) /
+//! [Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#remote-worker-two-binaries) sections.
 //!
 //! Task handle names are derived from the **task name** (dots become underscores, `PascalCase`).
 //! Params struct names are derived from the **function name**.

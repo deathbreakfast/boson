@@ -10,7 +10,7 @@ Provides `#[boson::task]` for defining tasks with typed enqueue APIs.
 2. First parameter must be `Box<dyn ExecutionContext>`.
 3. Add crate dependencies (below).
 4. Enqueue with `<TaskName>::send_with(actor_json, params)` once the process has called
-   `configure` (Mode 1 embedded **or** Mode 2 enqueue host).
+   `configure` (embedded **or** remote-worker enqueue host).
 
 Optional policy attributes: `priority`, `pool`, `idempotency_mode`, `max_attempts`, `base_delay_ms`,
 `backoff_multiplier`, `max_delay_ms`, `max_in_flight`, `max_enqueue_per_second` — see rustdoc on

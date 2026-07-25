@@ -2,8 +2,8 @@
 //!
 //! The prelude pulls together types from several crates; it is not a single workflow. See the
 //! [`boson`](crate) crate [Getting started](crate#getting-started) for
-//! [Mode 1](crate#mode-1--embedded-one-binary) /
-//! [Mode 2](crate#mode-2--remote-worker-two-binaries),
+//! [Embedded](crate#embedded-one-binary) /
+//! [Remote worker](crate#remote-worker-two-binaries),
 //! [define tasks](crate#3-define-tasks), and [custom backends](crate#4-choose-persistence).
 
 pub use crate::{

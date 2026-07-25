@@ -168,10 +168,7 @@ async fn external_system_actor_rejected_no_job_row() {
         err.to_string().contains("System"),
         "unexpected error: {err}"
     );
-    let listed = boson
-        .list_jobs(None, 0, 100)
-        .await
-        .expect("list_jobs");
+    let listed = boson.list_jobs(None, 0, 100).await.expect("list_jobs");
     assert!(
         listed.is_empty(),
         "rejected enqueue must not insert a job row"

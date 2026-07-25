@@ -15,7 +15,7 @@ Topology (embedded vs remote): see [`boson`](https://docs.rs/uf-boson)
 - [`configure`](src/global.rs) / [`default`](src/global.rs) — process-wide default required for macro `send_with` (once at boot)
 - [`TaskRegistry`](src/registry/mod.rs) — auto-discovery via `auto_registry` or manual registration in tests
 
-## Boot with `#[task]` (Mode 1 — once per process)
+## Boot with `#[task]` (embedded — once per process)
 
 ```rust
 use std::sync::Arc;
@@ -33,8 +33,8 @@ configure(boson);
 ```
 
 Link every crate that defines `#[boson::task]` handlers into the **worker** binary. See
-[`boson`](https://docs.rs/uf-boson) [Mode 1](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary) /
-[Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries) and
+[`boson`](https://docs.rs/uf-boson) [Embedded](https://docs.rs/uf-boson/latest/boson/index.html#embedded-one-binary) /
+[Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#remote-worker-two-binaries) and
 [`task_macro`](https://github.com/unified-field-dev/boson/blob/main/boson/examples/task_macro.rs).
 
 ## Manual task registration (tests)

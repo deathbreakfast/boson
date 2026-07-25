@@ -64,19 +64,19 @@ impl BosonBuilder {
     /// When [`without_worker`](Self::without_worker) was **not** set (default), a Tokio task polls
     /// queued jobs, claims them, dispatches registered handlers (from
     /// [`auto_registry`](Self::auto_registry) or [`registry`](Self::registry)), and applies retry
-    /// policy — Mode 1 embedded or Mode 2 worker.
+    /// policy — embedded or remote-worker.
     ///
     /// When [`without_worker`](Self::without_worker) **was** set, no claim loop starts; use this
-    /// for Mode 2 enqueue hosts, then [`configure`](crate::configure) + `send_with`.
+    /// for remote-worker enqueue hosts, then [`configure`](crate::configure) + `send_with`.
     ///
     /// Enqueue with [`Boson::enqueue`] or macro `send_with` after [`configure`](crate::configure).
     /// For step-driven tests, use [`build_manual`](Self::build_manual) instead.
     ///
     /// Getting started:
-    /// [Mode 1](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary) /
-    /// [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
+    /// [Embedded](https://docs.rs/uf-boson/latest/boson/index.html#embedded-one-binary) /
+    /// [Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#remote-worker-two-binaries).
     ///
-    /// # Example — Mode 1 embedded
+    /// # Example — embedded
     ///
     /// ```rust,no_run
     /// use std::sync::Arc;
@@ -130,7 +130,7 @@ impl BosonBuilder {
     /// Build without a background worker; returns [`ManualWorker`] for step-driven execution.
     ///
     /// Prefer this in **tests** when you want to enqueue then call
-    /// [`ManualWorker::try_run_next`](crate::ManualWorker::try_run_next). For Mode 2 enqueue-only
+    /// [`ManualWorker::try_run_next`](crate::ManualWorker::try_run_next). For remote-worker enqueue-only
     /// production hosts that never drain locally, prefer [`without_worker`](Self::without_worker)
     /// + [`build`](Self::build) instead (no `ManualWorker` handle needed).
     ///

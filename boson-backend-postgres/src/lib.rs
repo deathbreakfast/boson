@@ -1,18 +1,18 @@
 //! `PostgreSQL` [`QueueBackend`](boson_core::QueueBackend) for Boson.
 //!
-//! **When to use:** shared durable state for Mode 1 or Mode 2 (enqueue hosts + worker binaries
-//! against the same database). Enable via the `boson` crate `postgres` feature.
+//! **When to use:** shared durable state for embedded or remote-worker topologies (enqueue hosts +
+//! worker binaries against the same database). Enable via the `boson` crate `postgres` feature.
 //!
-//! Mode 2 workers should set a unique `worker_id` and `lease_ttl_secs > 0`. See the
+//! Remote workers should set a unique `worker_id` and `lease_ttl_secs > 0`. See the
 //! [`boson`](https://docs.rs/uf-boson) crate
-//! [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
+//! [Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#remote-worker-two-binaries).
 //!
 //! ## Entry points
 //!
 //! - [`PostgresQueueBackend::connect`] — open a pool and bootstrap schema
 //! - [`install_default_postgres_backend`] — register on the global [`QueueRouter`](boson_core::QueueRouter)
 //!
-//! ## Mode 2 — Enqueue binary
+//! ## Remote worker — Enqueue binary
 //!
 //! Shared `DATABASE_URL` with the worker. No claim loop in this process:
 //!
@@ -39,7 +39,9 @@
 //! # }
 //! ```
 //!
-//! ## Mode 2 — Worker binary
+//! Runnable: `cargo run -p uf-boson --example postgres_enqueue --features postgres`
+//!
+//! ## Remote worker — Worker binary
 //!
 //! Same database URL, unique `worker_id`, and `lease_ttl_secs > 0`:
 //!
@@ -65,10 +67,12 @@
 //! # }
 //! ```
 //!
-//! Other Mode 2 backends:
-//! [`SQLite`](../boson_backend_sqlite/index.html#mode-2--enqueue-binary),
-//! [Redis](../boson_backend_redis/index.html#mode-2--enqueue-binary),
-//! [NATS](../boson_backend_nats/index.html#mode-2--enqueue-binary).
+//! Runnable: `cargo run -p uf-boson --example postgres_worker --features postgres`
+//!
+//! Other remote-worker backends:
+//! [`SQLite`](../boson_backend_sqlite/index.html#remote-worker--enqueue-binary),
+//! [Redis](../boson_backend_redis/index.html#remote-worker--enqueue-binary),
+//! [NATS](../boson_backend_nats/index.html#remote-worker--enqueue-binary).
 
 mod bootstrap;
 
@@ -82,8 +86,8 @@ pub use bootstrap::{
 
 /// PostgreSQL-backed queue backend.
 ///
-/// Mode 2 examples: [enqueue](index.html#mode-2--enqueue-binary) /
-/// [worker](index.html#mode-2--worker-binary).
+/// Remote-worker examples: [enqueue](index.html#remote-worker--enqueue-binary) /
+/// [worker](index.html#remote-worker--worker-binary).
 pub struct PostgresQueueBackend {
     inner: SqlQueueBackend,
 }
@@ -100,8 +104,8 @@ impl PostgresQueueBackend {
 
     /// Connect using a `PostgreSQL` connection URL and wire into [`Boson`](https://docs.rs/boson-runtime).
     ///
-    /// See crate-level [Mode 2 — Enqueue binary](index.html#mode-2--enqueue-binary) and
-    /// [Mode 2 — Worker binary](index.html#mode-2--worker-binary).
+    /// See crate-level [Remote worker — Enqueue binary](index.html#remote-worker--enqueue-binary) and
+    /// [Remote worker — Worker binary](index.html#remote-worker--worker-binary).
     ///
     /// # Examples
     ///
@@ -120,7 +124,7 @@ impl PostgresQueueBackend {
     ///     .queue_backend(Arc::new(backend))
     ///     .execution_context_factory(JsonExecutionContextFactory)
     ///     .worker_id("worker-1")
-    ///     .lease_ttl_secs(30) // Mode 2 multi-process
+    ///     .lease_ttl_secs(30) // remote-worker multi-process
     ///     .auto_registry()
     ///     .build()?;
     /// # Ok(())

@@ -17,6 +17,7 @@ use boson::{configure, task, Boson, JsonExecutionContextFactory, MemQueueBackend
 static GREET_RUNS: AtomicUsize = AtomicUsize::new(0);
 
 #[task(name = "greet")]
+#[allow(clippy::unused_async)] // `#[task]` requires async handlers.
 async fn greet(ctx: Box<dyn boson::ExecutionContext>, name: String) -> boson_core::Result<()> {
     GREET_RUNS.fetch_add(1, Ordering::SeqCst);
     println!("greet {} (actor={})", name, ctx.label());

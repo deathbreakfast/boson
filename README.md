@@ -40,7 +40,8 @@ async fn main() -> anyhow::Result<()> {
 }
 ```
 
-Add tasks with `#[task]` and enqueue via `send_with`. See the hero example below and
+Add tasks with `#[task]` and enqueue via `send_with`. See the hero example below,
+[`boson/README.md` — How to run examples](boson/README.md#how-to-run-examples), and
 `cargo doc -p uf-boson --features mem,axum --open` for the guided get-started (embedded vs
 remote worker topology).
 
@@ -196,6 +197,7 @@ Full baseline: [`docs/VERIFICATION.md`](docs/VERIFICATION.md). Contribute checkl
 | [`docs/supply-chain.md`](docs/supply-chain.md) | `cargo-deny` and Git dependency policy |
 | [`SECURITY.md`](SECURITY.md) | Vulnerability reporting |
 | [`boson-macros/README.md`](boson-macros/README.md) | `#[task]` macro, policies, inventory |
+| [`boson/README.md` — How to run examples](boson/README.md#how-to-run-examples) | Embedded + remote-worker example runbooks |
 | [`boson/examples/task_macro.rs`](boson/examples/task_macro.rs) | End-to-end macro + worker drain example |
 | [`boson-core/README.md`](boson-core/README.md) | `QueueBackend` trait and DTOs |
 | [`boson-runtime/README.md`](boson-runtime/README.md) | Builder, worker loop, task registry |

@@ -1,17 +1,17 @@
-//! `NATS` `JetStream` [`QueueBackend`] for fleet-scale deployments (Mode 2 remote / multi-host).
+//! `NATS` `JetStream` [`QueueBackend`] for fleet-scale deployments (remote worker / multi-host).
 //!
 //! **When to use:** broker-backed fleets with NATS `JetStream` (KV and/or workqueue). Not a
-//! `boson` public crate feature — depend on this crate directly. Mode 2 workers need unique
+//! `boson` public crate feature — depend on this crate directly. Remote workers need unique
 //! `worker_id` and `lease_ttl_secs > 0`.
 //!
 //! Getting started:
-//! [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
+//! [Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#remote-worker-two-binaries).
 //! Full Compose / KV vs `WorkQueue` / env: [crate README](https://github.com/unified-field-dev/boson/blob/main/boson-backend-nats/README.md).
 //!
 //! Fleet URL precedence: `BOSON_NATS_POOL_ROUTING` over `BOSON_NATS_URLS`
 //! (see [`connect_fleet_from_env`]).
 //!
-//! ## Mode 2 — Enqueue binary
+//! ## Remote worker — Enqueue binary
 //!
 //! Shared NATS with the worker. No claim loop in this process:
 //!
@@ -41,7 +41,7 @@
 //! Also [`connect_auto`] / [`connect_fleet_from_env`] with the same `without_worker` + `configure`
 //! pattern.
 //!
-//! ## Mode 2 — Worker binary
+//! ## Remote worker — Worker binary
 //!
 //! Same NATS URL / fleet, unique `worker_id`, and `lease_ttl_secs > 0`:
 //!
@@ -67,10 +67,10 @@
 //! # }
 //! ```
 //!
-//! Other Mode 2 backends:
-//! [`SQLite`](../boson_backend_sqlite/index.html#mode-2--enqueue-binary),
-//! [Postgres](../boson_backend_postgres/index.html#mode-2--enqueue-binary),
-//! [Redis](../boson_backend_redis/index.html#mode-2--enqueue-binary).
+//! Other remote-worker backends:
+//! [`SQLite`](../boson_backend_sqlite/index.html#remote-worker--enqueue-binary),
+//! [Postgres](../boson_backend_postgres/index.html#remote-worker--enqueue-binary),
+//! [Redis](../boson_backend_redis/index.html#remote-worker--enqueue-binary).
 //!
 //! Custom adapters: **How to implement** on [`QueueBackend`].
 
@@ -113,8 +113,8 @@ struct LeaseRow {
 
 /// `NATS` `JetStream` KV queue backend.
 ///
-/// Mode 2 examples: [enqueue](index.html#mode-2--enqueue-binary) /
-/// [worker](index.html#mode-2--worker-binary).
+/// Remote-worker examples: [enqueue](index.html#remote-worker--enqueue-binary) /
+/// [worker](index.html#remote-worker--worker-binary).
 pub struct NatsQueueBackend {
     kv: Store,
     keys: keys::Keyspace,

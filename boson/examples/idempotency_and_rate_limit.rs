@@ -89,7 +89,7 @@ async fn main() -> anyhow::Result<()> {
         .await
     {
         Err(BosonError::RateLimited(_)) => {
-            println!("rate limit: second enqueue rejected as expected")
+            println!("rate limit: second enqueue rejected as expected");
         }
         Ok(id) => anyhow::bail!("expected RateLimited, got job {id}"),
         Err(e) => anyhow::bail!("expected RateLimited, got {e}"),

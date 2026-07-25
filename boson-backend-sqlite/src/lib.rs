@@ -1,19 +1,19 @@
 //! `SQLite` [`QueueBackend`](boson_core::QueueBackend) for Boson.
 //!
-//! **When to use:** durable single-host Mode 1, or Mode 2 on one machine when enqueue and worker
-//! processes share the same database file (`BOSON_SQLITE_PATH`). Enable via the `boson` crate
-//! `sqlite` feature.
+//! **When to use:** durable single-host embedded boots, or remote worker on one machine when
+//! enqueue and worker processes share the same database file (`BOSON_SQLITE_PATH`). Enable via the
+//! `boson` crate `sqlite` feature.
 //!
 //! Getting started:
-//! [Mode 1](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary) /
-//! [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
+//! [Embedded](https://docs.rs/uf-boson/latest/boson/index.html#embedded-one-binary) /
+//! [Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#remote-worker-two-binaries).
 //!
 //! ## Entry points
 //!
 //! - [`SqliteQueueBackend::new`] / [`SqliteQueueBackend::connect`] — open a database
 //! - [`install_default_sqlite_backend`] — register on the global [`QueueRouter`](boson_core::QueueRouter)
 //!
-//! ## Mode 2 — Enqueue binary
+//! ## Remote worker — Enqueue binary
 //!
 //! Shared file path with the worker. No claim loop in this process:
 //!
@@ -41,7 +41,7 @@
 //!
 //! Runnable: `cargo run -p uf-boson --example remote_enqueue --features sqlite`
 //!
-//! ## Mode 2 — Worker binary
+//! ## Remote worker — Worker binary
 //!
 //! Same `BOSON_SQLITE_PATH`, unique `worker_id`, and `lease_ttl_secs > 0`:
 //!
@@ -68,10 +68,10 @@
 //!
 //! Runnable: `cargo run -p uf-boson --example remote_worker --features sqlite`
 //!
-//! Other Mode 2 backends:
-//! [Postgres](../boson_backend_postgres/index.html#mode-2--enqueue-binary),
-//! [Redis](../boson_backend_redis/index.html#mode-2--enqueue-binary),
-//! [NATS](../boson_backend_nats/index.html#mode-2--enqueue-binary).
+//! Other remote-worker backends:
+//! [Postgres](../boson_backend_postgres/index.html#remote-worker--enqueue-binary),
+//! [Redis](../boson_backend_redis/index.html#remote-worker--enqueue-binary),
+//! [NATS](../boson_backend_nats/index.html#remote-worker--enqueue-binary).
 
 mod bootstrap;
 
@@ -85,11 +85,11 @@ pub use bootstrap::install_default_sqlite_backend;
 
 /// `SQLite`-backed queue backend.
 ///
-/// Suitable for Mode 1 embedded boots and for Mode 2 when both binaries open the **same path**.
+/// Suitable for embedded boots and for remote worker when both binaries open the **same path**.
 /// For multi-host fleets prefer Postgres, Redis, or NATS.
 ///
-/// Mode 2 examples: [enqueue](index.html#mode-2--enqueue-binary) /
-/// [worker](index.html#mode-2--worker-binary).
+/// Remote-worker examples: [enqueue](index.html#remote-worker--enqueue-binary) /
+/// [worker](index.html#remote-worker--worker-binary).
 pub struct SqliteQueueBackend {
     inner: SqlQueueBackend,
 }
@@ -97,8 +97,8 @@ pub struct SqliteQueueBackend {
 impl SqliteQueueBackend {
     /// Open a `SQLite` database at `path` (creates the file if missing).
     ///
-    /// See crate-level [Mode 2 — Enqueue binary](index.html#mode-2--enqueue-binary) and
-    /// [Mode 2 — Worker binary](index.html#mode-2--worker-binary).
+    /// See crate-level [Remote worker — Enqueue binary](index.html#remote-worker--enqueue-binary) and
+    /// [Remote worker — Worker binary](index.html#remote-worker--worker-binary).
     ///
     /// # Examples
     ///

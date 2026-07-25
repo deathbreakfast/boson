@@ -41,7 +41,7 @@ reachable path from public APIs or adapters.
 | HTTP enqueue actor | Default `actor_json` is `{"Service":{"name":"boson_api"}}` (not System). Host identity kits must not elevate this marker. |
 | Actor provenance | Optional `ActorJsonPolicy` / `RejectExternalSystemActor` rejects System-shaped JSON on `EnqueueTrust::External`. In-process enqueue remains trusted. |
 | List limits | HTTP list `limit` is clamped to 500 (`MAX_LIST_LIMIT`). |
-| Leases | Mode 2: `lease_ttl_secs > 0` + unique `worker_id`. Workers heartbeat `extend_lease` during handlers. |
+| Leases | Remote worker: `lease_ttl_secs > 0` + unique `worker_id`. Workers heartbeat `extend_lease` during handlers. |
 | Cancel | Cancel is cooperative: in-flight handlers are aborted via status watch; finish does not overwrite to Success. |
 | Errors | Handler errors are sanitized/truncated before run rows and telemetry; do not log `params_json` / `actor_json`. |
 | Rate limits | Enqueue rate limits are process-local unless the backend provides shared counters. Retry fields via HTTP config are capped. |

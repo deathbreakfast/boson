@@ -4,13 +4,13 @@
 ///
 /// Usually constructed by [`BosonBuilder`](crate::BosonBuilder) via [`worker_id`](crate::BosonBuilder::worker_id)
 /// and [`lease_ttl_secs`](crate::BosonBuilder::lease_ttl_secs). Defaults: worker id from
-/// `INSTANCE_ID` / `BOSON_WORKER_ID` / `boson-worker-1`, lease TTL `0` (Mode 1 embedded, no
+/// `INSTANCE_ID` / `BOSON_WORKER_ID` / `boson-worker-1`, lease TTL `0` (embedded, no
 /// distributed leases).
 ///
 /// Getting started:
-/// [Mode 2 — Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
+/// [Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#remote-worker-two-binaries).
 ///
-/// # Example — multiple worker processes (Mode 2)
+/// # Example — multiple worker processes (remote worker)
 ///
 /// Run one Boson instance per process against **shared** persistence (Postgres, `SQLite` path,
 /// Redis, or NATS — not [`MemQueueBackend`](https://docs.rs/boson-backend-mem), which is

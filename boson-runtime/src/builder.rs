@@ -30,18 +30,18 @@ pub(crate) enum ActorPolicyChoice {
 ///
 /// **Topology** (see the [`boson`](https://docs.rs/uf-boson) crate Getting started):
 ///
-/// | Mode | Builder posture |
-/// |------|-----------------|
-/// | Mode 1 — Embedded | [`auto_registry`](Self::auto_registry) + [`build`](Self::build) (or [`build_manual`](Self::build_manual) in tests) |
-/// | Mode 2 — Enqueue host | [`auto_registry`](Self::auto_registry) + [`without_worker`](Self::without_worker) + [`build`](Self::build) + [`configure`](crate::configure) |
-/// | Mode 2 — Worker | [`worker_id`](Self::worker_id) + [`lease_ttl_secs`](Self::lease_ttl_secs) (`> 0`) + [`auto_registry`](Self::auto_registry) + [`build`](Self::build) |
+/// | Topology | Builder posture |
+/// |----------|-----------------|
+/// | Embedded | [`auto_registry`](Self::auto_registry) + [`build`](Self::build) (or [`build_manual`](Self::build_manual) in tests) |
+/// | Remote worker — enqueue host | [`auto_registry`](Self::auto_registry) + [`without_worker`](Self::without_worker) + [`build`](Self::build) + [`configure`](crate::configure) |
+/// | Remote worker — worker | [`worker_id`](Self::worker_id) + [`lease_ttl_secs`](Self::lease_ttl_secs) (`> 0`) + [`auto_registry`](Self::auto_registry) + [`build`](Self::build) |
 ///
 /// **Optional:** [`ops_log`](Self::ops_log) / [`ops_log_console`](Self::ops_log_console) for
 /// telemetry ([`OpsLog`](boson_telemetry::OpsLog)).
 ///
 /// # Examples
 ///
-/// ## Mode 1 — embedded (enqueue + worker in one process)
+/// ## Embedded (enqueue + worker in one process)
 ///
 /// After [`build`](Self::build), call [`configure`](crate::configure) if callers use macro
 /// `send_with` (not required when holding `Boson` and calling [`Boson::enqueue`] directly).
@@ -64,7 +64,7 @@ pub(crate) enum ActorPolicyChoice {
 /// # }
 /// ```
 ///
-/// ## Mode 2 — enqueue-only host
+/// ## Remote worker — enqueue-only host
 ///
 /// ```rust,no_run
 /// use std::sync::Arc;
@@ -74,7 +74,7 @@ pub(crate) enum ActorPolicyChoice {
 /// use boson_runtime::{configure, Boson};
 ///
 /// # fn main() -> boson_core::Result<()> {
-/// // Production Mode 2: use Sqlite/Postgres/Redis/NATS — mem cannot cross processes.
+/// // Production remote worker: use Sqlite/Postgres/Redis/NATS — mem cannot cross processes.
 /// let boson = Boson::builder()
 ///     .queue_backend(Arc::new(MemQueueBackend::new()))
 ///     .execution_context_factory(JsonExecutionContextFactory)
@@ -105,9 +105,9 @@ pub struct BosonBuilder {
 impl BosonBuilder {
     /// Worker identity for lease claims (default: `INSTANCE_ID` / `BOSON_WORKER_ID` / `boson-worker-1`).
     ///
-    /// Required to be **unique per process** in Mode 2 (multiple workers sharing a backend). See
+    /// Required to be **unique per process** for remote workers (multiple workers sharing a backend). See
     /// [`WorkerSettings`](crate::WorkerSettings) and the
-    /// [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries)
+    /// [Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#remote-worker-two-binaries)
     /// section on the `boson` crate.
     ///
     /// # Example
@@ -138,7 +138,7 @@ impl BosonBuilder {
 
     /// Run lease TTL in seconds; when `> 0`, claim path acquires leases before job claim.
     ///
-    /// Use `0` (default) for Mode 1 embedded monoliths. Use a positive value for Mode 2 so
+    /// Use `0` (default) for embedded monoliths. Use a positive value for remote workers so
     /// workers do not double-execute the same run. Env override: `BOSON_LEASE_TTL_SECS`.
     ///
     /// See [`WorkerSettings`](crate::WorkerSettings).
@@ -185,7 +185,7 @@ impl BosonBuilder {
     /// Inject queue persistence backend explicitly.
     ///
     /// Pick the backend for your topology: [`MemQueueBackend`](https://docs.rs/boson-backend-mem)
-    /// for Mode 1 only; `SQLite`/Postgres/Redis/NATS when processes share a queue. See the
+    /// for embedded only; `SQLite`/Postgres/Redis/NATS when processes share a queue. See the
     /// [`boson`](https://docs.rs/uf-boson) crate backend table.
     #[must_use]
     pub fn queue_backend(mut self, backend: Arc<dyn QueueBackend>) -> Self {
@@ -293,8 +293,8 @@ impl BosonBuilder {
     /// dependency (for example `use my_worker as _;`).
     ///
     /// Getting started:
-    /// [Mode 1](https://docs.rs/uf-boson/latest/boson/index.html#mode-1--embedded-one-binary) /
-    /// [Mode 2](https://docs.rs/uf-boson/latest/boson/index.html#mode-2--remote-worker-two-binaries).
+    /// [Embedded](https://docs.rs/uf-boson/latest/boson/index.html#embedded-one-binary) /
+    /// [Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#remote-worker-two-binaries).
     ///
     /// # Example
     ///
@@ -333,13 +333,13 @@ impl BosonBuilder {
     /// Do not spawn the background worker loop.
     ///
     /// Use for:
-    /// - **Mode 2 enqueue hosts** — this process only [`configure`](crate::configure)s and
+    /// - **Remote-worker enqueue hosts** — this process only [`configure`](crate::configure)s and
     ///   calls `send_with`; a separate worker binary drains the shared backend
     /// - **Tests** — pair with [`build_manual`](Self::build_manual) and
     ///   [`ManualWorker`](crate::ManualWorker)
     ///
     /// Getting started:
-    /// [Mode 2 — enqueue binary](https://docs.rs/uf-boson/latest/boson/index.html#enqueue-binary).
+    /// [Enqueue binary](https://docs.rs/uf-boson/latest/boson/index.html#enqueue-binary).
     ///
     /// # Example — enqueue-only process
     ///
