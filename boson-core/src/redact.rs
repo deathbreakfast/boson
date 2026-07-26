@@ -78,10 +78,23 @@ pub fn redact_credentials_in_text(text: &str) -> String {
 ///
 /// `label` is a short prefix such as `"redis connect"` or `"nats connect"`.
 /// Use for all adapter connect paths so URL userinfo never lands in [`BosonError::Backend`].
+/// When `err` is a typed [`std::error::Error`], prefer [`map_backend_connect_err_source`].
 #[must_use]
 pub fn map_backend_connect_err(label: &str, endpoint: &str, err: impl fmt::Display) -> BosonError {
     let detail = redact_credentials_in_text(&err.to_string());
-    BosonError::Backend(format!("{label} {}: {detail}", redact_endpoint(endpoint)))
+    BosonError::backend(format!("{label} {}: {detail}", redact_endpoint(endpoint)))
+}
+
+/// Like [`map_backend_connect_err`], preserving `err` as [`std::error::Error::source`].
+#[must_use]
+pub fn map_backend_connect_err_source(
+    label: &str,
+    endpoint: &str,
+    err: impl std::error::Error + Send + Sync + 'static,
+) -> BosonError {
+    let detail = redact_credentials_in_text(&err.to_string());
+    let message = format!("{label} {}: {detail}", redact_endpoint(endpoint));
+    BosonError::backend_source(message, err)
 }
 
 #[cfg(test)]
@@ -133,5 +146,23 @@ mod tests {
         let msg = err.to_string();
         assert!(msg.contains("nats connect plain-host:4222"), "msg: {msg}");
         assert!(msg.contains("broker down"), "msg: {msg}");
+    }
+
+    #[test]
+    fn map_backend_connect_err_source_preserves_cause() {
+        use std::error::Error as StdError;
+
+        #[derive(Debug, thiserror::Error)]
+        #[error("broker down")]
+        struct BrokerDown;
+
+        let err =
+            map_backend_connect_err_source("nats connect", "nats://127.0.0.1:4222", BrokerDown);
+        assert!(err
+            .source()
+            .is_some_and(|s| s.to_string().contains("broker down")));
+        assert!(err
+            .to_string()
+            .contains("nats connect nats://127.0.0.1:4222"));
     }
 }

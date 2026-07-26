@@ -4,7 +4,9 @@ use std::sync::Arc;
 
 use async_nats::jetstream::context::PublishAckFuture;
 use boson_core::{redact_credentials_in_text, BosonError, Result};
+use boson_telemetry::ops_log;
 use bytes::Bytes;
+use serde_json::json;
 use tokio::sync::Semaphore;
 
 use crate::config::NatsEnqueueConfig;
@@ -37,10 +39,13 @@ impl PublishPipeline {
         body: Bytes,
     ) -> Result<()> {
         let permit = self.semaphore.clone().acquire_owned().await.map_err(|e| {
-            BosonError::Backend(format!(
-                "nats publish pipeline: {}",
-                redact_credentials_in_text(&e.to_string())
-            ))
+            BosonError::backend_source(
+                format!(
+                    "nats publish pipeline: {}",
+                    redact_credentials_in_text(&e.to_string())
+                ),
+                e,
+            )
         })?;
 
         let ack_future: PublishAckFuture =
@@ -48,23 +53,40 @@ impl PublishPipeline {
                 .publish(subject.clone(), body)
                 .await
                 .map_err(|e| {
-                    BosonError::Backend(format!(
-                        "nats publish {subject}: {}",
-                        redact_credentials_in_text(&e.to_string())
-                    ))
+                    BosonError::backend_source(
+                        format!(
+                            "nats publish {subject}: {}",
+                            redact_credentials_in_text(&e.to_string())
+                        ),
+                        e,
+                    )
                 })?;
 
         if self.sync_ack {
             ack_future.await.map_err(|e| {
-                BosonError::Backend(format!(
-                    "nats publish ack {subject}: {}",
-                    redact_credentials_in_text(&e.to_string())
-                ))
+                BosonError::backend_source(
+                    format!(
+                        "nats publish ack {subject}: {}",
+                        redact_credentials_in_text(&e.to_string())
+                    ),
+                    e,
+                )
             })?;
             drop(permit);
         } else {
             tokio::spawn(async move {
-                let _ = ack_future.await;
+                if let Err(e) = ack_future.await {
+                    let detail = redact_credentials_in_text(&e.to_string());
+                    let log = ops_log();
+                    log.record_counter("boson_nats_publish_ack_failed", &[], 1.0);
+                    log.log_event(
+                        "boson_nats_publish_ack_failed",
+                        &json!({
+                            "subject": subject,
+                            "message": detail,
+                        }),
+                    );
+                }
                 drop(permit);
             });
         }

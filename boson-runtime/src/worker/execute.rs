@@ -27,7 +27,7 @@ pub async fn execute_job(
     }
     let ctx = identity
         .build(&job.actor_json)
-        .map_err(|e| BosonError::Internal(e.to_string()))?;
+        .map_err(|e| BosonError::internal_source("execution context build failed", e))?;
     let invoke = (descriptor.invoke)(ctx, job.params_json.clone());
     let job_id = job.job_id.clone();
     let backend = Arc::clone(backend);
@@ -43,8 +43,8 @@ pub async fn execute_job(
     };
     tokio::select! {
         result = invoke => result,
-        () = cancel_watch => Err(BosonError::Internal(
-            "job canceled during execution".into(),
+        () = cancel_watch => Err(BosonError::internal(
+            "job canceled during execution",
         )),
     }
 }

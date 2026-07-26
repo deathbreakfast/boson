@@ -75,7 +75,7 @@ pub fn expand_task(attrs: &TaskAttrs, input: &ItemFn) -> TokenStream2 {
                 params: #params_struct_name,
             ) -> ::boson_core::Result<String> {
                 let b = ::boson_runtime::default()
-                    .ok_or_else(|| ::boson_core::BosonError::Internal("boson not configured; call boson_runtime::configure()".to_string()))?;
+                    .ok_or_else(|| ::boson_core::BosonError::internal("boson not configured; call boson_runtime::configure()".to_string()))?;
                 let params_json = serde_json::to_value(params)
                     .map_err(|e| ::boson_core::BosonError::ParamError(e.to_string()))?;
                 b.enqueue(#task_name_lit, actor_json, params_json, None).await
@@ -92,7 +92,7 @@ pub fn expand_task(attrs: &TaskAttrs, input: &ItemFn) -> TokenStream2 {
                     std::boxed::Box::pin(async move {
                         #deserialize_code
                         #internal_fn_name(ctx, #(params.#param_idents),*).await
-                            .map_err(|e| ::boson_core::BosonError::Internal(e.to_string()))
+                            .map_err(|e| ::boson_core::BosonError::internal(e.to_string()))
                     })
                 },
                 "{}",

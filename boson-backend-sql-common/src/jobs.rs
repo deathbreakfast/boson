@@ -116,7 +116,7 @@ impl SqlQueueBackend {
         let job_id = job.job_id.clone();
         match self.upsert_job_impl(&job).await {
             Ok(()) => Ok((job_id, JobEnqueueDisposition::InsertedNew)),
-            Err(BosonError::Backend(msg)) if msg.contains("UNIQUE") || msg.contains("unique") => {
+            Err(e) if e.is_backend_unique_violation() => {
                 if let Some(ref key) = job.idempotency_key {
                     if let Some(existing) =
                         self.find_nonterminal_by_idempotency_key_impl(key).await?
@@ -124,7 +124,7 @@ impl SqlQueueBackend {
                         return Ok((existing, JobEnqueueDisposition::ReusedIdempotent));
                     }
                 }
-                Err(BosonError::Backend(msg))
+                Err(e)
             }
             Err(e) => Err(e),
         }

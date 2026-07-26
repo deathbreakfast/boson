@@ -180,8 +180,8 @@ fn leak_secret_fail_task(
     _params: serde_json::Value,
 ) -> Pin<Box<dyn Future<Output = boson_core::Result<()>> + Send + 'static>> {
     Box::pin(async {
-        Err(boson_core::BosonError::Internal(
-            "db failed password=hunter2 more".into(),
+        Err(boson_core::BosonError::internal(
+            "db failed password=hunter2 more",
         ))
     })
 }

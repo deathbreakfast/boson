@@ -1,10 +1,8 @@
 //! Manual single-step worker for tests (no background task).
 
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
-use boson_core::ExecutionContextFactory;
-use boson_core::QueueBackend;
-use tokio::sync::Mutex;
+use boson_core::{ExecutionContextFactory, QueueBackend};
 
 use super::claim::claim_next_job;
 use super::config::WorkerSettings;
@@ -47,7 +45,18 @@ use crate::registry::TaskRegistry;
 /// ```
 pub struct ManualWorker {
     inner: Arc<WorkerEngine>,
-    lock: Mutex<()>,
+    /// True while a claim/execute step is in flight (never held across `.await`).
+    in_flight: Mutex<bool>,
+}
+
+struct ClearInFlight<'a>(&'a Mutex<bool>);
+
+impl Drop for ClearInFlight<'_> {
+    fn drop(&mut self) {
+        if let Ok(mut guard) = self.0.lock() {
+            *guard = false;
+        }
+    }
 }
 
 impl ManualWorker {
@@ -65,13 +74,23 @@ impl ManualWorker {
                 identity,
                 worker,
             }),
-            lock: Mutex::new(()),
+            in_flight: Mutex::new(false),
         }
     }
 
     /// Process at most one job across all pools.
     pub async fn try_run_next(&self) -> bool {
-        let _guard = self.lock.lock().await;
+        {
+            let Ok(mut in_flight) = self.in_flight.lock() else {
+                return false;
+            };
+            if *in_flight {
+                return false;
+            }
+            *in_flight = true;
+        }
+        let _clear = ClearInFlight(&self.in_flight);
+
         let discovered = self
             .inner
             .backend

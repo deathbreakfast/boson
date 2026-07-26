@@ -122,6 +122,7 @@ mod tests {
         let Err(err) = result else {
             panic!("must fail without AdminAuth");
         };
-        assert!(err.contains("AdminAuth"));
+        assert_eq!(err, crate::BosonAxumError::MissingAdminAuth);
+        assert!(err.to_string().contains("AdminAuth"));
     }
 }

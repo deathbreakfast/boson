@@ -147,7 +147,7 @@ fn fail_invoke(
     _ctx: Box<dyn ExecutionContext>,
     _params: serde_json::Value,
 ) -> Pin<Box<dyn Future<Output = boson_core::Result<()>> + Send + 'static>> {
-    Box::pin(async { Err(BosonError::Internal("testkit fail task".into())) })
+    Box::pin(async { Err(BosonError::internal("testkit fail task")) })
 }
 
 fn fail_n_then_ok_invoke(
@@ -158,7 +158,7 @@ fn fail_n_then_ok_invoke(
         let remaining = FAIL_REMAINING.load(Ordering::SeqCst);
         if remaining > 0 {
             FAIL_REMAINING.fetch_sub(1, Ordering::SeqCst);
-            Err(BosonError::Internal("testkit fail n then ok".into()))
+            Err(BosonError::internal("testkit fail n then ok"))
         } else {
             Ok(())
         }

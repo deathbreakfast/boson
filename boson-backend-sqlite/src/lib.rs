@@ -158,9 +158,9 @@ impl SqliteQueueBackend {
     pub fn pool(&self) -> Result<&SqlitePool> {
         match self.inner.pool() {
             boson_backend_sql_common::SqlPool::Sqlite(pool) => Ok(pool),
-            boson_backend_sql_common::SqlPool::Postgres(_) => Err(BosonError::Internal(
-                "sqlite backend has non-sqlite pool".into(),
-            )),
+            boson_backend_sql_common::SqlPool::Postgres(_) => {
+                Err(BosonError::internal("sqlite backend has non-sqlite pool"))
+            }
         }
     }
 }

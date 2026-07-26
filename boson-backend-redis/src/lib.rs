@@ -324,15 +324,22 @@ return updated
 ";
 
 fn map_err(e: impl std::fmt::Display) -> BosonError {
-    BosonError::Backend(format!(
-        "redis backend: {}",
-        boson_core::redact_credentials_in_text(&e.to_string())
-    ))
+    let detail = boson_core::redact_credentials_in_text(&e.to_string());
+    BosonError::backend_source(format!("redis backend: {detail}"), RedisCause(detail))
 }
 
 fn map_connect_err(url: &str, e: impl std::fmt::Display) -> BosonError {
-    boson_core::map_backend_connect_err("redis connect", url, e)
+    let detail = boson_core::redact_credentials_in_text(&e.to_string());
+    let message = format!(
+        "redis connect {}: {detail}",
+        boson_core::redact_endpoint(url)
+    );
+    BosonError::backend_source(message, RedisCause(detail))
 }
+
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct RedisCause(String);
 
 #[async_trait]
 impl QueueBackend for RedisQueueBackend {

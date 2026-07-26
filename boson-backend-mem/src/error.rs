@@ -4,5 +4,5 @@ use boson_core::BosonError;
 
 /// Lock poison mapped to backend error.
 pub fn lock_err() -> BosonError {
-    BosonError::Backend("memory backend lock poisoned".into())
+    BosonError::backend("memory backend lock poisoned")
 }

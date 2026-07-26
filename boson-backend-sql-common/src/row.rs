@@ -35,7 +35,7 @@ pub fn parse_job_status(s: &str) -> boson_core::Result<JobStatus> {
         "success" => Ok(JobStatus::Success),
         "failed" => Ok(JobStatus::Failed),
         "canceled" => Ok(JobStatus::Canceled),
-        other => Err(boson_core::BosonError::Backend(format!(
+        other => Err(boson_core::BosonError::backend(format!(
             "sql backend: unknown job status: {other}"
         ))),
     }
@@ -60,7 +60,7 @@ pub fn parse_run_status(s: &str) -> boson_core::Result<RunStatus> {
         "failed" => Ok(RunStatus::Failed),
         "canceled" => Ok(RunStatus::Canceled),
         "timeout" => Ok(RunStatus::Timeout),
-        other => Err(boson_core::BosonError::Backend(format!(
+        other => Err(boson_core::BosonError::backend(format!(
             "sql backend: unknown run status: {other}"
         ))),
     }

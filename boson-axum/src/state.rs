@@ -6,6 +6,7 @@ use boson_runtime::Boson;
 use serde_json::Value as JsonValue;
 
 use crate::auth::{require_admin_auth_from_env, AdminAuth};
+use crate::error::BosonAxumError;
 
 /// Callback that supplies `actor_json` for HTTP enqueue (overrides the default service marker).
 pub type HttpEnqueueActorProvider = Arc<dyn Fn() -> JsonValue + Send + Sync>;
@@ -106,12 +107,11 @@ impl BosonStateBuilder {
     ///
     /// # Errors
     ///
-    /// Returns an error when `require_admin_auth` is set and no verifier was installed.
-    pub fn build(self) -> Result<BosonState, String> {
+    /// Returns [`BosonAxumError::MissingAdminAuth`] when `require_admin_auth` is set and no
+    /// verifier was installed.
+    pub fn build(self) -> Result<BosonState, BosonAxumError> {
         if self.require_admin_auth && self.admin_auth.is_none() {
-            return Err(
-                "BOSON_REQUIRE_ADMIN_AUTH is set but no AdminAuth verifier was configured".into(),
-            );
+            return Err(BosonAxumError::MissingAdminAuth);
         }
         Ok(BosonState {
             boson: self.boson,

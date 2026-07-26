@@ -273,11 +273,23 @@ impl NatsWorkQueueBackend {
     fn mirror_job_async(&self, job: &Job) {
         let kv = self.kv.clone();
         let key = self.keys.job(&job.job_id);
+        let job_id = job.job_id.clone();
         let Ok(bytes) = serde_json::to_vec(job) else {
             return;
         };
         tokio::spawn(async move {
-            let _ = kv.put(key, bytes.into()).await;
+            if let Err(e) = kv.put(key, bytes.into()).await {
+                let detail = boson_core::redact_credentials_in_text(&e.to_string());
+                let log = boson_telemetry::ops_log();
+                log.record_counter("boson_nats_kv_mirror_failed", &[], 1.0);
+                log.log_event(
+                    "boson_nats_kv_mirror_failed",
+                    &serde_json::json!({
+                        "job_id": job_id,
+                        "message": detail,
+                    }),
+                );
+            }
         });
     }
 
@@ -391,11 +403,13 @@ impl NatsWorkQueueBackend {
 }
 
 fn map_err(e: impl std::fmt::Display) -> BosonError {
-    BosonError::Backend(format!(
-        "nats workqueue: {}",
-        boson_core::redact_credentials_in_text(&e.to_string())
-    ))
+    let detail = boson_core::redact_credentials_in_text(&e.to_string());
+    BosonError::backend_source(format!("nats workqueue: {detail}"), NatsCause(detail))
 }
+
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct NatsCause(String);
 
 #[async_trait]
 impl QueueBackend for NatsWorkQueueBackend {
@@ -582,16 +596,19 @@ impl QueueBackend for NatsWorkQueueBackend {
         if let Some(job) = buffered_job {
             return Ok(Some(job));
         }
-        let _refill = self.claim_refill.lock().await;
-        let buffered_job = self
-            .claim_buffers
-            .lock()
-            .await
-            .get_mut(pool)
-            .and_then(VecDeque::pop_front);
-        if let Some(job) = buffered_job {
-            return Ok(Some(job));
+        {
+            let _refill = self.claim_refill.lock().await;
+            let buffered_job = self
+                .claim_buffers
+                .lock()
+                .await
+                .get_mut(pool)
+                .and_then(VecDeque::pop_front);
+            if let Some(job) = buffered_job {
+                return Ok(Some(job));
+            }
         }
+        // Refill without holding `claim_refill` across the JetStream fetch await.
         self.refill_claim_buffer(pool).await?;
         Ok(self
             .claim_buffers

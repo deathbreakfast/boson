@@ -45,7 +45,7 @@ use boson_core::{
 
 use config::{expiry_bucket, shard_for_job};
 use enqueue_rate::EnqueueRateLimiter;
-use error_map::{map_connect_err, map_err};
+use error_map::{map_connect_err_source, map_err_source};
 
 pub use config::ScyllaQueueConfig;
 
@@ -206,7 +206,7 @@ impl ScyllaQueueBackend {
         let contact_label = config.contact_points.join(",");
         let session = Box::pin(builder.build())
             .await
-            .map_err(|e| map_connect_err(&contact_label, e))?;
+            .map_err(|e| map_connect_err_source(&contact_label, e))?;
         Self::from_session(Arc::new(session), &config).await
     }
 
@@ -224,7 +224,7 @@ impl ScyllaQueueBackend {
 
         let prepare = |sql: String| {
             let session = Arc::clone(&session);
-            async move { session.prepare(sql).await.map_err(map_err) }
+            async move { session.prepare(sql).await.map_err(map_err_source) }
         };
 
         Ok(Self {
@@ -389,7 +389,7 @@ impl ScyllaQueueBackend {
         self.session
             .execute_unpaged(stmt, values)
             .await
-            .map_err(map_err)
+            .map_err(map_err_source)
     }
 
     fn job_from_row(row: JobRow) -> Result<Job> {
@@ -569,8 +569,8 @@ impl QueueBackend for ScyllaQueueBackend {
                     if !lwt_applied(result) {
                         let existing = self.exec(&self.select_idempotency, (key.as_str(),)).await?;
                         let Some(row) = maybe_first_row::<IdRow>(existing) else {
-                            return Err(BosonError::Backend(
-                                "idempotency insert not applied but row missing".into(),
+                            return Err(BosonError::backend(
+                                "idempotency insert not applied but row missing",
                             ));
                         };
                         // Reuse only while the prior job is still active (mem/SQL parity).
@@ -1125,7 +1125,7 @@ fn parse_job_status(s: &str) -> Result<JobStatus> {
         "success" => Ok(JobStatus::Success),
         "failed" => Ok(JobStatus::Failed),
         "canceled" => Ok(JobStatus::Canceled),
-        other => Err(BosonError::Backend(format!("unknown job status: {other}"))),
+        other => Err(BosonError::backend(format!("unknown job status: {other}"))),
     }
 }
 
@@ -1136,7 +1136,7 @@ fn parse_run_status(s: &str) -> Result<RunStatus> {
         "failed" => Ok(RunStatus::Failed),
         "canceled" => Ok(RunStatus::Canceled),
         "timeout" => Ok(RunStatus::Timeout),
-        other => Err(BosonError::Backend(format!("unknown run status: {other}"))),
+        other => Err(BosonError::backend(format!("unknown run status: {other}"))),
     }
 }
 

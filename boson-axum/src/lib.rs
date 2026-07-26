@@ -38,7 +38,7 @@
 //!
 //! use axum::{extract::FromRef, Router};
 //! use boson_axum::{
-//!     boson_router, BosonState, StaticTokenAdminAuth, NEST_PATH,
+//!     boson_router, BosonAxumError, BosonState, StaticTokenAdminAuth, NEST_PATH,
 //! };
 //! use boson_runtime::Boson;
 //!
@@ -53,7 +53,7 @@
 //!     }
 //! }
 //!
-//! fn mount(boson: Boson) -> Result<Router<AppState>, String> {
+//! fn mount(boson: Boson) -> Result<Router<AppState>, BosonAxumError> {
 //!     let state = BosonState::builder(Arc::new(boson))
 //!         .admin_auth(Arc::new(StaticTokenAdminAuth::new("lab-token")))
 //!         .require_admin_auth(true)
@@ -65,6 +65,7 @@
 //! ```
 
 mod auth;
+mod error;
 mod handlers;
 mod limits;
 mod router;
@@ -74,6 +75,7 @@ pub use auth::{
     parse_require_admin_auth, require_admin_auth_from_env, AdminAuth, AdminAuthError,
     AllowAllAdminAuth, RequireAdmin, StaticTokenAdminAuth, REQUIRE_ADMIN_AUTH_ENV,
 };
+pub use error::BosonAxumError;
 pub use limits::{
     clamp_list_limit, clamp_retry_policy, DEFAULT_LIST_LIMIT, MAX_LIST_LIMIT, MAX_RETRY_ATTEMPTS,
     MAX_RETRY_DELAY_MS, MIN_RETRY_DELAY_MS,

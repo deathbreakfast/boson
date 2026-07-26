@@ -2,7 +2,7 @@
 
 use scylla::client::session::Session;
 
-use crate::error_map::{into_result, map_err};
+use crate::error_map::{into_result, map_err_source};
 
 #[allow(clippy::too_many_lines)]
 pub async fn ensure_schema(
@@ -25,7 +25,7 @@ pub async fn ensure_schema(
     session
         .use_keyspace(keyspace, false)
         .await
-        .map_err(map_err)?;
+        .map_err(map_err_source)?;
 
     for ddl in [
         format!(

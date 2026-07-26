@@ -168,8 +168,8 @@ impl PostgresQueueBackend {
     pub fn pool(&self) -> Result<&PgPool> {
         match self.inner.pool() {
             boson_backend_sql_common::SqlPool::Postgres(pool) => Ok(pool),
-            boson_backend_sql_common::SqlPool::Sqlite(_) => Err(BosonError::Internal(
-                "postgres backend has non-postgres pool".into(),
+            boson_backend_sql_common::SqlPool::Sqlite(_) => Err(BosonError::internal(
+                "postgres backend has non-postgres pool",
             )),
         }
     }

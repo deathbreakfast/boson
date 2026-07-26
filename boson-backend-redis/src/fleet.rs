@@ -34,12 +34,12 @@ impl PoolRoutedBackend {
             return self
                 .backends
                 .get(idx)
-                .ok_or_else(|| BosonError::Backend(format!("no backend for pool {pool}")));
+                .ok_or_else(|| BosonError::backend(format!("no backend for pool {pool}")));
         }
         let idx = pool_slot_index(pool, self.backends.len());
         self.backends
             .get(idx)
-            .ok_or_else(|| BosonError::Backend(format!("no backend index {idx} for pool {pool}")))
+            .ok_or_else(|| BosonError::backend(format!("no backend index {idx} for pool {pool}")))
     }
 
     async fn find_job_backend(
@@ -91,7 +91,7 @@ pub fn fleet_urls_from_env() -> Result<Vec<String>> {
                     continue;
                 }
                 let (_, url) = part.split_once('=').ok_or_else(|| {
-                    BosonError::Backend(format!("invalid BOSON_REDIS_POOL_ROUTING segment: {part}"))
+                    BosonError::backend(format!("invalid BOSON_REDIS_POOL_ROUTING segment: {part}"))
                 })?;
                 urls.push(url.trim().to_string());
             }
@@ -111,8 +111,8 @@ pub fn fleet_urls_from_env() -> Result<Vec<String>> {
             return Ok(list);
         }
     }
-    Err(BosonError::Backend(
-        "BOSON_REDIS_URLS or BOSON_REDIS_POOL_ROUTING required for fleet".into(),
+    Err(BosonError::backend(
+        "BOSON_REDIS_URLS or BOSON_REDIS_POOL_ROUTING required for fleet",
     ))
 }
 
@@ -150,9 +150,10 @@ pub async fn connect_fleet_from_env() -> Result<Arc<dyn QueueBackend>> {
     }
 
     if backends.len() == 1 {
-        let backend = backends.into_iter().next().ok_or_else(|| {
-            BosonError::Backend("expected one redis backend after connect".into())
-        })?;
+        let backend = backends
+            .into_iter()
+            .next()
+            .ok_or_else(|| BosonError::backend("expected one redis backend after connect"))?;
         return Ok(backend as Arc<dyn QueueBackend>);
     }
 

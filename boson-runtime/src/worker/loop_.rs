@@ -99,7 +99,7 @@ impl WorkerEngine {
         result?;
         match self.backend.get_job(job_id).await {
             Ok(Some(j)) if j.status == JobStatus::Canceled => Err(
-                boson_core::BosonError::Internal("job canceled during execution".into()),
+                boson_core::BosonError::internal("job canceled during execution"),
             ),
             _ => Ok(()),
         }

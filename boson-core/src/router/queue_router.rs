@@ -54,7 +54,7 @@ impl QueueRouter {
     pub fn register_runtime(&self, name: &str, backend: Arc<dyn QueueBackend>) -> Result<()> {
         self.backends
             .write()
-            .map_err(|_| BosonError::Internal("queue router lock poisoned".into()))?
+            .map_err(|_| BosonError::internal("queue router lock poisoned"))?
             .insert(name.to_string(), backend);
         Ok(())
     }
@@ -68,7 +68,7 @@ impl QueueRouter {
     pub fn resolve(&self, name: &str) -> Result<Arc<dyn QueueBackend>> {
         self.backends
             .read()
-            .map_err(|_| BosonError::Internal("queue router lock poisoned".into()))?
+            .map_err(|_| BosonError::internal("queue router lock poisoned"))?
             .get(name)
             .cloned()
             .ok_or_else(|| BosonError::UnknownBackend(name.to_string()))
@@ -88,7 +88,7 @@ impl QueueRouter {
         GLOBAL_ROUTER
             .get()
             .cloned()
-            .ok_or_else(|| BosonError::Internal("QueueRouter::set_global was not called".into()))
+            .ok_or_else(|| BosonError::internal("QueueRouter::set_global was not called"))
     }
 
     /// Optional global router.

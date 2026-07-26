@@ -32,6 +32,9 @@ pub use models::{
     IdempotencyMode, Job, JobStatus, RateLimitPolicy, RetryPolicy, Run, RunStatus, TaskConfig,
     TaskRunStats,
 };
-pub use redact::{map_backend_connect_err, redact_credentials_in_text, redact_endpoint};
+pub use redact::{
+    map_backend_connect_err, map_backend_connect_err_source, redact_credentials_in_text,
+    redact_endpoint,
+};
 pub use router::QueueRouter;
 pub use sanitize::{sanitize_error_message, MAX_ERROR_MESSAGE_CHARS};

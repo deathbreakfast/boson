@@ -33,7 +33,7 @@ impl FromRef<AppState> for BosonState {
     }
 }
 
-# fn mount(boson: std::sync::Arc<boson_runtime::Boson>) -> Result<Router<AppState>, String> {
+# fn mount(boson: std::sync::Arc<boson_runtime::Boson>) -> Result<Router<AppState>, boson_axum::BosonAxumError> {
 let state = BosonState::builder(boson)
     .admin_auth(Arc::new(StaticTokenAdminAuth::new("lab-token")))
     .require_admin_auth(true)
