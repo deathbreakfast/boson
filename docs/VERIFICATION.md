@@ -98,6 +98,8 @@ Smoke scenario ids: `enqueue_and_drain`, `enqueue_only`, `run_lifecycle`, `idemp
 | Catalog | `cancel_running_job` | mid-run cooperative cancel → `Canceled` |
 | Catalog | `long_job_lease_heartbeat_drain` | TTL 2s < sleep 5s; single success |
 | Axum | admin 401/200, non-System actor, list clamp, retry cap | `boson-testkit/tests/axum_http_api.rs` |
+| Unit | URL redact / `map_backend_connect_err` (happy + passworded sad) | `boson-core` `redact`, sql-common / redis / scylla `error_map` |
+| Docs | Operator table: AdminAuth, ActorJsonPolicy, sanitize, URL credentials | [`SECURITY.md`](../SECURITY.md) |
 | AWS | Redis/NATS/Scylla e2e scripts run contracts + `scenarios_full` filters | `infra/native-aws/scripts/run-*-e2e.sh` |
 
 ### Full broker env (GHA services or local docker)

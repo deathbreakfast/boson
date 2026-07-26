@@ -287,7 +287,10 @@ impl NatsQueueBackend {
 }
 
 fn map_err(e: impl std::fmt::Display) -> BosonError {
-    BosonError::Backend(format!("nats backend: {e}"))
+    BosonError::Backend(format!(
+        "nats backend: {}",
+        boson_core::redact_credentials_in_text(&e.to_string())
+    ))
 }
 
 #[async_trait]

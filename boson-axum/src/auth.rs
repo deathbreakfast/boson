@@ -58,16 +58,17 @@ pub trait AdminAuth: Send + Sync {
     ) -> Pin<Box<dyn Future<Output = Result<(), AdminAuthError>> + Send + 'a>>;
 }
 
+/// Parse a require-admin-auth flag string (`1` / `true` / `yes`, case-insensitive).
+#[must_use]
+pub fn parse_require_admin_auth(value: &str) -> bool {
+    let v = value.trim().to_ascii_lowercase();
+    matches!(v.as_str(), "1" | "true" | "yes")
+}
+
 /// Read [`REQUIRE_ADMIN_AUTH_ENV`]: `1`, `true`, or `yes` (case-insensitive) ⇒ required.
 #[must_use]
 pub fn require_admin_auth_from_env() -> bool {
-    match std::env::var(REQUIRE_ADMIN_AUTH_ENV) {
-        Ok(v) => {
-            let v = v.trim().to_ascii_lowercase();
-            matches!(v.as_str(), "1" | "true" | "yes")
-        }
-        Err(_) => false,
-    }
+    std::env::var(REQUIRE_ADMIN_AUTH_ENV).is_ok_and(|v| parse_require_admin_auth(&v))
 }
 
 fn unauthorized(message: impl Into<String>) -> Response {
@@ -157,5 +158,47 @@ impl AdminAuth for StaticTokenAdminAuth {
                 )),
             }
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use axum::http::Request;
+
+    use super::*;
+
+    fn parts_with_token(token: Option<&str>) -> Parts {
+        let mut builder = Request::builder().uri("/");
+        if let Some(t) = token {
+            builder = builder.header("x-boson-admin-token", t);
+        }
+        builder.body(()).expect("request").into_parts().0
+    }
+
+    #[test]
+    fn parse_require_admin_auth_truthy_and_falsy() {
+        for v in ["1", "true", "YES", " True "] {
+            assert!(parse_require_admin_auth(v), "expected truthy: {v}");
+        }
+        for v in ["0", "false", "no", ""] {
+            assert!(!parse_require_admin_auth(v), "expected falsy: {v}");
+        }
+    }
+
+    #[tokio::test]
+    async fn static_token_accepts_matching_header() {
+        let auth = StaticTokenAdminAuth::new("lab-secret");
+        let parts = parts_with_token(Some("lab-secret"));
+        assert!(auth.authorize(&parts).await.is_ok());
+    }
+
+    #[tokio::test]
+    async fn static_token_rejects_missing_or_wrong_header() {
+        let auth = StaticTokenAdminAuth::new("lab-secret");
+        assert!(auth.authorize(&parts_with_token(None)).await.is_err());
+        assert!(auth
+            .authorize(&parts_with_token(Some("nope")))
+            .await
+            .is_err());
     }
 }

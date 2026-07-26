@@ -45,7 +45,7 @@ use boson_core::{
 
 use config::{expiry_bucket, shard_for_job};
 use enqueue_rate::EnqueueRateLimiter;
-use error_map::map_err;
+use error_map::{map_connect_err, map_err};
 
 pub use config::ScyllaQueueConfig;
 
@@ -203,7 +203,10 @@ impl ScyllaQueueBackend {
         {
             builder = builder.pool_size(PoolSize::PerShard(n));
         }
-        let session = Box::pin(builder.build()).await.map_err(map_err)?;
+        let contact_label = config.contact_points.join(",");
+        let session = Box::pin(builder.build())
+            .await
+            .map_err(|e| map_connect_err(&contact_label, e))?;
         Self::from_session(Arc::new(session), &config).await
     }
 

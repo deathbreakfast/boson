@@ -44,6 +44,7 @@ reachable path from public APIs or adapters.
 | Leases | Remote worker: `lease_ttl_secs > 0` + unique `worker_id`. Workers heartbeat `extend_lease` during handlers. |
 | Cancel | Cancel is cooperative: in-flight handlers are aborted via status watch; finish does not overwrite to Success. |
 | Errors | Handler errors are sanitized/truncated before run rows and telemetry; do not log `params_json` / `actor_json`. |
+| URL credentials | Backend connect/operation errors redact URL userinfo (`scheme://***@host`) via `redact_endpoint` / `map_backend_connect_err` (Redis, NATS, Postgres/SQLite, Scylla). Operators still treat connect URLs as secrets. |
 | Rate limits | Enqueue rate limits are process-local unless the backend provides shared counters. Retry fields via HTTP config are capped. |
 | Lab infra | Bench Redis `protected-mode no` / Postgres password `bench` under `infra/` are lab-only — not production templates. |
 

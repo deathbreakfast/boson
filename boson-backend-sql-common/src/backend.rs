@@ -4,7 +4,7 @@ use boson_core::Result;
 use sqlx::{Executor, Pool, Postgres, Sqlite};
 
 use crate::enqueue_rate::EnqueueRateLimiter;
-use crate::error_map::map_err;
+use crate::error_map::{map_connect_err, map_err};
 use crate::schema;
 
 /// `SQLite` uses `?` placeholders; `PostgreSQL` uses `$1`, `$2`, …
@@ -73,7 +73,7 @@ impl SqlQueueBackend {
             .max_connections(5)
             .connect(url)
             .await
-            .map_err(|e| map_err(&e))?;
+            .map_err(|e| map_connect_err("sqlite", url, &e))?;
         Self::from_sqlite_pool(pool).await
     }
 
@@ -87,7 +87,7 @@ impl SqlQueueBackend {
             .max_connections(5)
             .connect(url)
             .await
-            .map_err(|e| map_err(&e))?;
+            .map_err(|e| map_connect_err("postgres", url, &e))?;
         Self::from_postgres_pool(pool).await
     }
 
@@ -101,7 +101,7 @@ impl SqlQueueBackend {
             .max_connections(1)
             .connect(url)
             .await
-            .map_err(|e| map_err(&e))?;
+            .map_err(|e| map_connect_err("postgres", url, &e))?;
         let ddl = format!("CREATE SCHEMA IF NOT EXISTS \"{schema}\"");
         admin.execute(ddl.as_str()).await.map_err(|e| map_err(&e))?;
         drop(admin);
@@ -119,7 +119,7 @@ impl SqlQueueBackend {
             })
             .connect(url)
             .await
-            .map_err(|e| map_err(&e))?;
+            .map_err(|e| map_connect_err("postgres", url, &e))?;
         Self::from_postgres_pool(pool).await
     }
 

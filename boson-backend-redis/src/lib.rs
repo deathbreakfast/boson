@@ -165,8 +165,10 @@ impl RedisQueueBackend {
     ///
     /// Returns an error when the connection cannot be established.
     pub async fn connect_with_keyspace(url: &str, keyspace: keys::Keyspace) -> Result<Self> {
-        let client = redis::Client::open(url).map_err(map_err)?;
-        let conn = ConnectionManager::new(client).await.map_err(map_err)?;
+        let client = redis::Client::open(url).map_err(|e| map_connect_err(url, e))?;
+        let conn = ConnectionManager::new(client)
+            .await
+            .map_err(|e| map_connect_err(url, e))?;
         Ok(Self {
             conn,
             keys: keyspace,
@@ -322,7 +324,14 @@ return updated
 ";
 
 fn map_err(e: impl std::fmt::Display) -> BosonError {
-    BosonError::Backend(format!("redis backend: {e}"))
+    BosonError::Backend(format!(
+        "redis backend: {}",
+        boson_core::redact_credentials_in_text(&e.to_string())
+    ))
+}
+
+fn map_connect_err(url: &str, e: impl std::fmt::Display) -> BosonError {
+    boson_core::map_backend_connect_err("redis connect", url, e)
 }
 
 #[async_trait]
@@ -840,4 +849,42 @@ pub async fn install_default_redis_backend(url: &str) -> Result<Arc<RedisQueueBa
         Arc::clone(&backend) as Arc<dyn QueueBackend>,
     ));
     Ok(backend)
+}
+
+#[cfg(test)]
+mod redact_tests {
+    use super::{map_connect_err, map_err};
+
+    #[test]
+    fn map_connect_err_redacts_passworded_url() {
+        let err = map_connect_err(
+            "redis://user:secret@127.0.0.1:6379",
+            "Connection refused redis://user:secret@127.0.0.1:6379",
+        );
+        let msg = err.to_string();
+        assert!(
+            msg.contains("redis connect redis://***@127.0.0.1:6379"),
+            "msg: {msg}"
+        );
+        assert!(!msg.contains("secret"), "msg: {msg}");
+    }
+
+    #[test]
+    fn map_err_redacts_embedded_url() {
+        let err = map_err("GET failed redis://u:p@host:6379/0");
+        let msg = err.to_string();
+        assert!(msg.contains("redis://***@host:6379/0"), "msg: {msg}");
+        assert!(!msg.contains("u:p@"), "msg: {msg}");
+    }
+
+    #[test]
+    fn map_connect_err_sad_path_surfaces_failure() {
+        let err = map_connect_err("redis://127.0.0.1:6379", "Connection refused");
+        let msg = err.to_string();
+        assert!(
+            msg.contains("redis connect redis://127.0.0.1:6379"),
+            "msg: {msg}"
+        );
+        assert!(msg.contains("Connection refused"), "msg: {msg}");
+    }
 }

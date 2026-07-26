@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use async_nats::jetstream::context::PublishAckFuture;
-use boson_core::{BosonError, Result};
+use boson_core::{redact_credentials_in_text, BosonError, Result};
 use bytes::Bytes;
 use tokio::sync::Semaphore;
 
@@ -36,22 +36,31 @@ impl PublishPipeline {
         subject: String,
         body: Bytes,
     ) -> Result<()> {
-        let permit = self
-            .semaphore
-            .clone()
-            .acquire_owned()
-            .await
-            .map_err(|e| BosonError::Backend(format!("nats publish pipeline: {e}")))?;
+        let permit = self.semaphore.clone().acquire_owned().await.map_err(|e| {
+            BosonError::Backend(format!(
+                "nats publish pipeline: {}",
+                redact_credentials_in_text(&e.to_string())
+            ))
+        })?;
 
-        let ack_future: PublishAckFuture = jetstream
-            .publish(subject.clone(), body)
-            .await
-            .map_err(|e| BosonError::Backend(format!("nats publish {subject}: {e}")))?;
+        let ack_future: PublishAckFuture =
+            jetstream
+                .publish(subject.clone(), body)
+                .await
+                .map_err(|e| {
+                    BosonError::Backend(format!(
+                        "nats publish {subject}: {}",
+                        redact_credentials_in_text(&e.to_string())
+                    ))
+                })?;
 
         if self.sync_ack {
-            ack_future
-                .await
-                .map_err(|e| BosonError::Backend(format!("nats publish ack {subject}: {e}")))?;
+            ack_future.await.map_err(|e| {
+                BosonError::Backend(format!(
+                    "nats publish ack {subject}: {}",
+                    redact_credentials_in_text(&e.to_string())
+                ))
+            })?;
             drop(permit);
         } else {
             tokio::spawn(async move {

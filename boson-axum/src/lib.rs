@@ -71,8 +71,8 @@ mod router;
 mod state;
 
 pub use auth::{
-    require_admin_auth_from_env, AdminAuth, AdminAuthError, AllowAllAdminAuth, RequireAdmin,
-    StaticTokenAdminAuth, REQUIRE_ADMIN_AUTH_ENV,
+    parse_require_admin_auth, require_admin_auth_from_env, AdminAuth, AdminAuthError,
+    AllowAllAdminAuth, RequireAdmin, StaticTokenAdminAuth, REQUIRE_ADMIN_AUTH_ENV,
 };
 pub use limits::{
     clamp_list_limit, clamp_retry_policy, DEFAULT_LIST_LIMIT, MAX_LIST_LIMIT, MAX_RETRY_ATTEMPTS,
