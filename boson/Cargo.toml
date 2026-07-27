@@ -43,10 +43,14 @@ axum = ["dep:boson-axum"]
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "signal"] }
 anyhow = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
 serde_json = { workspace = true }
 axum = { workspace = true }
 tower = { workspace = true }
 http-body-util = { workspace = true }
+boson-backend-redis = { workspace = true }
+boson-backend-nats = { workspace = true }
 
 [[example]]
 name = "task_macro"
@@ -79,6 +83,26 @@ required-features = ["postgres"]
 [[example]]
 name = "postgres_worker"
 required-features = ["postgres"]
+
+[[example]]
+name = "redis_fleet_enqueue"
+
+[[example]]
+name = "redis_fleet_worker"
+
+[[example]]
+name = "nats_workqueue_enqueue"
+
+[[example]]
+name = "nats_workqueue_worker"
+
+[[example]]
+name = "admin_auth_policy"
+required-features = ["mem", "axum"]
+
+[[example]]
+name = "custom_queue_backend_stub"
+required-features = ["mem"]
 
 [lints]
 workspace = true

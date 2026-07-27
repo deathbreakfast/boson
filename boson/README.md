@@ -104,6 +104,66 @@ cargo run -p uf-boson --example postgres_enqueue --features postgres
 Stop with Ctrl-C on each worker. Real apps put `#[task]` handlers in a shared crate and
 `use my_tasks as _;` from the worker binary.
 
+**Docker quickstart** (no local Postgres install): the repo ships a Compose stack at
+[`infra/postgres/`](../infra/postgres/README.md).
+
+```bash
+cd infra/postgres && docker compose up -d
+export DATABASE_URL="postgres://boson:bench@127.0.0.1:5433/boson_bench"
+```
+
+Then run the worker/enqueue pair above from the repo root. Stop with
+`docker compose -f infra/postgres/docker-compose.yml down`.
+
+### 4. Remote worker — Redis fleet (multi-process — run as a set)
+
+Broker-backed fleet backend — same split shape, many enqueue hosts and workers sharing Redis.
+**Not a `uf-boson` feature** — depends on
+[`boson-backend-redis`](https://docs.rs/boson-backend-redis) directly (a path dev-dependency in
+this crate; production apps add it to `[dependencies]`).
+
+| Rule | Detail |
+|------|--------|
+| Shared env | Same `BOSON_REDIS_URL` on every process (default `redis://127.0.0.1:6379`) |
+| Start order | Worker(s) first, then enqueue |
+| Workers | Unique `BOSON_WORKER_ID`; positive lease TTL |
+
+```bash
+docker run -d --name boson-redis -p 6379:6379 redis:7
+export BOSON_REDIS_URL=redis://127.0.0.1:6379
+
+# Terminal 1 — worker A
+BOSON_WORKER_ID=worker-a cargo run -p uf-boson --example redis_fleet_worker
+
+# Terminal 2 — enqueue
+cargo run -p uf-boson --example redis_fleet_enqueue
+```
+
+### 5. Remote worker — NATS `WorkQueue` (multi-process — run as a set)
+
+Broker-backed fleet backend on NATS `JetStream` `WorkQueue` streams via
+[`connect_auto`](https://docs.rs/boson-backend-nats/latest/boson_backend_nats/fn.connect_auto.html)
+with `BOSON_NATS_QUEUE_MODE=workqueue`. **Not a `uf-boson` feature** — depends on
+[`boson-backend-nats`](https://docs.rs/boson-backend-nats) directly.
+
+| Rule | Detail |
+|------|--------|
+| Shared env | Same `BOSON_NATS_URL` and `BOSON_NATS_QUEUE_MODE=workqueue` on every process |
+| Start order | Worker(s) first, then enqueue |
+| Workers | Unique `BOSON_WORKER_ID`; positive lease TTL; **pin `BOSON_WORKER_POOLS`** — `WorkQueue` pool discovery is per-process, so cross-process workers cannot auto-discover pools (`#[task]` default pool is `global`) |
+
+```bash
+docker run -d --name boson-nats -p 4222:4222 nats:2.10 -js
+export BOSON_NATS_URL=nats://127.0.0.1:4222
+export BOSON_NATS_QUEUE_MODE=workqueue
+
+# Terminal 1 — worker A
+BOSON_WORKER_POOLS=global BOSON_WORKER_ID=worker-a cargo run -p uf-boson --example nats_workqueue_worker
+
+# Terminal 2 — enqueue
+cargo run -p uf-boson --example nats_workqueue_enqueue
+```
+
 ### Other examples
 
 | Example | Topology | Features | Notes |
@@ -111,6 +171,7 @@ Stop with Ctrl-C on each worker. Real apps put `#[task]` handlers in a shared cr
 | `minimal_enqueue` | Embedded | `mem` | Manual registry + `Boson::enqueue` |
 | `idempotency_and_rate_limit` | Embedded | `mem` | Idempotency key + `max_in_flight` |
 | `axum_admin` | Embedded + HTTP admin | `mem,axum` | Nest `/api/boson`; `BOSON_EXAMPLE_SERVE=1` to listen |
+| `admin_auth_policy` | Embedded + HTTP admin | `mem,axum` | Fail-closed `axum_admin`: proves 401 without a token, 200 with one |
 
 **Production:** Boson does not authenticate `/api/boson/*` by itself. Install host
 [`AdminAuth`](https://docs.rs/uf-boson/latest/boson/trait.AdminAuth.html) and prefer
