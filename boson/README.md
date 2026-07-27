@@ -36,6 +36,8 @@ This crate ships with **no default features** (`default = []`).
 
 ## How to run examples
 
+Navigational index: [`examples/README.md`](examples/README.md) (when-to-use ladder, host-mount sketches, success checks).
+
 Canonical teaching path (start here). Topology docs:
 [Embedded](https://docs.rs/uf-boson/latest/boson/index.html#embedded-one-binary) /
 [Remote worker](https://docs.rs/uf-boson/latest/boson/index.html#remote-worker-two-binaries).

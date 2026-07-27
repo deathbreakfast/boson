@@ -198,6 +198,7 @@ Full baseline: [`docs/VERIFICATION.md`](docs/VERIFICATION.md). Contribute checkl
 | [`SECURITY.md`](SECURITY.md) | Vulnerability reporting |
 | [`boson-macros/README.md`](boson-macros/README.md) | `#[task]` macro, policies, inventory |
 | [`boson/README.md` — How to run examples](boson/README.md#how-to-run-examples) | Embedded + remote-worker example runbooks |
+| [`boson/examples/README.md`](boson/examples/README.md) | Example ladder (when-to-use, host-mount sketches) |
 | [`boson/examples/task_macro.rs`](boson/examples/task_macro.rs) | End-to-end macro + worker drain example |
 | [`boson-core/README.md`](boson-core/README.md) | `QueueBackend` trait and DTOs |
 | [`boson-runtime/README.md`](boson-runtime/README.md) | Builder, worker loop, task registry |
