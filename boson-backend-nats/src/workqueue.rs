@@ -414,13 +414,21 @@ struct NatsCause(String);
 #[async_trait]
 impl QueueBackend for NatsWorkQueueBackend {
     async fn upsert_job(&self, job: &Job) -> Result<()> {
-        if matches!(
-            job.status,
-            JobStatus::Success | JobStatus::Failed | JobStatus::Canceled
-        ) {
-            self.ack_job(&job.job_id).await?;
+        match job.status {
+            JobStatus::Success | JobStatus::Failed | JobStatus::Canceled => {
+                self.ack_job(&job.job_id).await?;
+                let _ = self.kv_delete(&self.keys.claim_marker(&job.job_id)).await;
+                self.save_job(job).await
+            }
+            JobStatus::Queued => {
+                // Retry re-queue: consume in-flight delivery, clear marker, republish.
+                self.ack_job(&job.job_id).await?;
+                let _ = self.kv_delete(&self.keys.claim_marker(&job.job_id)).await;
+                self.save_job(job).await?;
+                self.publish_job(job).await
+            }
+            JobStatus::Running => self.save_job(job).await,
         }
-        self.save_job(job).await
     }
 
     async fn enqueue_with_policies(
