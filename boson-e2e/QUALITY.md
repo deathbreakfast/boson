@@ -1,6 +1,6 @@
 # boson-e2e Quality Gates
 
-Cargo quality gates for for matrix correctness integration tests.
+Cargo quality gates for matrix correctness integration tests.
 
 ## Baseline (Phase 5)
 

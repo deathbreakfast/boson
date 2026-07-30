@@ -76,6 +76,6 @@ pub fn compute(inputs: &FleetProjectionInputs) -> FleetProjection {
         nodes_required: nodes,
         cost_per_million_ops_usd: cost_per_m,
         target_ops_per_sec: TARGET_OPS_PER_SEC as u64,
-        disclaimer: "Aspirational decomposition — not a performance claim.".into(),
+        disclaimer: "Aspirational decomposition.".into(),
     }
 }

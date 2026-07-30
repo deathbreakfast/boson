@@ -87,7 +87,7 @@ Success: worker `listening (url=…, lease_ttl_secs=…)`; enqueue `enqueued job
 
 ## Host-mount sketches
 
-These examples show how Boson nests into an existing Axum app — not a standalone admin server.
+These examples show how Boson nests into an existing Axum app.
 
 ### [`axum_admin.rs`](axum_admin.rs)
 

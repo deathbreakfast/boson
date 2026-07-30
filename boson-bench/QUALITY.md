@@ -1,6 +1,6 @@
 # boson-bench Quality Gates
 
-Cargo quality gates for for the BM-B* benchmark CLI.
+Cargo quality gates for the BM-B* benchmark CLI.
 
 ## Baseline
 

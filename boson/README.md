@@ -1,6 +1,6 @@
 [![crates.io](https://img.shields.io/crates/v/uf-boson.svg)](https://crates.io/crates/uf-boson)
 [![docs.rs](https://docs.rs/uf-boson/badge.svg)](https://docs.rs/uf-boson)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../LICENSE-MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../LICENSE)
 
 # boson (`uf-boson` on crates.io)
 

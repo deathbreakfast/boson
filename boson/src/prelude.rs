@@ -1,6 +1,6 @@
 //! Convenient re-exports for application code.
 //!
-//! The prelude pulls together types from several crates; it is not a single workflow. See the
+//! The prelude re-exports types from several crates for application imports. See the
 //! [`boson`](crate) crate [Getting started](crate#getting-started) for
 //! [Embedded](crate#embedded-one-binary) /
 //! [Remote worker](crate#remote-worker-two-binaries),
