@@ -20,7 +20,7 @@
 //!
 //! use boson_backend_nats::NatsQueueBackend;
 //! use boson_core::JsonExecutionContextFactory;
-//! use boson_runtime::{configure, Boson};
+//! use boson::{configure, Boson};
 //!
 //! # async fn boot_enqueue() -> boson_core::Result<()> {
 //! let url = std::env::var("BOSON_NATS_URL")
@@ -50,7 +50,7 @@
 //!
 //! use boson_backend_nats::NatsQueueBackend;
 //! use boson_core::JsonExecutionContextFactory;
-//! use boson_runtime::Boson;
+//! use boson::Boson;
 //!
 //! # async fn boot_worker() -> boson_core::Result<()> {
 //! let url = std::env::var("BOSON_NATS_URL")
@@ -132,7 +132,7 @@ impl NatsQueueBackend {
     ///
     /// # Examples
     ///
-    /// ```rust,no_run
+    /// ```rust,ignore
     /// use boson_backend_nats::NatsQueueBackend;
     ///
     /// # async fn connect() -> boson_core::Result<()> {

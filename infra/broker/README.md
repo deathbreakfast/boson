@@ -42,43 +42,16 @@ cargo run -p boson-bench -- be4-publisher-curve \
   --reports-dir profiling/boson-bench/reports
 ```
 
-Compare to Photon BM-PFH (`~/photon/infra/broker/scripts/run-pfh-sweep.sh`) for raw firehose ingress vs Boson job-queue enqueue.
+Compare to Photon BM-PFH for raw firehose ingress vs Boson job-queue enqueue.
 
-## AWS Phase 2 campaign (Photon-aligned hardware)
+## AWS campaigns
 
-```bash
-bash infra/native-aws/scripts/run-tier3-c6i-aws.sh nats
-```
+Maintainers also run c6i.large broker sizing, RAFT cluster comparisons, multi-embed fleet
+sweeps, and Phase D dequeue campaigns on AWS. Those scripts are not shipped in this
+repository. Aggregate retained reports with the `*-curve` commands below (and in BM-BD2).
 
-## Phase A: c6i.large broker sizing
-
-```bash
-bash infra/native-aws/scripts/run-tier3-c6i-broker-aws.sh
-```
-
-## RAFT cluster comparison (optional, Phase C)
-
-```bash
-bash infra/native-aws/broker-fleet/run-be4-cluster-ref-aws.sh   # K=4 sharded cluster, single bench
-bash infra/native-aws/broker-fleet/run-cluster-n2-aws.sh        # publisher sweep on n=2 cluster
-```
-
-Uses single NATS client to sharded JetStream cluster (rep=1 per stream). Different from standalone pool-routed fleet.
-
-## Multi-embed fleet sweep (Photon Phase 4 analog)
-
-```bash
-bash infra/native-aws/broker-fleet/run-be4-multibench-sweep-aws.sh
-cargo run -p boson-bench -- be4-multibench-curve --hardware aws-c6i-large --backend nats
-```
-
-## Broker fleet sweep (standalone NATS per pool, N=1/2/4)
-
-```bash
-bash infra/native-aws/broker-fleet/run-fleet-sweep-aws.sh
-```
-
-N=4 requires **≥10 vCPU** free (1× c6i.large + 4× t3.medium). Account default limit is 16 vCPU — terminate other campaigns first.
+N=4 fleet shapes need **≥10 vCPU** free (1× c6i.large + 4× t3.medium). Account default
+limit is 16 vCPU — terminate other campaigns first.
 
 Local smoke (2 Docker NATS):
 
@@ -94,7 +67,7 @@ cargo run -p boson-bench -- be4-fleet-curve --hardware aws-c6i-large --backend n
 
 ## BM-BE4 shard sweep (multi-stream scaling)
 
-Fixed C=256, K ∈ {1, 4, 10, 32}. Use `BOSON_TIER3_PHASE=shard` on AWS or run cells manually.
+Fixed C=256, K ∈ {1, 4, 10, 32}. Run cells locally or on AWS.
 
 **Aggregate curve:**
 
@@ -139,12 +112,3 @@ cargo run -p boson-bench -- bd2-shard-curve --hardware aws-c6i-large --backend n
 cargo run -p boson-bench -- bd2-fleet-curve --hardware aws-c6i-large --backend nats
 cargo run -p boson-bench -- bd2-multibench-curve --hardware aws-c6i-large --backend nats
 ```
-
-## AWS Phase D dequeue campaign
-
-```bash
-bash infra/native-aws/broker-fleet/run-bd2-campaign-aws.sh   # D0→D3 NATS
-bash infra/native-aws/broker-fleet/run-bd2-redis-replay-aws.sh  # Redis D0–D1
-```
-
-Individual phases: `run-bd2-worker-sweep-aws.sh`, `run-bd2-shard-sweep-aws.sh`, `run-bd2-fleet-sweep-aws.sh`, `run-bd2-multibench-sweep-aws.sh`.

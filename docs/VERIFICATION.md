@@ -3,23 +3,11 @@
 Re-run after test or CI changes. See the root [README.md](../README.md) verify section and
 [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-## Remote CI (native-aws)
+## Remote CI (AWS)
 
-Mirror the PR subset on a provisioned bench host (deny, clippy, crate tests, mem/sqlite e2e,
-examples, docs):
-
-```bash
-~/aws/boson/run-remote-ci.sh
-```
-
-Broker contracts against a provisioned fleet:
-
-```bash
-./infra/native-aws/scripts/run-redis-e2e.sh
-./infra/native-aws/scripts/run-nats-e2e.sh
-```
-
-See [`infra/native-aws/README.md`](../infra/native-aws/README.md).
+Maintainers also mirror the PR subset on AWS (deny, clippy, crate tests, mem/sqlite e2e,
+examples, docs) and run broker contracts against provisioned redis/nats fleets. Those
+scripts are not shipped in this repository.
 
 ## What GitHub Actions runs (merge gate)
 
@@ -100,7 +88,7 @@ Smoke scenario ids: `enqueue_and_drain`, `enqueue_only`, `run_lifecycle`, `idemp
 | Axum | admin 401/200, non-System actor, list clamp, retry cap | `boson-testkit/tests/axum_http_api.rs` |
 | Unit | URL redact / `map_backend_connect_err` (happy + passworded sad) | `boson-core` `redact`, sql-common / redis / scylla `error_map` |
 | Docs | Operator table: AdminAuth, ActorJsonPolicy, sanitize, URL credentials | [`SECURITY.md`](../SECURITY.md) |
-| AWS | Redis/NATS/Scylla e2e scripts run contracts + `scenarios_full` filters | `infra/native-aws/scripts/run-*-e2e.sh` |
+| AWS | Redis/NATS/Scylla e2e on provisioned fleets (contracts + `scenarios_full` filters) | maintainer out-of-tree |
 
 ### Full broker env (GHA services or local docker)
 
@@ -117,7 +105,7 @@ cargo test -p boson-backend-nats -- --ignored --test-threads=1
 cargo test -p boson-e2e -- --include-ignored --test-threads=1
 ```
 
-Fleet routing (Redis/NATS dual-broker) and Scylla cloud campaigns: [`infra/native-aws/scripts/`](../infra/native-aws/scripts/).
+Fleet routing (Redis/NATS dual-broker) and Scylla cloud campaigns are run on AWS by maintainers; those scripts are not shipped in this repository.
 
 ## Line coverage (CI artifact)
 
@@ -136,7 +124,7 @@ Baseline ~40% line coverage (2026-07-08), workspace excluding e2e/bench with `--
 Keep harness code, experiment IDs, and methodology docs in Git. Publish heavy JSON reports,
 flamegraphs, and machine-specific captures as CI artifacts or release assets. Retain only small
 golden fixtures when needed for assertions. Report directory:
-`profiling/boson-bench/reports/` (see [`boson-bench/EXPERIMENTS.md`](../boson-bench/EXPERIMENTS.md)).
+`profiling/boson-bench/reports/` (see [`boson-bench/PERFORMANCE.md`](../boson-bench/PERFORMANCE.md)).
 
 ## Backend contract suites
 

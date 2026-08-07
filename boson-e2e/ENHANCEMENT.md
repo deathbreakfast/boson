@@ -54,12 +54,12 @@ Implement BM-B2–B8 / BM-BL* runners aligned with e2e scenarios in [`boson-benc
 - Pagination offsets on list APIs (beyond count-at-depth)
 - Config revision history (HTTP stub route returns empty list today)
 - Multiple workers / pools concurrently
-- Redis/NATS fleet routing (manual 2-broker scripts under `infra/native-aws/scripts/`)
+- Redis/NATS fleet routing (manual multi-broker campaigns on AWS)
 
 ## CI tiers
 
 | Tier | Trigger | What runs |
 |------|---------|-----------|
 | PR | `boson-matrix.yml` | Full matrix: mem/sqlite/postgres/redis/nats contracts + e2e `--include-ignored`; deny; clippy; axum; examples; coverage |
-| AWS remote | `~/aws/boson/run-remote-ci.sh` | PR subset without broker containers (deny, clippy, crate tests, mem/sqlite e2e) |
-| Manual | `infra/native-aws/scripts/` | Scylla cloud, fleet routing, extended broker campaigns |
+| AWS remote | maintainer | PR subset without broker containers (deny, clippy, crate tests, mem/sqlite e2e) |
+| Manual | maintainer | Scylla cloud, fleet routing, extended broker campaigns on AWS |

@@ -252,7 +252,7 @@ dependencies = [
 
 [[package]]
 name = "boson-axum"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum",
  "boson-backend-mem",
@@ -267,7 +267,7 @@ dependencies = [
 
 [[package]]
 name = "boson-backend-mem"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "boson-core",
@@ -277,7 +277,7 @@ dependencies = [
 
 [[package]]
 name = "boson-backend-nats"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-nats",
  "async-trait",
@@ -295,7 +295,7 @@ dependencies = [
 
 [[package]]
 name = "boson-backend-postgres"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "boson-backend-sql-common",
@@ -307,7 +307,7 @@ dependencies = [
 
 [[package]]
 name = "boson-backend-redis"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "boson-core",
@@ -321,7 +321,7 @@ dependencies = [
 
 [[package]]
 name = "boson-backend-scylla"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "boson-core",
@@ -335,7 +335,7 @@ dependencies = [
 
 [[package]]
 name = "boson-backend-sql-common"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "boson-core",
@@ -351,7 +351,7 @@ dependencies = [
 
 [[package]]
 name = "boson-backend-sqlite"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "boson-backend-sql-common",
@@ -362,7 +362,7 @@ dependencies = [
 
 [[package]]
 name = "boson-bench"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "axum",
@@ -384,7 +384,7 @@ dependencies = [
 
 [[package]]
 name = "boson-core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "chrono",
@@ -397,7 +397,7 @@ dependencies = [
 
 [[package]]
 name = "boson-e2e"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "boson-core",
  "boson-testkit",
@@ -408,7 +408,7 @@ dependencies = [
 
 [[package]]
 name = "boson-macros"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -417,7 +417,7 @@ dependencies = [
 
 [[package]]
 name = "boson-runtime"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "boson-backend-mem",
@@ -433,14 +433,14 @@ dependencies = [
 
 [[package]]
 name = "boson-telemetry"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde_json",
 ]
 
 [[package]]
 name = "boson-testkit"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "axum",
@@ -2972,7 +2972,7 @@ checksum = "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20"
 
 [[package]]
 name = "uf-boson"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "async-trait",

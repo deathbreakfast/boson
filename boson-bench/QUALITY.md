@@ -6,7 +6,7 @@ Cargo quality gates for the BM-B* benchmark CLI.
 
 - Smoke: `cargo run -p boson-bench -- experiments`
 - CI: upstream `.github/workflows/boson-matrix.yml`
-- Registry: [`EXPERIMENTS.md`](EXPERIMENTS.md), [`PERFORMANCE_STUDY.md`](PERFORMANCE_STUDY.md)
+- Registry: [`PERFORMANCE.md`](PERFORMANCE.md), [`PERFORMANCE.md`](PERFORMANCE.md)
 
 ## Local commands
 

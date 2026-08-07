@@ -1,6 +1,6 @@
 # Boson performance
 
-Measured on AWS (`c6i.large` bench hosts with `t3.medium` brokers unless noted). Boson is a typed job queue with pluggable backends. The figures below cover **Redis** and **NATS JetStream WorkQueue** enqueue and drain paths applications use in production topologies. Full ladders live in the private `uf-live-cloud-lab` boson performance study.
+Measured on AWS (`c6i.large` bench hosts with `t3.medium` brokers unless noted). Boson is a typed job queue with pluggable backends. The figures below cover **Redis** and **NATS JetStream WorkQueue** enqueue and drain paths applications use in production topologies.
 
 ## Enqueue
 

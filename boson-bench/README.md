@@ -6,8 +6,8 @@ Performance CLI over shared [`boson-testkit`](../boson-testkit/README.md) scenar
 
 | Doc | Role |
 |-----|------|
-| [`PERFORMANCE_STUDY.md`](PERFORMANCE_STUDY.md) | Decision-grade findings — Redis vs NATS Tier 3 capacity |
-| [`EXPERIMENTS.md`](EXPERIMENTS.md) | Pre-registered IDs, phase status, run commands |
+| [`PERFORMANCE.md`](PERFORMANCE.md) | Decision-grade findings — Redis vs NATS Tier 3 capacity |
+| [`PERFORMANCE.md`](PERFORMANCE.md) | Pre-registered IDs, phase status, run commands |
 | [`EXPERIMENTS-ARCHIVE.md`](EXPERIMENTS-ARCHIVE.md) | Scylla, Tier 1–2, campaign debug history |
 
 ## Role
@@ -27,7 +27,7 @@ cargo run -p boson-bench -- run --experiment bm-be4 --backend redis \
 
 Reports: [`profiling/boson-bench/reports/`](../profiling/boson-bench/reports/)
 
-AWS campaigns: `infra/native-aws/broker-fleet/` (see [`EXPERIMENTS.md`](EXPERIMENTS.md)).
+AWS campaigns are run out of tree by maintainers (see [`PERFORMANCE.md`](PERFORMANCE.md)).
 
 CI smoke: [`.github/workflows/boson-matrix.yml`](../.github/workflows/boson-matrix.yml).
 

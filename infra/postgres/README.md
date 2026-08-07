@@ -17,4 +17,4 @@ cargo run -p boson-bench -- matrix --subset embedded-lab --backend postgres --ha
 |----------|---------|
 | `BOSON_BENCH_POSTGRES_URL` | `postgres://boson:bench@127.0.0.1:5433/boson_bench` |
 
-See [`boson-bench/EXPERIMENTS.md`](../boson-bench/EXPERIMENTS.md) embedded backend protocol.
+See [`boson-bench/PERFORMANCE.md`](../boson-bench/PERFORMANCE.md) embedded backend protocol.

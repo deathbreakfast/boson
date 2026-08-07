@@ -33,11 +33,4 @@ Remaining ignore: unmaintained `paste` via broker SDK transitive edges.
 
 ## Verification
 
-Run `cargo deny check` locally, or via remote CI on a provisioned native-aws host:
-
-```bash
-~/aws/boson/run-remote-ci.sh
-```
-
-That remote script installs `cargo-deny` if needed and runs `cargo deny check` before
-the rest of the PR matrix subset.
+Run `cargo deny check` locally. Maintainers also re-run deny as part of remote CI on AWS.
