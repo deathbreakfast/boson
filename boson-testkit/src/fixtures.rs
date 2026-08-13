@@ -150,6 +150,15 @@ fn fail_invoke(
     Box::pin(async { Err(BosonError::internal("testkit fail task")) })
 }
 
+fn panic_invoke(
+    _ctx: Box<dyn ExecutionContext>,
+    _params: serde_json::Value,
+) -> Pin<Box<dyn Future<Output = boson_core::Result<()>> + Send + 'static>> {
+    Box::pin(async {
+        panic!("testkit panic task");
+    })
+}
+
 fn fail_n_then_ok_invoke(
     _ctx: Box<dyn ExecutionContext>,
     _params: serde_json::Value,
@@ -221,6 +230,19 @@ pub fn register_fail_task(registry: &mut TaskRegistry, name: &'static str) {
         registry,
         name,
         fail_invoke,
+        TaskPolicy {
+            max_attempts: 1,
+            ..TaskPolicy::default()
+        },
+    );
+}
+
+/// Register a handler that panics (`max_attempts = 1` → terminal Failed).
+pub fn register_panic_task(registry: &mut TaskRegistry, name: &'static str) {
+    register_task_with_policy(
+        registry,
+        name,
+        panic_invoke,
         TaskPolicy {
             max_attempts: 1,
             ..TaskPolicy::default()

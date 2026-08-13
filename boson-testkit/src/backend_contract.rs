@@ -293,3 +293,31 @@ pub async fn expired_lease_pairs(b: Arc<dyn QueueBackend>, _env: &BackendEnv) {
         .iter()
         .any(|(lid, jid)| lid == &lease_id && jid == "job-3"));
 }
+
+/// Asserts reaper semantics: expired lease + release/revert returns job to queued for reclaim.
+///
+/// # Panics
+///
+/// Panics if backend operations fail or contract assertions are violated.
+pub async fn reclaim_expired_lease_requeues_job(b: Arc<dyn QueueBackend>, _env: &BackendEnv) {
+    let mut job = sample_job("reclaim-task", "global", 0, None);
+    job.status = JobStatus::Running;
+    let job_id = job.job_id.clone();
+    b.upsert_job(&job).await.unwrap();
+    let lease_id = b
+        .try_claim_run_lease(&job_id, "worker-a", -1)
+        .await
+        .unwrap()
+        .expect("expired lease");
+    assert!(b
+        .expired_lease_job_pairs()
+        .await
+        .unwrap()
+        .iter()
+        .any(|(lid, jid)| lid == &lease_id && jid == &job_id));
+    b.release_lease(&lease_id).await.unwrap();
+    b.revert_job_to_queued(&job_id).await.unwrap();
+    let restored = b.get_job(&job_id).await.unwrap().expect("job");
+    assert_eq!(restored.status, JobStatus::Queued);
+    assert!(b.try_claim_job(&job_id).await.unwrap().is_some());
+}

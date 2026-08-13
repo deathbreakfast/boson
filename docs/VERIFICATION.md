@@ -72,8 +72,8 @@ cargo run -p boson-bench -- run --experiment bm-b0 --backend mem --topology isol
 | Suite | Scenarios | Backends on PR | Notes |
 |-------|-----------|----------------|-------|
 | Smoke | 4 | mem, sqlite (also covered inside full) | `scenarios_smoke.rs` |
-| Full | 32 | mem, sqlite, postgres, redis, nats (+ scylla if secret) | `--include-ignored` in PR `e2e` job |
-| Catalog | 32 rows | includes security-hardening rows below | [`boson-testkit/src/scenario/catalog.rs`](../boson-testkit/src/scenario/catalog.rs) |
+| Full | 35 | mem, sqlite, postgres, redis, nats (+ scylla if secret) | `--include-ignored` in PR `e2e` job |
+| Catalog | 35 rows | includes security-hardening rows below | [`boson-testkit/src/scenario/catalog.rs`](../boson-testkit/src/scenario/catalog.rs) |
 
 Smoke scenario ids: `enqueue_and_drain`, `enqueue_only`, `run_lifecycle`, `idempotency_smoke`.
 
@@ -83,8 +83,12 @@ Smoke scenario ids: `enqueue_and_drain`, `enqueue_only`, `run_lifecycle`, `idemp
 |-------|-------------|--------|
 | Contract | `contract_claim_ignores_status_in_params` | `backend_contract_suite!` (all adapters) |
 | Contract | `contract_try_claim_atomic`, `contract_try_claim_parallel`, lease contention/extend/expire | suite |
+| Contract | `contract_reclaim_expired_lease_requeues_job` | expired lease → release/revert → re-claim |
 | Catalog | `cancel_running_job` | mid-run cooperative cancel → `Canceled` |
 | Catalog | `long_job_lease_heartbeat_drain` | TTL 2s < sleep 5s; single success |
+| Catalog | `handler_panic_drain` / `handler_panic_drain_isolated` | panic → terminal `Failed` |
+| Catalog | `lease_reclaim_after_expired` | force-expire + reclaim → drain success |
+| Unit | `handler_panic_marks_job_failed` | `boson-testkit` `runtime_mem` |
 | Axum | admin 401/200, non-System actor, list clamp, retry cap | `boson-testkit/tests/axum_http_api.rs` |
 | Unit | URL redact / `map_backend_connect_err` (happy + passworded sad) | `boson-core` `redact`, sql-common / redis / scylla `error_map` |
 | Docs | Operator table: AdminAuth, ActorJsonPolicy, sanitize, URL credentials | [`SECURITY.md`](../SECURITY.md) |
@@ -128,5 +132,6 @@ golden fixtures when needed for assertions. Report directory:
 
 ## Backend contract suites
 
-Each adapter expands `backend_contract_suite!` (13 checks, including
-`claim_ignores_status_in_params` and `try_claim_parallel`). See [`boson-testkit`](../boson-testkit/README.md).
+Each adapter expands `backend_contract_suite!` (14 checks, including
+`claim_ignores_status_in_params`, `try_claim_parallel`, and
+`reclaim_expired_lease_requeues_job`). See [`boson-testkit`](../boson-testkit/README.md).

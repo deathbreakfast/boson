@@ -5,7 +5,8 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use boson_core::{
-    ExecutionContextFactory, Job, JobStatus, QueueBackend, Result, Run, RunStatus, TaskConfig,
+    BosonError, ExecutionContextFactory, Job, JobStatus, QueueBackend, Result, Run, RunStatus,
+    TaskConfig,
 };
 use chrono::Utc;
 use tokio::time::sleep;
@@ -13,6 +14,7 @@ use tokio::time::sleep;
 use super::claim::claim_next_job;
 use super::config::WorkerSettings;
 use super::execute::{execute_job, record_run_start};
+use super::lease_guard::AbortOnDrop;
 use super::lifecycle::{finish_job_execution, sleep_retry_delay, RunLifecycleHost};
 use crate::registry::TaskRegistry;
 use crate::telemetry;
@@ -57,12 +59,9 @@ impl WorkerEngine {
             &run_id,
             &self.worker.runtime_label,
         );
-        let heartbeat = self.spawn_lease_heartbeat(lease_id.as_deref());
+        let _heartbeat_guard = AbortOnDrop::new(self.spawn_lease_heartbeat(lease_id.as_deref()));
         let start = Utc::now();
-        let result = execute_job(&self.registry, &self.identity, &self.backend, &job).await;
-        if let Some(handle) = heartbeat {
-            handle.abort();
-        }
+        let result = self.execute_job_catch_panic(&job).await;
         let result = self.apply_cancel_if_needed(&job.job_id, result).await;
         if let Err(ref e) = result {
             let msg = boson_core::sanitize_error_message(&e.to_string());
@@ -72,6 +71,27 @@ impl WorkerEngine {
         finish_job_execution(self.as_ref(), run_id, job, result, duration_ms).await;
         if let Some(ref lid) = lease_id {
             let _ = self.backend.release_lease(lid).await;
+        }
+    }
+
+    /// Run the handler in a supervised task so panics become [`BosonError`] instead of
+    /// leaving the job stuck in `Running` with an orphaned lease heartbeat.
+    async fn execute_job_catch_panic(&self, job: &Job) -> Result<()> {
+        let registry = Arc::clone(&self.registry);
+        let identity = Arc::clone(&self.identity);
+        let backend = Arc::clone(&self.backend);
+        let job_id = job.job_id.clone();
+        let task_name = job.task_name.clone();
+        let job = job.clone();
+        match tokio::spawn(async move { execute_job(&registry, &identity, &backend, &job).await })
+            .await
+        {
+            Ok(result) => result,
+            Err(join_err) if join_err.is_panic() => {
+                telemetry::record_handler_error(&task_name, &job_id, "panic", "handler panicked");
+                Err(BosonError::internal("handler panicked"))
+            }
+            Err(_) => Err(BosonError::internal("handler task cancelled")),
         }
     }
 
@@ -114,7 +134,7 @@ impl WorkerEngine {
             &self.worker.runtime_label,
         );
         let start = Utc::now();
-        let result = execute_job(&self.registry, &self.identity, &self.backend, &job).await;
+        let result = self.execute_job_catch_panic(&job).await;
         let result = self.apply_cancel_if_needed(&job.job_id, result).await;
         let duration_ms = (Utc::now() - start).num_milliseconds();
         match result {

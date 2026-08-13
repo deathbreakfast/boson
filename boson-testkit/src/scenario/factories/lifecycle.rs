@@ -51,6 +51,56 @@ impl ScenarioSpec {
         }
     }
 
+    /// Panic task → terminal `Failed` (not stuck `Running`).
+    #[must_use]
+    pub fn handler_panic_drain(task: &str) -> Self {
+        Self {
+            id: "handler_panic_drain".into(),
+            steps: vec![
+                ScenarioStep::EnqueueN {
+                    task: task.to_string(),
+                    count: 1,
+                    idempotency_key: None,
+                },
+                ScenarioStep::DrainUntilIdle { max_steps: 32 },
+                ScenarioStep::AssertJobStatus {
+                    job_index: 0,
+                    status: JobStatus::Failed,
+                },
+                ScenarioStep::AssertRunOutcome {
+                    job_index: 0,
+                    run_status: RunStatus::Failed,
+                },
+            ],
+        }
+    }
+
+    /// Force-expire a running job lease, reclaim to queued, then drain to success.
+    #[must_use]
+    pub fn lease_reclaim_after_expired(task: &str) -> Self {
+        Self {
+            id: "lease_reclaim_after_expired".into(),
+            steps: vec![
+                ScenarioStep::EnqueueN {
+                    task: task.to_string(),
+                    count: 1,
+                    idempotency_key: None,
+                },
+                ScenarioStep::MarkRunningWithExpiredLease { job_index: 0 },
+                ScenarioStep::ForceReclaimExpiredLeases,
+                ScenarioStep::AssertJobStatus {
+                    job_index: 0,
+                    status: JobStatus::Queued,
+                },
+                ScenarioStep::DrainUntilIdle { max_steps: 32 },
+                ScenarioStep::AssertJobStatus {
+                    job_index: 0,
+                    status: JobStatus::Success,
+                },
+            ],
+        }
+    }
+
     /// Fail N times then succeed via retry policy.
     #[must_use]
     pub fn retry_then_success(task: &str, fail_attempts: u32) -> Self {

@@ -132,6 +132,13 @@ pub enum ScenarioStep {
         /// Lease TTL seconds for contention probe.
         ttl_secs: u32,
     },
+    /// Mark a queued job `Running` and attach an already-expired run lease.
+    MarkRunningWithExpiredLease {
+        /// Job id index from prior enqueue steps.
+        job_index: usize,
+    },
+    /// Release expired leases and revert those jobs to `queued` (reaper semantics).
+    ForceReclaimExpiredLeases,
     /// Retry/backoff: enqueue, drain until success after transient failures.
     RetryBackoff {
         /// Registered fail-then-ok task name.

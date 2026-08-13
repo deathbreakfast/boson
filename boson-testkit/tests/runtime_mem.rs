@@ -243,3 +243,73 @@ async fn handler_error_sanitized_in_run_row() {
         "expected sanitized message, got: {msg}"
     );
 }
+
+fn panic_task(
+    _ctx: Box<dyn ExecutionContext>,
+    _params: serde_json::Value,
+) -> Pin<Box<dyn Future<Output = boson_core::Result<()>> + Send + 'static>> {
+    Box::pin(async {
+        panic!("runtime_mem panic fixture");
+    })
+}
+
+#[tokio::test]
+async fn handler_panic_marks_job_failed() {
+    let backend: Arc<dyn QueueBackend> = Arc::new(MemQueueBackend::new());
+    let mut registry = TaskRegistry::new();
+    let defaults = TaskDefaults {
+        priority: 1,
+        pool: "global",
+        retry: RetryPolicy {
+            max_attempts: 1,
+            base_delay_ms: 0,
+            backoff_multiplier: 2.0,
+            max_delay_ms: 1000,
+        },
+        rate: RateLimitPolicy {
+            max_in_flight: 0,
+            max_enqueue_per_second: 0,
+        },
+    };
+    let desc: &'static TaskDescriptor = Box::leak(Box::new(TaskDescriptor::with_defaults(
+        "panic_task",
+        panic_task,
+        "{}",
+        0,
+        defaults,
+    )));
+    registry.register(desc);
+    let (boson, manual) = Boson::builder()
+        .queue_backend(backend)
+        .execution_context_factory(TestFactory)
+        .registry(Arc::new(registry))
+        .without_worker()
+        .build_manual()
+        .expect("build");
+
+    let job_id = boson
+        .enqueue(
+            "panic_task",
+            serde_json::json!({"Service": {"name": "test"}}),
+            serde_json::json!({}),
+            None,
+        )
+        .await
+        .expect("enqueue");
+    assert!(manual.try_run_next().await);
+
+    let job = boson.get_job(&job_id).await.expect("get").expect("job");
+    assert_eq!(
+        job.status,
+        JobStatus::Failed,
+        "panic must not leave job Running"
+    );
+    let runs = boson.list_runs(Some(&job_id), 0, 8).await.expect("runs");
+    let run = runs.last().expect("run row");
+    assert_eq!(run.status, boson_core::RunStatus::Failed);
+    let msg = run.error_message.as_deref().unwrap_or("");
+    assert!(
+        msg.contains("panicked"),
+        "expected handler panicked message, got: {msg}"
+    );
+}

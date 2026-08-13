@@ -7,6 +7,7 @@
 mod claim;
 mod config;
 mod execute;
+mod lease_guard;
 mod lifecycle;
 mod loop_;
 mod manual;

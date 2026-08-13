@@ -6,8 +6,9 @@ use super::steps::{
     run_assert_handler_hits, run_assert_job_count, run_assert_job_missing, run_assert_job_status,
     run_assert_run_count, run_assert_run_outcome, run_assert_same_job_id,
     run_assert_task_run_stats, run_cancel_job, run_cancel_missing_job, run_cancel_while_draining,
-    run_drain, run_enqueue, run_reregister_task_signature, run_retry_backoff,
-    run_simulate_lease_contention, run_upsert_task_config,
+    run_drain, run_enqueue, run_force_reclaim_expired_leases, run_mark_running_with_expired_lease,
+    run_reregister_task_signature, run_retry_backoff, run_simulate_lease_contention,
+    run_upsert_task_config,
 };
 use super::support::ScenarioStep;
 use super::{RunMode, ScenarioRunner, StepTiming};
@@ -110,6 +111,12 @@ impl ScenarioRunner<'_> {
             }
             ScenarioStep::SimulateLeaseContention { ttl_secs, .. } => {
                 run_simulate_lease_contention(state, *ttl_secs).await
+            }
+            ScenarioStep::MarkRunningWithExpiredLease { job_index } => {
+                run_mark_running_with_expired_lease(state, *job_index).await
+            }
+            ScenarioStep::ForceReclaimExpiredLeases => {
+                run_force_reclaim_expired_leases(state).await
             }
             ScenarioStep::RetryBackoff {
                 task,

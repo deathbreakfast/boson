@@ -8,7 +8,7 @@ use boson_core::IdempotencyMode;
 
 use crate::fixtures::{
     register_counting_task, register_fail_exhaustion_task, register_fail_n_then_ok_task,
-    register_fail_task, register_noop_task, register_noop_task_with_priority,
+    register_fail_task, register_noop_task, register_noop_task_with_priority, register_panic_task,
     register_rate_limited_eps_task, register_rate_limited_in_flight_task, register_sleep_task,
     reset_counting_hits, reset_noop_hits, reset_sleep_hits,
 };
@@ -58,6 +58,8 @@ pub enum RegisterKind {
     Counting,
     /// Always-fail task (`max_attempts = 1`).
     Fail,
+    /// Panic task (`max_attempts = 1`).
+    Panic,
     /// Always-fail with retries (`max_attempts = 3`) for exhaustion.
     FailExhaustion,
     /// Fail twice then succeed.
@@ -88,6 +90,7 @@ impl RegisterKind {
                 register_counting_task(registry, "counting");
             }
             Self::Fail => register_fail_task(registry, "fail"),
+            Self::Panic => register_panic_task(registry, "panic"),
             Self::FailExhaustion => register_fail_exhaustion_task(registry, "fail_exhaust", 3),
             Self::Retryable => register_fail_n_then_ok_task(registry, "retryable", 2),
             Self::RateLimitedInFlight => {
@@ -239,6 +242,30 @@ pub fn correctness_catalog() -> &'static [CatalogEntry] {
             register: RegisterKind::Fail,
             idempotency_mode: None,
             spec: || ScenarioSpec::handler_failure_terminal("fail"),
+        },
+        CatalogEntry {
+            id: "handler_panic_drain_isolated",
+            path: PathKind::Sad,
+            topology: CatalogTopology::IsolatedLab,
+            register: RegisterKind::Panic,
+            idempotency_mode: None,
+            spec: || ScenarioSpec::handler_panic_drain("panic"),
+        },
+        CatalogEntry {
+            id: "handler_panic_drain",
+            path: PathKind::Sad,
+            topology: CatalogTopology::SplitBosonServer,
+            register: RegisterKind::Panic,
+            idempotency_mode: None,
+            spec: || ScenarioSpec::handler_panic_drain("panic"),
+        },
+        CatalogEntry {
+            id: "lease_reclaim_after_expired",
+            path: PathKind::Happy,
+            topology: CatalogTopology::SplitBosonServer,
+            register: RegisterKind::Noop,
+            idempotency_mode: None,
+            spec: || ScenarioSpec::lease_reclaim_after_expired("noop"),
         },
         CatalogEntry {
             id: "retry_then_success",
