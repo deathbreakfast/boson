@@ -251,6 +251,7 @@ mod tests {
     use tokio::sync::Mutex;
 
     static MEM_LOCK: Mutex<()> = Mutex::const_new(());
+    static SQLITE_LOCK: Mutex<()> = Mutex::const_new(());
 
     fn bc1_test_cfg() -> BenchRunConfig {
         let mut cfg = BenchRunConfig::for_experiment("bm-bc1");
@@ -382,5 +383,46 @@ mod tests {
             metrics.residual_backlog.unwrap_or(0) > 0 || notes.contains("FAIL"),
             "{notes:?} {metrics:?}"
         );
+    }
+
+    async fn install_bc1_sqlite() -> (
+        boson_testkit::BootstrapSession,
+        Arc<dyn QueueBackend>,
+        Arc<TaskRegistry>,
+        Arc<dyn ExecutionContextFactory>,
+    ) {
+        let mut session =
+            boson_testkit::BootstrapSession::new(MatrixSpec::ci_sqlite_isolated_lab());
+        {
+            let registry = session.registry_mut().expect("unique registry");
+            register_sleep_task(registry, SLEEP_TASK);
+            register_fail_n_then_ok_task(registry, RETRY_TASK, 1);
+        }
+        session.install().await.expect("install");
+        let backend = session.backend().expect("backend");
+        let registry = session.registry();
+        let identity: Arc<dyn ExecutionContextFactory> = Arc::new(StubExecutionContextFactory);
+        (session, backend, registry, identity)
+    }
+
+    #[tokio::test]
+    async fn sqlite_sleep_retry_reaches_success() {
+        let _guard = SQLITE_LOCK.lock().await;
+        reset_sleep_hits();
+        let cfg = bc1_test_cfg();
+        let (session, backend, registry, identity) = install_bc1_sqlite().await;
+        let metrics = run_completed(&session, backend, registry, identity, "isolated-lab", &cfg)
+            .await
+            .expect("run");
+        assert_eq!(metrics.lease_ttl_secs, Some(BC1_LEASE_TTL_SECS));
+        assert_eq!(metrics.run_rows_enabled, Some(true));
+        assert_eq!(metrics.duplicate_executions, Some(0));
+        assert_eq!(metrics.residual_backlog, Some(0));
+        assert!(
+            metrics.completed_ops_per_sec.unwrap_or(0.0) > 0.0,
+            "expected terminal Success throughput, got {metrics:?}"
+        );
+        let (pass, notes) = crate::pass_eval::evaluate("bm-bc1", &metrics, None);
+        assert!(pass, "{notes}");
     }
 }
