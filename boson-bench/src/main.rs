@@ -13,6 +13,7 @@
 )]
 
 mod cli;
+mod completed;
 mod config;
 mod drain;
 mod enqueue;

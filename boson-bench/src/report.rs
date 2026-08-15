@@ -78,8 +78,23 @@ pub struct ReportMetrics {
     /// Sum of per-client achieved rates in a multibench aggregate report.
     pub fleet_aggregate_ops_per_sec: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    /// Metric kind: `enqueue`, `drain`, or soak default.
+    /// Metric kind: `enqueue`, `drain`, `completed`, or soak default.
     pub metric_kind: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Terminal Success jobs per second (BM-BC1).
+    pub completed_ops_per_sec: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Handler executions beyond the expected one-shot (or retry-once) count.
+    pub duplicate_executions: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Queued + running jobs remaining after the drain tail.
+    pub residual_backlog: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Worker lease TTL used for this run (seconds).
+    pub lease_ttl_secs: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Whether run rows were persisted (`false` when `BOSON_SKIP_RUN_ROWS` is enabled).
+    pub run_rows_enabled: Option<bool>,
 }
 
 /// NATS enqueue pipeline dimensions captured at run time.
@@ -166,4 +181,48 @@ pub fn write_report(path: &std::path::Path, report: &BenchReport) -> anyhow::Res
     }
     std::fs::write(path, serde_json::to_string_pretty(report)?)?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn old_metrics_json_deserializes_without_bc1_fields() {
+        let json = r#"{"achieved_ops_per_sec": 12.5, "error_rate": 0.0}"#;
+        let metrics: ReportMetrics = serde_json::from_str(json).expect("legacy metrics JSON");
+        assert_eq!(metrics.achieved_ops_per_sec, Some(12.5));
+        assert!(metrics.completed_ops_per_sec.is_none());
+        assert!(metrics.duplicate_executions.is_none());
+        assert!(metrics.residual_backlog.is_none());
+        assert!(metrics.lease_ttl_secs.is_none());
+        assert!(metrics.run_rows_enabled.is_none());
+    }
+
+    #[test]
+    fn bc1_optional_fields_round_trip() {
+        let metrics = ReportMetrics {
+            completed_ops_per_sec: Some(40.0),
+            duplicate_executions: Some(0),
+            residual_backlog: Some(0),
+            lease_ttl_secs: Some(30),
+            run_rows_enabled: Some(true),
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&metrics).expect("serialize");
+        let back: ReportMetrics = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.completed_ops_per_sec, Some(40.0));
+        assert_eq!(back.lease_ttl_secs, Some(30));
+        assert_eq!(back.run_rows_enabled, Some(true));
+    }
+
+    #[test]
+    fn absent_optional_fields_omitted_from_json() {
+        let json = serde_json::to_string(&ReportMetrics::default()).expect("serialize");
+        assert!(!json.contains("completed_ops_per_sec"));
+        assert!(!json.contains("duplicate_executions"));
+        assert!(!json.contains("residual_backlog"));
+        assert!(!json.contains("lease_ttl_secs"));
+        assert!(!json.contains("run_rows_enabled"));
+    }
 }

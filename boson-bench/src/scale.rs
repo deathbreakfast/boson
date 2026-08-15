@@ -157,6 +157,7 @@ pub async fn run_task_fanout(boson: Arc<Boson>, cfg: &BenchRunConfig) -> Result<
         pool_count: task_count,
         pool_layout: cfg.publisher.pool_layout,
         duration_secs: cfg.publisher.duration_secs,
+        job_count: cfg.publisher.job_count,
     };
     run_scale(
         boson,

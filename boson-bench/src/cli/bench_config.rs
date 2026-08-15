@@ -117,6 +117,16 @@ fn apply_env_overrides(cfg: &mut BenchRunConfig) {
             cfg.storage_topology = Some(v);
         }
     }
+    if let Ok(v) = std::env::var("BOSON_BENCH_BC1_DURATION_SECS") {
+        if let Ok(d) = v.parse() {
+            cfg.publisher.duration_secs = d;
+        }
+    }
+    if let Ok(v) = std::env::var("BOSON_BENCH_BC1_JOB_COUNT") {
+        if let Ok(n) = v.parse() {
+            cfg.publisher.job_count = Some(n);
+        }
+    }
 }
 
 /// Convenience for matrix subset runs (experiment defaults + env only).
@@ -148,5 +158,19 @@ mod tests {
             cfg.worker_fleet.worker_pools,
             Some(vec!["global".to_string()])
         );
+    }
+
+    #[test]
+    fn bc1_worker_count_override() {
+        let cfg = resolve_bench_config(
+            "bm-bc1",
+            BenchConfigOverrides {
+                worker_count: Some(2),
+                ..Default::default()
+            },
+        );
+        assert_eq!(cfg.drain.worker_count, 2);
+        assert_eq!(cfg.drain.lease_ttl_secs, 30);
+        assert_eq!(cfg.publisher.duration_secs, 60);
     }
 }

@@ -11,6 +11,7 @@ use boson_testkit::{
     StubExecutionContextFactory,
 };
 
+use crate::completed;
 use crate::config::BenchRunConfig;
 use crate::drain;
 use crate::enqueue;
@@ -85,8 +86,7 @@ fn worker_settings_for(matrix: &MatrixSpec, cfg: &BenchRunConfig) -> WorkerSetti
         worker_pools: cfg.worker_fleet.worker_pools.clone(),
         worker_poll_interval_ms: cfg.drain.poll_interval_ms,
         skip_run_persistence: std::env::var("BOSON_SKIP_RUN_ROWS")
-            .ok()
-            .is_some_and(|v| matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes")),
+            .is_ok_and(|v| matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes")),
     }
 }
 
@@ -97,8 +97,13 @@ pub async fn run_experiment(
     plan: ExperimentPlan,
     hardware: &str,
     warmup: u32,
-    bench_cfg: BenchRunConfig,
+    mut bench_cfg: BenchRunConfig,
 ) -> Result<BenchReport> {
+    if plan.id == "bm-bc1" {
+        if let Some(ops) = plan.ops {
+            bench_cfg.publisher.job_count.get_or_insert(u64::from(ops));
+        }
+    }
     let hardware_detail = hardware::capture();
     let capture_resources = captures_resource_profile(hardware);
     let mut sampler = capture_resources.then(ResourceSampler::start);
@@ -170,6 +175,28 @@ pub async fn run_experiment(
         let registry = session.registry();
         let identity: Arc<dyn ExecutionContextFactory> = Arc::new(StubExecutionContextFactory);
         match drain::run_background_drain(
+            &session,
+            backend,
+            registry,
+            identity,
+            matrix.runtime_label(),
+            &bench_cfg,
+        )
+        .await
+        {
+            Ok(m) => (m, None, None),
+            Err(e) => (ReportMetrics::default(), None, Some(e.to_string())),
+        }
+    } else if plan.id == "bm-bc1" {
+        let mut session = capacity_session(matrix.clone(), &bench_cfg);
+        tasks::register_for_plan(session.registry_mut()?, &plan, &bench_cfg);
+        session.install().await?;
+        let backend = session
+            .backend()
+            .ok_or_else(|| anyhow::anyhow!("no backend"))?;
+        let registry = session.registry();
+        let identity: Arc<dyn ExecutionContextFactory> = Arc::new(StubExecutionContextFactory);
+        match completed::run_completed(
             &session,
             backend,
             registry,

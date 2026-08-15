@@ -14,6 +14,14 @@ Redis single-broker drain **~10.5k ops/s** @ W=32. NATS single-broker **~4.5k op
 
 Redis leads raw enqueue and single-broker drain. NATS clears a high enqueue gate and shows validated multi-publisher scaling. Choose by topology (ops familiarity, multi-tenant stream needs, drain shape), not by a single headline number.
 
+## Completed
+
+BM-BC1 measures terminal **Success** jobs per second with production worker settings: `lease_ttl_secs: 30`, run rows persisted (`BOSON_SKIP_RUN_ROWS` unset), W=32, 80% sleep handlers (100–500 ms) and 20% retry-once. The enqueue window is 60 seconds, then a bounded drain tail. Fail the report on terminal failures, duplicate handler execution, leftover backlog, disabled leases, or skipped run persistence.
+
+Enqueue (BM-BE*) is publisher insert rate with workers off. Dequeue (BM-BD*) is claim+execute of prefilled noops; those runs may disable leases (`lease_ttl_secs: 0`) and skip run rows for throughput. Completed (BM-BC1) is the durable Success rate applications see after both enqueue and execute finish.
+
+This track has no in-tree AWS campaign figures yet. Quote hardware-tagged BM-BC1 reports when they exist. Enqueue and dequeue figures stay on their own tracks.
+
 ## How to read these results
 
 Quote AWS-tagged hardware. Treat older curves taken before claim/lease hardening as historical until re-measured on current code.

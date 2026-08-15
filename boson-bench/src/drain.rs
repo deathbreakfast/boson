@@ -33,20 +33,17 @@ fn bench_client_count() -> Option<u32> {
 
 fn drain_only_mode() -> bool {
     std::env::var("BOSON_BENCH_DRAIN_ONLY")
-        .ok()
-        .is_some_and(|v| matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes"))
+        .is_ok_and(|v| matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes"))
 }
 
 fn central_prefill_mode() -> bool {
     std::env::var("BOSON_BENCH_CENTRAL_PREFILL")
-        .ok()
-        .is_some_and(|v| matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes"))
+        .is_ok_and(|v| matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes"))
 }
 
 fn pin_worker_pools_per_slot() -> bool {
     std::env::var("BOSON_BD2_PIN_WORKER_POOLS")
-        .ok()
-        .is_some_and(|v| matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes"))
+        .is_ok_and(|v| matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes"))
 }
 
 /// Inclusive start, exclusive end pool slot indices for multibench client `client`.
@@ -344,8 +341,7 @@ pub async fn run_background_drain(
             worker_pools: worker_pools_for(cfg, w),
             worker_poll_interval_ms: drain.poll_interval_ms,
             skip_run_persistence: std::env::var("BOSON_SKIP_RUN_ROWS")
-                .ok()
-                .is_some_and(|v| matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes")),
+                .is_ok_and(|v| matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes")),
         };
         spawn_worker(
             Arc::clone(&backend),

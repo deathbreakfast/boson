@@ -36,11 +36,15 @@ pub fn register_for_plan(registry: &mut TaskRegistry, plan: &ExperimentPlan, cfg
     use boson_testkit::fixtures::{
         register_fail_n_then_ok_task, register_fail_task, register_noop_task,
         register_noop_task_with_priority, register_rate_limited_eps_task,
-        register_rate_limited_in_flight_task,
+        register_rate_limited_in_flight_task, register_sleep_task,
     };
 
     match plan.id.as_str() {
         "bm-b4" => register_fail_n_then_ok_task(registry, "retryable", 2),
+        "bm-bc1" => {
+            register_sleep_task(registry, "sleep");
+            register_fail_n_then_ok_task(registry, "retryable", 1);
+        }
         "bm-b9" => register_rate_limited_in_flight_task(registry, "limited"),
         "bm-b10" => register_rate_limited_eps_task(registry, "limited_eps"),
         "bm-b16" => register_fail_task(registry, "fail"),

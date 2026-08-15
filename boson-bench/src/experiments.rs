@@ -94,9 +94,9 @@ fn lookup_builder(normalized: &str) -> Option<ScenarioBuilder> {
         }),
         "bm-b16" => Some(|_| (ScenarioSpec::handler_failure_terminal("fail"), None)),
         "bm-b17" => Some(bm_b17),
-        "bm-bi1" | "bm-bf2" | "bm-be1" | "bm-be2" | "bm-be4" | "bm-bd1" | "bm-bd2" | "bm-bl0"
-        | "bm-bl1" | "bm-bl2" | "bm-bl3" | "bm-bl4" | "bm-bp1" | "bm-bp2" | "bm-bm1" | "bm-bm2"
-        | "bm-bm3" | "bm-bm4" => Some(enqueue_only_stub),
+        "bm-bi1" | "bm-bf2" | "bm-be1" | "bm-be2" | "bm-be4" | "bm-bd1" | "bm-bd2" | "bm-bc1"
+        | "bm-bl0" | "bm-bl1" | "bm-bl2" | "bm-bl3" | "bm-bl4" | "bm-bp1" | "bm-bp2" | "bm-bm1"
+        | "bm-bm2" | "bm-bm3" | "bm-bm4" => Some(enqueue_only_stub),
         _ => None,
     }
 }
@@ -145,6 +145,10 @@ pub const ALL_EXPERIMENTS: &[(&str, &str)] = &[
     ("bm-be4", "Enqueue capacity C=64×K=10 (no worker)"),
     ("bm-bd1", "Dequeue capacity W×ManualWorker (prefill+drain)"),
     ("bm-bd2", "Dequeue capacity W×background worker poll=0"),
+    (
+        "bm-bc1",
+        "Completed durable tasks/s (leases on, run rows on)",
+    ),
     ("bm-bp1", "Multi-pool enqueue"),
     ("bm-bp2", "Multi-pool enqueue"),
     ("bm-bm1", "Multi-client enqueue"),
@@ -180,14 +184,33 @@ pub fn subset_experiments(subset: &str) -> Result<Vec<&'static str>> {
         "tier3-capacity-full" => vec![
             "bm-b0", "bm-be1", "bm-be2", "bm-be4", "bm-bd1", "bm-bd2",
         ],
+        "marketing-durable" => vec!["bm-bc1"],
         "scylla-lab" => vec![
             "bm-b0", "bm-b1", "bm-b2", "bm-b3", "bm-b4", "bm-b5", "bm-b7", "bm-b8", "bm-b9",
             "bm-b10", "bm-b11", "bm-b12", "bm-b13", "bm-b14", "bm-b15", "bm-b16", "bm-bl0",
             "bm-bl1", "bm-bl2", "bm-bl3",
         ],
         other => bail!(
-            "unknown subset {other}; use mem-lab|mem-scale|mem-projection-inputs|embedded-lab|scylla-lab|tier3-capacity|tier3-capacity-full"
+            "unknown subset {other}; use mem-lab|mem-scale|mem-projection-inputs|embedded-lab|scylla-lab|tier3-capacity|tier3-capacity-full|marketing-durable"
         ),
     };
     Ok(ids)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn marketing_durable_slice_is_bc1() {
+        let ids = subset_experiments("marketing-durable").expect("subset");
+        assert_eq!(ids, vec!["bm-bc1"]);
+    }
+
+    #[test]
+    fn historical_ids_still_resolve() {
+        for id in ["bm-b0", "bm-bd1", "bm-bd2", "bm-be4", "bm-bc1"] {
+            resolve_experiment(id, None).unwrap_or_else(|_| panic!("missing {id}"));
+        }
+    }
 }

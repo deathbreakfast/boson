@@ -6,6 +6,9 @@
 use boson_core::IdempotencyMode;
 use serde::{Deserialize, Serialize};
 
+/// Production lease TTL for BM-BC1 (seconds). BM-BD2 keeps `0`.
+pub const BC1_LEASE_TTL_SECS: i64 = 30;
+
 /// How multi-client publishers map to queue pools.
 ///
 /// Task name selects the handler; **pool** selects the backend partition (Redis ZSET,
@@ -31,6 +34,9 @@ pub struct PublisherConfig {
     pub pool_layout: PoolLayout,
     /// Timed enqueue window in seconds.
     pub duration_secs: u64,
+    /// Optional cap on jobs enqueued (BM-BC1). `None` uses the duration window only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub job_count: Option<u64>,
 }
 
 impl Default for PublisherConfig {
@@ -40,6 +46,7 @@ impl Default for PublisherConfig {
             pool_count: 1,
             pool_layout: PoolLayout::Shared,
             duration_secs: 15,
+            job_count: None,
         }
     }
 }
@@ -55,6 +62,12 @@ pub struct DrainConfig {
     pub poll_interval_ms: u64,
     /// Max seconds to wait for queue empty / handler hits.
     pub timeout_secs: u64,
+    /// Worker lease TTL in seconds. `0` disables leases (BM-BD*). BM-BC1 requires `30`.
+    #[serde(default)]
+    pub lease_ttl_secs: i64,
+    /// Skip persisting run rows (BM-BD* throughput). BM-BC1 requires `false`.
+    #[serde(default)]
+    pub skip_run_persistence: bool,
 }
 
 impl Default for DrainConfig {
@@ -64,6 +77,8 @@ impl Default for DrainConfig {
             worker_count: 10,
             poll_interval_ms: 0,
             timeout_secs: 600,
+            lease_ttl_secs: 0,
+            skip_run_persistence: false,
         }
     }
 }
@@ -120,6 +135,7 @@ impl BenchRunConfig {
                     pool_count: 1,
                     pool_layout: PoolLayout::Shared,
                     duration_secs: 15,
+                    job_count: None,
                 };
             }
             "bm-be2" => {
@@ -129,6 +145,7 @@ impl BenchRunConfig {
                     pool_count: 1,
                     pool_layout: PoolLayout::Shared,
                     duration_secs: 15,
+                    job_count: None,
                 };
             }
             "bm-be4" => {
@@ -138,12 +155,29 @@ impl BenchRunConfig {
                     pool_count: 10,
                     pool_layout: PoolLayout::DistinctPerSlot,
                     duration_secs: 15,
+                    job_count: None,
                 };
             }
             "bm-bd1" | "bm-bd2" => {
                 cfg.idempotency_mode = Some(IdempotencyMode::None);
                 cfg.publisher.pool_count = 1;
                 cfg.publisher.pool_layout = PoolLayout::Shared;
+                cfg.worker_fleet.worker_pools = Some(vec!["global".to_string()]);
+            }
+            "bm-bc1" => {
+                cfg.idempotency_mode = Some(IdempotencyMode::None);
+                cfg.publisher = PublisherConfig {
+                    client_count: 1,
+                    pool_count: 1,
+                    pool_layout: PoolLayout::Shared,
+                    duration_secs: 60,
+                    job_count: None,
+                };
+                cfg.drain.worker_count = 32;
+                cfg.drain.poll_interval_ms = 50;
+                cfg.drain.timeout_secs = 180;
+                cfg.drain.lease_ttl_secs = BC1_LEASE_TTL_SECS;
+                cfg.drain.skip_run_persistence = false;
                 cfg.worker_fleet.worker_pools = Some(vec!["global".to_string()]);
             }
             "bm-bm2" | "bm-bm4" => {
@@ -180,5 +214,32 @@ impl BenchRunConfig {
         } else {
             format!("noop_{}", client % pool_count)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bc1_defaults_production_shaped_completed_track() {
+        let cfg = BenchRunConfig::for_experiment("bm-bc1");
+        assert_eq!(cfg.drain.worker_count, 32);
+        assert_eq!(cfg.publisher.duration_secs, 60);
+        assert_eq!(cfg.drain.lease_ttl_secs, BC1_LEASE_TTL_SECS);
+        assert!(!cfg.drain.skip_run_persistence);
+        assert_eq!(cfg.publisher.job_count, None);
+        assert_eq!(
+            cfg.worker_fleet.worker_pools,
+            Some(vec!["global".to_string()])
+        );
+    }
+
+    #[test]
+    fn historical_bd2_defaults_unchanged() {
+        let cfg = BenchRunConfig::for_experiment("bm-bd2");
+        assert_eq!(cfg.drain.lease_ttl_secs, 0);
+        assert_eq!(cfg.drain.worker_count, 10);
+        assert_eq!(cfg.publisher.duration_secs, 15);
     }
 }

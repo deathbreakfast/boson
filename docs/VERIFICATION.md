@@ -65,6 +65,7 @@ cargo run -p uf-boson --example axum_admin --features mem,axum
 
 cargo run -p boson-bench -- experiments
 cargo run -p boson-bench -- run --experiment bm-b0 --backend mem --topology isolated-lab --telemetry off --ops 1000
+BOSON_BENCH_BC1_DURATION_SECS=2 BOSON_BENCH_WORKER_COUNT=2 cargo run -p boson-bench -- run --experiment bm-bc1 --backend mem --topology isolated-lab --telemetry off
 ```
 
 ## E2E matrix
