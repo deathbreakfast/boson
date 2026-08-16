@@ -26,6 +26,9 @@ cargo run -p boson-bench -- run --experiment bm-be4 --backend redis \
 
 # Completed-task track (BM-BC1). AWS default is 60s / W=32 / Redis.
 # Local mem smoke: shorten the window with BOSON_BENCH_BC1_DURATION_SECS.
+# AWS remote cells use one enqueue driver (`BOSON_BENCH_BC1_ENQUEUE_ONLY=1`) and
+# N worker hosts (`BOSON_BENCH_BC1_WORKER_ONLY=1`) against one Redis. Bound offered
+# work with `BOSON_BENCH_BC1_JOB_COUNT`.
 cargo run -p boson-bench --release -- run --experiment bm-bc1 --backend redis
 
 # Embedded SQLite completed-task smoke (same ID; tagged --report for the campaign cell)

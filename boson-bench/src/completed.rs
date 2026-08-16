@@ -2,7 +2,7 @@
 //!
 //! Steady enqueue of mixed sleep / retry-once jobs while background workers run with
 //! hardened leases (`lease_ttl_secs = 30`) and run-row persistence. Primary metric is
-//! terminal [`JobStatus::Success`](boson_core::JobStatus::Success) per second.
+//! terminal [`JobStatus::Success`] per second.
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
@@ -57,6 +57,25 @@ fn job_count_cap(cfg: &BenchRunConfig) -> Option<u64> {
         .or(cfg.publisher.job_count)
 }
 
+fn env_flag(name: &str) -> bool {
+    std::env::var(name).is_ok_and(|v| matches!(v.as_str(), "1" | "true" | "TRUE"))
+}
+
+fn worker_only() -> bool {
+    env_flag("BOSON_BENCH_BC1_WORKER_ONLY")
+}
+
+fn enqueue_only() -> bool {
+    env_flag("BOSON_BENCH_BC1_ENQUEUE_ONLY")
+}
+
+fn drain_timeout_secs(cfg: &BenchRunConfig) -> u64 {
+    std::env::var("BOSON_BENCH_BC1_DRAIN_TIMEOUT_SECS")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(cfg.drain.timeout_secs)
+}
+
 fn is_retry_slot(n: u64) -> bool {
     n.is_multiple_of(5)
 }
@@ -94,12 +113,22 @@ pub async fn run_completed(
 
     reset_sleep_hits();
     let boson = Arc::new(session.build_boson_manual()?.0);
-    let workers = cfg.drain.worker_count.max(1);
-    spawn_completed_workers(&backend, &registry, &identity, runtime_label, cfg, workers);
+    let workers = if enqueue_only() {
+        0
+    } else {
+        cfg.drain.worker_count.max(1)
+    };
+    if workers > 0 {
+        spawn_completed_workers(&backend, &registry, &identity, runtime_label, cfg, workers);
+    }
 
     let start = Instant::now();
-    let enqueued = enqueue_mix(Arc::clone(&boson), cfg, start).await?;
-    let drain_deadline = Duration::from_secs(cfg.drain.timeout_secs);
+    let enqueued = if worker_only() {
+        EnqueueCounts { total: 0, sleep: 0 }
+    } else {
+        enqueue_mix(Arc::clone(&boson), cfg, start).await?
+    };
+    let drain_deadline = Duration::from_secs(drain_timeout_secs(cfg));
     let backlog = wait_for_idle(&backend, drain_deadline).await?;
     let elapsed = start.elapsed().as_secs_f64().max(f64::EPSILON);
     finish_metrics(&backend, cfg, workers, enqueued, backlog, elapsed).await
@@ -216,8 +245,19 @@ async fn finish_metrics(
     let canceled = backend.count_jobs(Some(JobStatus::Canceled)).await?;
     let terminal_fail = failed.saturating_add(canceled);
     let sleep_hits = u64::try_from(sleep_hit_count()).unwrap_or(u64::MAX);
-    let duplicates = sleep_hits.saturating_sub(enqueued.sleep);
-    let error_rate = if enqueued.total == 0 {
+    let duplicates = if worker_only() {
+        0
+    } else {
+        sleep_hits.saturating_sub(enqueued.sleep)
+    };
+    let error_rate = if worker_only() {
+        let denom = success.saturating_add(terminal_fail);
+        if denom == 0 {
+            0.0
+        } else {
+            terminal_fail as f64 / denom as f64
+        }
+    } else if enqueued.total == 0 {
         0.0
     } else {
         terminal_fail as f64 / enqueued.total as f64
@@ -424,5 +464,47 @@ mod tests {
         );
         let (pass, notes) = crate::pass_eval::evaluate("bm-bc1", &metrics, None);
         assert!(pass, "{notes}");
+    }
+
+    #[tokio::test]
+    async fn worker_only_drains_jobs_enqueued_by_driver() {
+        let _guard = MEM_LOCK.lock().await;
+        reset_sleep_hits();
+        let mut cfg = bc1_test_cfg();
+        cfg.drain.timeout_secs = 0;
+        std::env::set_var("BOSON_BENCH_BC1_ENQUEUE_ONLY", "1");
+        let (session, backend, registry, identity) = install_bc1().await;
+        let queued = run_completed(
+            &session,
+            Arc::clone(&backend),
+            Arc::clone(&registry),
+            Arc::clone(&identity),
+            "isolated-lab",
+            &cfg,
+        )
+        .await
+        .expect("enqueue-only");
+        std::env::remove_var("BOSON_BENCH_BC1_ENQUEUE_ONLY");
+        assert!(
+            queued.residual_backlog.unwrap_or(0) > 0,
+            "driver without workers must leave a backlog: {queued:?}"
+        );
+
+        cfg.drain.timeout_secs = 15;
+        std::env::set_var("BOSON_BENCH_BC1_WORKER_ONLY", "1");
+        let metrics = run_completed(&session, backend, registry, identity, "isolated-lab", &cfg)
+            .await
+            .expect("worker-only");
+        std::env::remove_var("BOSON_BENCH_BC1_WORKER_ONLY");
+        assert_eq!(metrics.residual_backlog, Some(0));
+        assert_eq!(metrics.duplicate_executions, Some(0));
+        let (pass, notes) = crate::pass_eval::evaluate("bm-bc1", &metrics, None);
+        assert!(pass, "{notes}");
+    }
+
+    #[test]
+    fn job_count_cap_reads_env_then_config() {
+        let cfg = bc1_test_cfg();
+        assert_eq!(job_count_cap(&cfg), Some(8));
     }
 }

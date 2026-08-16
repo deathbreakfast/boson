@@ -127,6 +127,11 @@ fn apply_env_overrides(cfg: &mut BenchRunConfig) {
             cfg.publisher.job_count = Some(n);
         }
     }
+    if let Ok(v) = std::env::var("BOSON_BENCH_BC1_DRAIN_TIMEOUT_SECS") {
+        if let Ok(d) = v.parse() {
+            cfg.drain.timeout_secs = d;
+        }
+    }
 }
 
 /// Convenience for matrix subset runs (experiment defaults + env only).
