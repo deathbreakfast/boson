@@ -129,7 +129,18 @@ pub async fn run_completed(
         enqueue_mix(Arc::clone(&boson), cfg, start).await?
     };
     let drain_deadline = Duration::from_secs(drain_timeout_secs(cfg));
-    let backlog = wait_for_idle(&backend, drain_deadline).await?;
+    let backlog = if worker_only() {
+        // Drain-only hosts start against an empty queue. Treat empty-at-start as
+        // "work has not arrived yet", not idle, or they exit before the driver
+        // enqueues (AWS N-host leftover: 2048 queued, 0 Success).
+        if wait_for_work(&backend, drain_deadline).await? {
+            wait_for_idle(&backend, drain_deadline).await?
+        } else {
+            queued_and_running(&backend).await?
+        }
+    } else {
+        wait_for_idle(&backend, drain_deadline).await?
+    };
     let elapsed = start.elapsed().as_secs_f64().max(f64::EPSILON);
     finish_metrics(&backend, cfg, workers, enqueued, backlog, elapsed).await
 }
@@ -221,6 +232,23 @@ async fn wait_for_idle(backend: &Arc<dyn QueueBackend>, timeout: Duration) -> Re
         }
         if Instant::now() >= deadline {
             return Ok(backlog);
+        }
+        tokio::time::sleep(Duration::from_millis(25)).await;
+    }
+}
+
+/// Wait until queued/running work (or a Success) appears. Empty at t=0 is not idle
+/// for drain-only hosts.
+async fn wait_for_work(backend: &Arc<dyn QueueBackend>, timeout: Duration) -> Result<bool> {
+    let deadline = Instant::now() + timeout;
+    loop {
+        let inflight = queued_and_running(backend).await?;
+        let success = backend.count_jobs(Some(JobStatus::Success)).await?;
+        if inflight > 0 || success > 0 {
+            return Ok(true);
+        }
+        if Instant::now() >= deadline {
+            return Ok(false);
         }
         tokio::time::sleep(Duration::from_millis(25)).await;
     }
@@ -506,5 +534,54 @@ mod tests {
     fn job_count_cap_reads_env_then_config() {
         let cfg = bc1_test_cfg();
         assert_eq!(job_count_cap(&cfg), Some(8));
+    }
+
+    #[tokio::test]
+    async fn wait_for_idle_returns_immediately_when_queue_is_empty() {
+        let _guard = MEM_LOCK.lock().await;
+        let (_session, backend, _registry, _identity) = install_bc1().await;
+        let start = Instant::now();
+        let backlog = wait_for_idle(&backend, Duration::from_secs(5))
+            .await
+            .expect("idle");
+        assert_eq!(backlog, 0);
+        assert!(
+            start.elapsed() < Duration::from_millis(500),
+            "empty wait_for_idle must not consume the drain budget"
+        );
+    }
+
+    #[tokio::test]
+    async fn wait_for_work_times_out_when_queue_stays_empty() {
+        let _guard = MEM_LOCK.lock().await;
+        let (_session, backend, _registry, _identity) = install_bc1().await;
+        let appeared = wait_for_work(&backend, Duration::from_millis(80))
+            .await
+            .expect("timeout");
+        assert!(!appeared, "empty queue is not work");
+    }
+
+    #[tokio::test]
+    async fn wait_for_work_sees_jobs_enqueued_after_start() {
+        let _guard = MEM_LOCK.lock().await;
+        reset_sleep_hits();
+        let mut cfg = bc1_test_cfg();
+        cfg.drain.timeout_secs = 0;
+        let (session, backend, registry, identity) = install_bc1().await;
+        let watcher = Arc::clone(&backend);
+        let waiter =
+            tokio::spawn(async move { wait_for_work(&watcher, Duration::from_secs(5)).await });
+        tokio::time::sleep(Duration::from_millis(80)).await;
+        std::env::set_var("BOSON_BENCH_BC1_ENQUEUE_ONLY", "1");
+        let queued = run_completed(&session, backend, registry, identity, "isolated-lab", &cfg)
+            .await
+            .expect("enqueue-only");
+        std::env::remove_var("BOSON_BENCH_BC1_ENQUEUE_ONLY");
+        let appeared = waiter.await.expect("join").expect("wait_for_work");
+        assert!(
+            appeared,
+            "drain-only wait must observe later enqueues; queued={queued:?}"
+        );
+        assert!(queued.residual_backlog.unwrap_or(0) > 0);
     }
 }
