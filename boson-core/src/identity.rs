@@ -68,6 +68,11 @@ pub trait ExecutionContext: Send {
 
     /// Actor JSON captured at enqueue time and restored at dispatch.
     fn actor_json(&self) -> &Value;
+
+    /// One-based attempt for this dispatch. The worker sets this from `Job::attempt`.
+    fn attempt(&self) -> u32 {
+        1
+    }
 }
 
 /// Builds handler execution context from captured actor JSON at enqueue time.
@@ -226,6 +231,7 @@ mod tests {
         let ctx = factory.build(&actor).expect("ok");
         assert_eq!(ctx.actor_json(), &actor);
         assert!(ctx.label().contains("alice"));
+        assert_eq!(ctx.attempt(), 1);
     }
 
     #[test]

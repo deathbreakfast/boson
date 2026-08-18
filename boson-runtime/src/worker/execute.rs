@@ -3,10 +3,32 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use boson_core::{BosonError, ExecutionContextFactory, Job, JobStatus, QueueBackend, Result};
+use boson_core::{
+    BosonError, ExecutionContext, ExecutionContextFactory, Job, JobStatus, QueueBackend, Result,
+};
+use serde_json::Value;
 use tokio::time::sleep;
 
 use crate::registry::TaskRegistry;
+
+struct DispatchAttemptContext {
+    inner: Box<dyn ExecutionContext>,
+    attempt: u32,
+}
+
+impl ExecutionContext for DispatchAttemptContext {
+    fn label(&self) -> &str {
+        self.inner.label()
+    }
+
+    fn actor_json(&self) -> &Value {
+        self.inner.actor_json()
+    }
+
+    fn attempt(&self) -> u32 {
+        self.attempt
+    }
+}
 
 /// Run the registered handler for one claimed job.
 ///
@@ -25,9 +47,13 @@ pub async fn execute_job(
             actual: descriptor.signature_hash.to_string(),
         });
     }
-    let ctx = identity
+    let inner = identity
         .build(&job.actor_json)
         .map_err(|e| BosonError::internal_source("execution context build failed", e))?;
+    let ctx = Box::new(DispatchAttemptContext {
+        inner,
+        attempt: job.attempt.cast_unsigned(),
+    });
     let invoke = (descriptor.invoke)(ctx, job.params_json.clone());
     let job_id = job.job_id.clone();
     let backend = Arc::clone(backend);
@@ -55,4 +81,42 @@ pub async fn record_run_start(
     run: &boson_core::Run,
 ) -> Result<()> {
     backend.upsert_run(run).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    struct InnerContext {
+        actor_json: Value,
+    }
+
+    impl ExecutionContext for InnerContext {
+        fn label(&self) -> &'static str {
+            "inner"
+        }
+
+        fn actor_json(&self) -> &Value {
+            &self.actor_json
+        }
+    }
+
+    #[test]
+    fn dispatch_context_forwards_job_attempt() {
+        let inner = Box::new(InnerContext {
+            actor_json: json!({"System": {"operation": "test"}}),
+        });
+        let ctx = DispatchAttemptContext { inner, attempt: 2 };
+        assert_eq!(ctx.label(), "inner");
+        assert_eq!(ctx.attempt(), 2);
+        assert_eq!(inner_attempt_default(), 1);
+    }
+
+    fn inner_attempt_default() -> u32 {
+        InnerContext {
+            actor_json: json!({}),
+        }
+        .attempt()
+    }
 }

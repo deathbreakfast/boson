@@ -84,12 +84,12 @@ pub fn reset_sleep_hits() {
     SLEEP_HITS.store(0, Ordering::SeqCst);
 }
 
-/// Remaining fail invocations for [`register_fail_n_then_ok_task`].
+/// Configured first-attempt failures for [`register_fail_n_then_ok_task`].
 pub fn fail_remaining() -> u32 {
     FAIL_REMAINING.load(Ordering::SeqCst)
 }
 
-/// Configure fail-until-ok handler for the next scenario.
+/// Configure how many leading attempts [`register_fail_n_then_ok_task`] should fail.
 pub fn set_fail_remaining(n: u32) {
     FAIL_REMAINING.store(n, Ordering::SeqCst);
 }
@@ -159,14 +159,19 @@ fn panic_invoke(
     })
 }
 
+fn should_fail_this_attempt(attempt: u32) -> bool {
+    let fail_count = FAIL_REMAINING.load(Ordering::SeqCst);
+    fail_count > 0 && attempt > 0 && attempt <= fail_count
+}
+
 fn fail_n_then_ok_invoke(
-    _ctx: Box<dyn ExecutionContext>,
+    ctx: Box<dyn ExecutionContext>,
     _params: serde_json::Value,
 ) -> Pin<Box<dyn Future<Output = boson_core::Result<()>> + Send + 'static>> {
-    Box::pin(async {
-        let remaining = FAIL_REMAINING.load(Ordering::SeqCst);
-        if remaining > 0 {
-            FAIL_REMAINING.fetch_sub(1, Ordering::SeqCst);
+    let attempt = ctx.attempt();
+    drop(ctx);
+    Box::pin(async move {
+        if should_fail_this_attempt(attempt) {
             Err(BosonError::internal("testkit fail n then ok"))
         } else {
             Ok(())
@@ -392,4 +397,26 @@ pub fn assert_task_registered(registry: &TaskRegistry, name: &str) {
         "expected task `{name}` in registry; found {:?}",
         registry.sorted_task_names()
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn retry_once_fails_only_the_first_attempt() {
+        set_fail_remaining(1);
+        assert!(should_fail_this_attempt(1));
+        assert!(!should_fail_this_attempt(2));
+        assert!(!should_fail_this_attempt(3));
+        assert!(!should_fail_this_attempt(0));
+    }
+
+    #[test]
+    fn retry_once_second_attempt_succeeds_when_another_host_already_failed_first() {
+        set_fail_remaining(1);
+        assert!(should_fail_this_attempt(1));
+        assert!(should_fail_this_attempt(1));
+        assert!(!should_fail_this_attempt(2));
+    }
 }
