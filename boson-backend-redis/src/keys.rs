@@ -27,6 +27,16 @@ impl Keyspace {
         Self::new(format!("{prefix}_{}", uuid::Uuid::new_v4().simple()))
     }
 
+    /// Shared bench prefix when `BOSON_REDIS_KEY_PREFIX` is set; otherwise a unique e2e prefix.
+    #[must_use]
+    pub fn from_env_or_isolated() -> Self {
+        if std::env::var("BOSON_REDIS_KEY_PREFIX").is_ok() {
+            Self::from_env()
+        } else {
+            Self::isolated("boson_e2e")
+        }
+    }
+
     /// `{prefix}:job:*` SCAN pattern.
     #[must_use]
     pub fn job_pattern(&self) -> String {
@@ -111,4 +121,35 @@ impl Keyspace {
 #[allow(clippy::cast_precision_loss)] // Redis ZSET scores are f64; priority×1e15+ms is intentional.
 pub fn ready_score(priority: i32, created_at_ms: i64) -> f64 {
     (i64::from(priority) as f64).mul_add(1e15, created_at_ms as f64)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Keyspace;
+
+    #[test]
+    fn isolated_prefixes_are_unique() {
+        let a = Keyspace::isolated("boson_e2e");
+        let b = Keyspace::isolated("boson_e2e");
+        assert_ne!(a.job("1"), b.job("1"));
+    }
+
+    #[test]
+    fn from_env_or_isolated_shares_prefix_when_set() {
+        let prefix = format!("bm-bc1-test-{}", std::process::id());
+        std::env::set_var("BOSON_REDIS_KEY_PREFIX", &prefix);
+        let a = Keyspace::from_env_or_isolated();
+        let b = Keyspace::from_env_or_isolated();
+        std::env::remove_var("BOSON_REDIS_KEY_PREFIX");
+        assert_eq!(a.job("x"), b.job("x"));
+        assert!(a.job("x").starts_with(&format!("{prefix}:job:")));
+    }
+
+    #[test]
+    fn from_env_or_isolated_is_unique_without_prefix() {
+        std::env::remove_var("BOSON_REDIS_KEY_PREFIX");
+        let a = Keyspace::from_env_or_isolated();
+        let b = Keyspace::from_env_or_isolated();
+        assert_ne!(a.job("1"), b.job("1"));
+    }
 }

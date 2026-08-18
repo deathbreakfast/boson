@@ -218,7 +218,7 @@ impl BootstrapSession {
                     let url = std::env::var("BOSON_TEST_REDIS_URL")
                         .or_else(|_| std::env::var("BOSON_BENCH_REDIS_URL"))
                         .unwrap_or_else(|_| "redis://127.0.0.1:6379".into());
-                    let keyspace = boson_backend_redis::keys::Keyspace::isolated("boson_e2e");
+                    let keyspace = boson_backend_redis::keys::Keyspace::from_env_or_isolated();
                     Arc::new(RedisQueueBackend::connect_with_keyspace(&url, keyspace).await?)
                         as Arc<dyn QueueBackend>
                 };

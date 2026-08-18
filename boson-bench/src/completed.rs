@@ -318,8 +318,7 @@ mod tests {
     use boson_testkit::StubExecutionContextFactory;
     use tokio::sync::Mutex;
 
-    static MEM_LOCK: Mutex<()> = Mutex::const_new(());
-    static SQLITE_LOCK: Mutex<()> = Mutex::const_new(());
+    static RUN_LOCK: Mutex<()> = Mutex::const_new(());
 
     fn bc1_test_cfg() -> BenchRunConfig {
         let mut cfg = BenchRunConfig::for_experiment("bm-bc1");
@@ -381,7 +380,7 @@ mod tests {
 
     #[tokio::test]
     async fn mem_sleep_retry_reaches_success() {
-        let _guard = MEM_LOCK.lock().await;
+        let _guard = RUN_LOCK.lock().await;
         reset_sleep_hits();
         let cfg = bc1_test_cfg();
         let (session, backend, registry, identity) = install_bc1().await;
@@ -402,7 +401,7 @@ mod tests {
 
     #[tokio::test]
     async fn fail_closed_on_skip_run_rows() {
-        let _guard = MEM_LOCK.lock().await;
+        let _guard = RUN_LOCK.lock().await;
         let mut cfg = bc1_test_cfg();
         cfg.drain.skip_run_persistence = true;
         let (session, backend, registry, identity) = install_bc1().await;
@@ -420,7 +419,7 @@ mod tests {
 
     #[tokio::test]
     async fn fail_closed_on_lease_ttl_zero() {
-        let _guard = MEM_LOCK.lock().await;
+        let _guard = RUN_LOCK.lock().await;
         let mut cfg = bc1_test_cfg();
         cfg.drain.lease_ttl_secs = 0;
         let (session, backend, registry, identity) = install_bc1().await;
@@ -435,7 +434,7 @@ mod tests {
 
     #[tokio::test]
     async fn timeout_writes_fail_report_without_panic() {
-        let _guard = MEM_LOCK.lock().await;
+        let _guard = RUN_LOCK.lock().await;
         reset_sleep_hits();
         let mut cfg = bc1_test_cfg();
         cfg.publisher.job_count = Some(16);
@@ -475,7 +474,7 @@ mod tests {
 
     #[tokio::test]
     async fn sqlite_sleep_retry_reaches_success() {
-        let _guard = SQLITE_LOCK.lock().await;
+        let _guard = RUN_LOCK.lock().await;
         reset_sleep_hits();
         let cfg = bc1_test_cfg();
         let (session, backend, registry, identity) = install_bc1_sqlite().await;
@@ -496,7 +495,7 @@ mod tests {
 
     #[tokio::test]
     async fn worker_only_drains_jobs_enqueued_by_driver() {
-        let _guard = MEM_LOCK.lock().await;
+        let _guard = RUN_LOCK.lock().await;
         reset_sleep_hits();
         let mut cfg = bc1_test_cfg();
         cfg.drain.timeout_secs = 0;
@@ -538,7 +537,7 @@ mod tests {
 
     #[tokio::test]
     async fn wait_for_idle_returns_immediately_when_queue_is_empty() {
-        let _guard = MEM_LOCK.lock().await;
+        let _guard = RUN_LOCK.lock().await;
         let (_session, backend, _registry, _identity) = install_bc1().await;
         let start = Instant::now();
         let backlog = wait_for_idle(&backend, Duration::from_secs(5))
@@ -553,7 +552,7 @@ mod tests {
 
     #[tokio::test]
     async fn wait_for_work_times_out_when_queue_stays_empty() {
-        let _guard = MEM_LOCK.lock().await;
+        let _guard = RUN_LOCK.lock().await;
         let (_session, backend, _registry, _identity) = install_bc1().await;
         let appeared = wait_for_work(&backend, Duration::from_millis(80))
             .await
@@ -563,7 +562,7 @@ mod tests {
 
     #[tokio::test]
     async fn wait_for_work_sees_jobs_enqueued_after_start() {
-        let _guard = MEM_LOCK.lock().await;
+        let _guard = RUN_LOCK.lock().await;
         reset_sleep_hits();
         let mut cfg = bc1_test_cfg();
         cfg.drain.timeout_secs = 0;
