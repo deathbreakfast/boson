@@ -133,6 +133,5 @@ fn resolve_worker_poll_interval_from_env() -> u64 {
 
 fn resolve_skip_run_persistence_from_env() -> bool {
     std::env::var("BOSON_SKIP_RUN_ROWS")
-        .ok()
-        .is_some_and(|v| matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes"))
+        .is_ok_and(|v| matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes"))
 }
