@@ -10,7 +10,7 @@ readme = "README.md"
 keywords.workspace = true
 categories.workspace = true
 documentation = "https://docs.rs/uf-boson"
-description = "Public Boson crate — async work engine"
+description = "Durable Rust background job runtime with typed tasks, retries, rate limits, leases, and pluggable backends."
 
 [package.metadata.docs.rs]
 all-features = true
