@@ -51,7 +51,7 @@ cargo test -p boson-telemetry
 cargo test -p boson-e2e -- --test-threads=1
 cargo test -p boson-axum
 
-RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --all-features
 cargo test --doc -p boson-core
 cargo test --doc -p boson-runtime
 cargo test --doc -p boson-backend-mem
