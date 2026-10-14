@@ -274,7 +274,7 @@ pub async fn extend_lease_refreshes_ttl(b: Arc<dyn QueueBackend>, _env: &Backend
         .unwrap()
         .expect("claim");
     b.extend_lease(&lease_id, 300).await.unwrap();
-    assert!(b.expired_lease_job_pairs().await.unwrap().is_empty());
+    assert_eq!(b.expired_lease_job_pairs().await.unwrap(), Vec::new());
 }
 
 /// Asserts expired leases appear in expired pairs listing.
