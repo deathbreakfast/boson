@@ -29,12 +29,12 @@ BOSON_BE4_SWEEP_POOLS=distinct bash infra/broker/scripts/run-be4-sweep.sh
 | `BOSON_BENCH_CMD` | `cargo run -p boson-bench --release --` | Bench binary |
 | `BOSON_TEST_NATS_URL` | `nats://127.0.0.1:4222` | NATS server |
 | `BOSON_BENCH_HARDWARE` | `local` | Hardware slug (smoke only) |
-| `BOSON_BENCH_REPORTS` | `profiling/boson-bench/smoke` | Output dir (gitignored; AWS reports stay under `reports/`) |
+| `BOSON_BENCH_REPORTS` | `profiling/boson-bench/smoke` | Output dir (gitignored; decision-grade AWS results aren't committed to this repo) |
 
 **Output (smoke):** `profiling/boson-bench/smoke/bm-be4-c{C}-nats-*.json` and  
 `scaling-curve-be4-publishers-{hardware}-nats-{k1-shared|k10-distinct}.json`
 
-**Aggregate curve (retained AWS reports):**
+**Aggregate curve (AWS reports):**
 
 ```bash
 cargo run -p boson-bench -- be4-publisher-curve \
@@ -48,7 +48,7 @@ Compare to Photon BM-PFH for raw firehose ingress vs Boson job-queue enqueue.
 
 Maintainers also run c6i.large broker sizing, RAFT cluster comparisons, multi-embed fleet
 sweeps, and Phase D dequeue campaigns on AWS. Those scripts are not shipped in this
-repository. Aggregate retained reports with the `*-curve` commands below (and in BM-BD2).
+repository, and their decision-grade JSON isn't committed here either. Aggregate it with the `*-curve` commands below (and in BM-BD2).
 
 N=4 fleet shapes need **≥10 vCPU** free (1× c6i.large + 4× t3.medium). Account default
 limit is 16 vCPU — terminate other campaigns first.
@@ -104,7 +104,7 @@ BOSON_BD2_SWEEP_PHASE=shard BOSON_BD2_WORKER_COUNT=10 bash infra/broker/scripts/
 
 **Output (smoke):** `profiling/boson-bench/smoke/bm-bd2-w{W}-*.json`, `scaling-curve-bd2-workers-{hardware}-nats.json`
 
-**Aggregate curves (retained AWS reports):**
+**Aggregate curves (AWS reports):**
 
 ```bash
 cargo run -p boson-bench -- bd2-worker-curve --hardware aws-c6i-large --backend nats

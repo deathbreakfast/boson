@@ -22,5 +22,5 @@ cargo clippy -p boson-bench --all-targets -- -D warnings
 ## Targets
 
 - BM-B0–B17, BM-BL0–BL4, BM-BP/BM* registered and mem-runnable
-- JSON reports include `hardware_detail`, `metrics`, pass/fail in `profiling/boson-bench/reports/`
+- JSON reports include `hardware_detail`, `metrics`, pass/fail; runs write them to gitignored `profiling/boson-bench/reports/`
 - `project-fleet` and `project-scaling-curve` for 10M/s decomposition

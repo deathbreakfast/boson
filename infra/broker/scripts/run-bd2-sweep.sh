@@ -6,7 +6,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 REPO="$(cd "$ROOT/.." && pwd)"
-# Local smoke only — retained decision-grade reports live under reports/ (AWS).
+# Local smoke only — decision-grade AWS reports aren't kept in this repo.
 REPORTS="${BOSON_BENCH_REPORTS:-${REPO}/profiling/boson-bench/smoke}"
 mkdir -p "$REPORTS"
 

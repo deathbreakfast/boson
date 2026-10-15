@@ -1,6 +1,7 @@
 /target
 /target-*/
 /profiling/boson-bench/smoke/
+# Local bench output; decision-grade results aren't kept in this repo
 /profiling/boson-bench/reports/*
 !/profiling/boson-bench/reports/.gitkeep
 

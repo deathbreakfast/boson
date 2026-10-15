@@ -3,7 +3,7 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/../../.." && pwd)"
-# Local smoke only — retained decision-grade reports live under reports/ (AWS).
+# Local smoke only — decision-grade AWS reports aren't kept in this repo.
 REPORTS="${BOSON_BENCH_REPORTS:-${REPO}/profiling/boson-bench/smoke}"
 mkdir -p "$REPORTS"
 
