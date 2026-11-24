@@ -75,6 +75,7 @@ where
     i32: sqlx::Decode<'r, R::Database> + sqlx::Type<R::Database>,
     i64: sqlx::Decode<'r, R::Database> + sqlx::Type<R::Database>,
     DateTime<Utc>: sqlx::Decode<'r, R::Database> + sqlx::Type<R::Database>,
+    Option<DateTime<Utc>>: sqlx::Decode<'r, R::Database> + sqlx::Type<R::Database>,
     Option<String>: sqlx::Decode<'r, R::Database> + sqlx::Type<R::Database>,
 {
     let actor_json: String = row.try_get("actor_json").map_err(|e| map_err(&e))?;
@@ -96,6 +97,8 @@ where
         )
         .unwrap_or(0),
         attempt: row.try_get("attempt").map_err(|e| map_err(&e))?,
+        retried_from: row.try_get("retried_from").map_err(|e| map_err(&e))?,
+        dropped_at: row.try_get("dropped_at").map_err(|e| map_err(&e))?,
     })
 }
 

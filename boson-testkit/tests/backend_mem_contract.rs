@@ -18,3 +18,4 @@ async fn fresh() -> Option<Arc<dyn QueueBackend>> {
 }
 
 boson_testkit::backend_contract_suite!(fresh, "mem");
+boson_testkit::backend_admin_contract_suite!(fresh, "mem");

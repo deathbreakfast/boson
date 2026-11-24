@@ -13,7 +13,8 @@ use std::borrow::Borrow;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::models::{Job, JobStatus, Run};
+use super::filter::{JobFilter, RunFilter};
+use crate::models::{Job, Run};
 
 /// Position of a job in `created_at ASC, job_id ASC` order.
 ///
@@ -75,14 +76,14 @@ impl From<&Run> for RunKey {
 
 /// One keyset page of jobs from an unordered collection.
 ///
-/// Keeps jobs matching `status_filter` that sort strictly after `after`, orders them
+/// Keeps jobs matching `filter` that sort strictly after `after`, orders them
 /// `created_at ASC, job_id ASC` (byte order on the id), and returns at most `limit`.
 /// Copies of the same job (as a Redis `SCAN` can yield) collapse to one.
 /// Accepts owned jobs or references and returns the same element type.
 #[must_use]
 pub fn page_jobs_after<J, I>(
     jobs: I,
-    status_filter: Option<JobStatus>,
+    filter: &JobFilter,
     after: Option<&JobKey>,
     limit: usize,
 ) -> Vec<J>
@@ -94,7 +95,7 @@ where
         .into_iter()
         .filter(|j| {
             let j = j.borrow();
-            status_filter.is_none_or(|s| j.status == s) && after.is_none_or(|k| k.precedes(j))
+            filter.matches(j) && after.is_none_or(|k| k.precedes(j))
         })
         .collect();
     page.sort_by(|a, b| {
@@ -108,14 +109,14 @@ where
 
 /// One keyset page of runs from an unordered collection.
 ///
-/// Keeps runs matching `job_id_filter` that sort strictly after `after`, orders them
+/// Keeps runs matching `filter` that sort strictly after `after`, orders them
 /// `started_at DESC, run_id DESC` (byte order on the id), and returns at most `limit`.
 /// Copies of the same run (as a Redis `SCAN` can yield) collapse to one.
 /// Accepts owned runs or references and returns the same element type.
 #[must_use]
 pub fn page_runs_after<R, I>(
     runs: I,
-    job_id_filter: Option<&str>,
+    filter: &RunFilter,
     after: Option<&RunKey>,
     limit: usize,
 ) -> Vec<R>
@@ -127,7 +128,7 @@ where
         .into_iter()
         .filter(|r| {
             let r = r.borrow();
-            job_id_filter.is_none_or(|jid| r.job_id == jid) && after.is_none_or(|k| k.precedes(r))
+            filter.matches(r) && after.is_none_or(|k| k.precedes(r))
         })
         .collect();
     page.sort_by(|a, b| {
@@ -142,6 +143,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::JobStatus;
     use chrono::{Duration, TimeZone};
     use serde_json::json;
 
@@ -173,7 +175,12 @@ mod tests {
         let mut seen = Vec::new();
         let mut cursor: Option<JobKey> = None;
         loop {
-            let page = page_jobs_after(all.iter(), Some(JobStatus::Success), cursor.as_ref(), 7);
+            let page = page_jobs_after(
+                all.iter(),
+                &JobFilter::status(JobStatus::Success),
+                cursor.as_ref(),
+                7,
+            );
             let Some(last) = page.last() else { break };
             cursor = Some(JobKey::from(*last));
             seen.extend(page.iter().map(|j| j.job_id.clone()));
@@ -213,7 +220,7 @@ mod tests {
         let mut seen = Vec::new();
         let mut cursor: Option<RunKey> = None;
         loop {
-            let page = page_runs_after(all.clone(), Some("job-a"), cursor.as_ref(), 11);
+            let page = page_runs_after(all.clone(), &RunFilter::job("job-a"), cursor.as_ref(), 11);
             let Some(last) = page.last() else { break };
             cursor = Some(RunKey::from(last));
             seen.extend(page.into_iter().map(|r| r.run_id));
@@ -233,14 +240,33 @@ mod tests {
             job(0, JobStatus::Queued),
             job(1, JobStatus::Queued),
         ];
-        let page = page_jobs_after(all, None, None, 10);
+        let page = page_jobs_after(all, &JobFilter::default(), None, 10);
         assert_eq!(page.len(), 2);
     }
 
     #[test]
     fn zero_limit_is_empty() {
         let all = vec![job(0, JobStatus::Queued)];
-        assert!(page_jobs_after(all, None, None, 0).is_empty());
+        assert!(page_jobs_after(all, &JobFilter::default(), None, 0).is_empty());
+    }
+
+    #[test]
+    fn jobs_page_with_suffix_match_and_dropped() {
+        let mut all: Vec<Job> = (0..30).map(|i| job(i, JobStatus::Failed)).collect();
+        all[1].dropped_at = Some(base());
+        // ids ending in "1": job-000001, job-000011, job-000021; job-000001 is dropped.
+        let filter = JobFilter {
+            id_match: Some("1".into()),
+            ..JobFilter::default()
+        };
+        let page = page_jobs_after(all.iter(), &filter, None, 10);
+        let ids: Vec<&str> = page.iter().map(|j| j.job_id.as_str()).collect();
+        assert_eq!(ids, ["job-000011", "job-000021"]);
+        let filter = JobFilter {
+            include_dropped: true,
+            ..filter
+        };
+        assert_eq!(page_jobs_after(all.iter(), &filter, None, 10).len(), 3);
     }
 
     #[test]

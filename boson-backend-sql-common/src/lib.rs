@@ -24,9 +24,12 @@ mod backend;
 mod delegate;
 mod enqueue_rate;
 mod error_map;
+#[doc(hidden)]
+pub mod filter_sql;
 mod jobs;
 mod leases;
 mod macros;
+mod pools;
 mod queue_impl;
 mod row;
 mod runs;
@@ -37,3 +40,6 @@ pub use backend::{SqlDialect, SqlPool, SqlQueueBackend};
 pub use enqueue_rate::EnqueueRateLimiter;
 
 pub(crate) use backend::bind_sql;
+
+#[doc(hidden)]
+pub use serde_json as __serde_json;

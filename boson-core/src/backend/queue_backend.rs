@@ -13,9 +13,15 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
+use serde_json::Value;
+
+use super::filter::{JobFilter, RunFilter};
 use super::keyset::{page_jobs_after, page_runs_after, JobKey, RunKey};
-use crate::error::Result;
-use crate::models::{Job, JobStatus, Run, RunStatus, TaskConfig, TaskRunStats};
+use super::stats::tally_pool_stats;
+use crate::error::{BosonError, Result};
+use crate::models::{
+    Job, JobStatus, PoolState, PoolStats, Run, RunStatus, TaskConfig, TaskRunStats,
+};
 
 /// Default router key for single-backend hosts.
 pub const DEFAULT_BACKEND_NAME: &str = "default";
@@ -54,6 +60,7 @@ pub enum JobEnqueueDisposition {
 /// | **Jobs** | [`enqueue_with_policies`](Self::enqueue_with_policies), [`try_claim_job`](Self::try_claim_job), [`list_queued_for_pool_sorted`](Self::list_queued_for_pool_sorted) | Apply [`TaskConfig`] rate limits on enqueue; claim must be atomic |
 /// | **Runs** | [`upsert_run`](Self::upsert_run), [`finish_run`](Self::finish_run), [`task_run_stats`](Self::task_run_stats) | One run row per execution attempt |
 /// | **Task config** | [`get_task_config`](Self::get_task_config), [`upsert_task_config`](Self::upsert_task_config) | Optional per-task overrides stored by the runtime |
+/// | **Admin** (optional) | [`retry_job`](Self::retry_job), [`drop_failed_job`](Self::drop_failed_job), [`sweep_failed`](Self::sweep_failed), [`pool_stats`](Self::pool_stats), [`set_pool_paused`](Self::set_pool_paused), [`purge_queued_in_pool`](Self::purge_queued_in_pool) | Default bodies work through the methods above; sweep, pause and purge need storage support and return an error until an engine overrides them |
 /// | **Leases** | [`try_claim_run_lease`](Self::try_claim_run_lease), [`extend_lease`](Self::extend_lease), [`expired_lease_job_pairs`](Self::expired_lease_job_pairs) | Required for multi-worker deploys; may no-op for single-node dev |
 ///
 /// # Reference implementations
@@ -137,24 +144,24 @@ pub trait QueueBackend: Send + Sync + Debug {
         limit: usize,
     ) -> Result<Vec<Job>>;
 
-    /// List up to `limit` jobs that sort strictly after `after`, oldest first.
+    /// List up to `limit` jobs matching `filter` that sort strictly after `after`, oldest first.
     ///
     /// Order is `created_at ASC, job_id ASC`. A job comes after the key when its `created_at`
     /// is later than `after.created_at`, or equal with a greater `job_id`, so two jobs created in
     /// the same instant still page in a fixed order. `after: None` starts at the oldest job.
-    /// `status_filter` narrows the scan to one status.
+    /// `filter` narrows the scan (see [`JobFilter`]); the default filter leaves out dropped jobs.
     ///
     /// To page, pass `JobKey::from(last)` for the last job of each non-empty page; an empty page
     /// means the scan is done. Each job appears once across the pages, with no `OFFSET` drift
     /// when jobs are enqueued mid-scan: [`Job::new`] stamps `created_at` with the current time,
     /// so a new job sorts after every key already returned and shows up at the end of the scan.
-    /// A job whose status changes mid-scan keeps its position; with a `status_filter`, it shows
+    /// A job whose status changes mid-scan keeps its position; with a status filter, it shows
     /// up only if it matches when its page is read.
     ///
     /// Engines compare `job_id` with their own text ordering (byte order for in-memory engines
     /// and `SQLite`, the column collation on Postgres). Paging stays consistent within one engine.
     ///
-    /// The default body loads every matching job through [`Self::list_jobs`] and pages them with
+    /// The default body loads every job through [`Self::list_jobs`] and pages them with
     /// [`page_jobs_after`], which is O(n) per page. Engines should override it with an indexed
     /// query.
     ///
@@ -163,15 +170,32 @@ pub trait QueueBackend: Send + Sync + Debug {
     /// Returns the same storage errors as [`Self::list_jobs`].
     async fn list_jobs_after(
         &self,
-        status_filter: Option<JobStatus>,
+        filter: &JobFilter,
         after: Option<&JobKey>,
         limit: usize,
     ) -> Result<Vec<Job>> {
         if limit == 0 {
             return Ok(Vec::new());
         }
-        let all = self.list_jobs(status_filter, 0, usize::MAX).await?;
-        Ok(page_jobs_after(all, status_filter, after, limit))
+        let all = self
+            .list_jobs(single_job_status(filter), 0, usize::MAX)
+            .await?;
+        Ok(page_jobs_after(all, filter, after, limit))
+    }
+
+    /// Count the jobs matching `filter`: the total for a [`Self::list_jobs_after`] scan.
+    ///
+    /// The default body loads every job through [`Self::list_jobs`]; engines should override it.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same storage errors as [`Self::list_jobs`].
+    async fn count_jobs_matching(&self, filter: &JobFilter) -> Result<u64> {
+        let all = self
+            .list_jobs(single_job_status(filter), 0, usize::MAX)
+            .await?;
+        let count = all.iter().filter(|j| filter.matches(j)).count();
+        Ok(u64::try_from(count).unwrap_or(u64::MAX))
     }
 
     /// Cancel a job if it is still active (`queued` or `running`).
@@ -231,12 +255,12 @@ pub trait QueueBackend: Send + Sync + Debug {
         limit: usize,
     ) -> Result<Vec<Run>>;
 
-    /// List up to `limit` runs that sort strictly after `after`, newest first.
+    /// List up to `limit` runs matching `filter` that sort strictly after `after`, newest first.
     ///
     /// Order is `started_at DESC, run_id DESC`. A run comes after the key when its `started_at`
     /// is earlier than `after.started_at`, or equal with a smaller `run_id`, so two runs started
     /// in the same instant still page in a fixed order. `after: None` starts at the newest run.
-    /// `job_id_filter` narrows the scan to one job's runs.
+    /// `filter` narrows the scan (see [`RunFilter`]).
     ///
     /// To page, pass `RunKey::from(last)` for the last run of each non-empty page; an empty page
     /// means the scan is done. Each run appears once across the pages. A run that starts
@@ -249,7 +273,7 @@ pub trait QueueBackend: Send + Sync + Debug {
     /// This order is newest first on every engine, including those whose [`Self::list_runs`]
     /// returns oldest first.
     ///
-    /// The default body loads every matching run through [`Self::list_runs`] and pages them with
+    /// The default body loads the runs through [`Self::list_runs`] and pages them with
     /// [`page_runs_after`], which is O(n) per page. Engines should override it with an indexed
     /// query.
     ///
@@ -258,15 +282,32 @@ pub trait QueueBackend: Send + Sync + Debug {
     /// Returns the same storage errors as [`Self::list_runs`].
     async fn list_runs_after(
         &self,
-        job_id_filter: Option<&str>,
+        filter: &RunFilter,
         after: Option<&RunKey>,
         limit: usize,
     ) -> Result<Vec<Run>> {
         if limit == 0 {
             return Ok(Vec::new());
         }
-        let all = self.list_runs(job_id_filter, 0, usize::MAX).await?;
-        Ok(page_runs_after(all, job_id_filter, after, limit))
+        let all = self
+            .list_runs(filter.job_id.as_deref(), 0, usize::MAX)
+            .await?;
+        Ok(page_runs_after(all, filter, after, limit))
+    }
+
+    /// Count the runs matching `filter`: the total for a [`Self::list_runs_after`] scan.
+    ///
+    /// The default body loads the runs through [`Self::list_runs`]; engines should override it.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same storage errors as [`Self::list_runs`].
+    async fn count_runs_matching(&self, filter: &RunFilter) -> Result<u64> {
+        let all = self
+            .list_runs(filter.job_id.as_deref(), 0, usize::MAX)
+            .await?;
+        let count = all.iter().filter(|r| filter.matches(r)).count();
+        Ok(u64::try_from(count).unwrap_or(u64::MAX))
     }
 
     /// Mark a run terminal with outcome fields.
@@ -295,6 +336,172 @@ pub trait QueueBackend: Send + Sync + Debug {
     /// Persist task config.
     async fn upsert_task_config(&self, config: &TaskConfig) -> Result<()>;
 
+    // --- Admin: failed jobs and pools ---
+
+    /// Enqueue a fresh copy of a failed job and return the new job id.
+    ///
+    /// The new job carries the failed job's `params_json`, `signature_hash` and
+    /// `idempotency_key`, starts at attempt 1, runs as `actor_json` (the person who asked for the
+    /// retry), and links back through [`Job::retried_from`]. Priority, pool and policies come
+    /// from the task type's current stored [`TaskConfig`], falling back to the failed job's
+    /// priority and pool when none is stored. It goes through [`Self::enqueue_with_policies`],
+    /// so rate limits and idempotency apply. The failed job and its runs stay as they are.
+    ///
+    /// The default body works on every engine through the methods above.
+    ///
+    /// # Errors
+    ///
+    /// [`BosonError::JobNotFound`] for an unknown id, [`BosonError::InvalidConfig`] when the job
+    /// is not `failed`, [`BosonError::RateLimited`] from the task's limits, or storage errors.
+    async fn retry_job(&self, job_id: &str, actor_json: Value) -> Result<String> {
+        let old = self
+            .get_job(job_id)
+            .await?
+            .ok_or_else(|| BosonError::JobNotFound(job_id.to_string()))?;
+        if old.status != JobStatus::Failed {
+            return Err(BosonError::InvalidConfig(format!(
+                "job {job_id} is {}; only failed jobs can be retried",
+                old.status
+            )));
+        }
+        let stored = self.get_task_config(&old.task_name).await?;
+        let config = stored.unwrap_or_else(|| {
+            let mut config = TaskConfig::default_for(&old.task_name);
+            config.priority = old.priority;
+            config.pool.clone_from(&old.pool);
+            config
+        });
+        let mut job = Job::new(
+            &old.task_name,
+            actor_json,
+            old.params_json,
+            config.priority,
+            &config.pool,
+            old.signature_hash,
+            old.idempotency_key,
+        );
+        job.retried_from = Some(old.job_id);
+        let (new_id, _) = self.enqueue_with_policies(job, &config).await?;
+        Ok(new_id)
+    }
+
+    /// Mark a failed job dropped by setting [`Job::dropped_at`]. Dropping twice is a no-op.
+    ///
+    /// The job stays stored, so a list with [`JobFilter::include_dropped`] can still show it;
+    /// [`Self::sweep_failed`] is the only hard delete.
+    ///
+    /// The default body loads the job, sets the field and writes it back with
+    /// [`Self::upsert_job`], then reads it again to check the engine kept the field.
+    ///
+    /// # Errors
+    ///
+    /// [`BosonError::JobNotFound`] for an unknown id, [`BosonError::InvalidConfig`] when the job
+    /// is not `failed`, or a backend error when the engine does not store `dropped_at`.
+    async fn drop_failed_job(&self, job_id: &str) -> Result<()> {
+        let mut job = self
+            .get_job(job_id)
+            .await?
+            .ok_or_else(|| BosonError::JobNotFound(job_id.to_string()))?;
+        if job.status != JobStatus::Failed {
+            return Err(BosonError::InvalidConfig(format!(
+                "job {job_id} is {}; only failed jobs can be dropped",
+                job.status
+            )));
+        }
+        if job.dropped_at.is_some() {
+            return Ok(());
+        }
+        job.dropped_at = Some(Utc::now());
+        self.upsert_job(&job).await?;
+        let stored = self.get_job(job_id).await?;
+        if stored.is_some_and(|j| j.dropped_at.is_some()) {
+            Ok(())
+        } else {
+            Err(unsupported("drop_failed_job"))
+        }
+    }
+
+    /// Delete `failed` jobs enqueued before `older_than` and return how many were removed.
+    ///
+    /// Jobs don't record when they failed, so a job's age is its `created_at`. Runs are kept.
+    /// The host picks the age and the schedule; [`DEFAULT_FAILED_RETENTION`](crate::DEFAULT_FAILED_RETENTION)
+    /// is the suggested age.
+    ///
+    /// # Errors
+    ///
+    /// The default body returns a backend error: the trait has no delete method to build it on.
+    async fn sweep_failed(&self, older_than: DateTime<Utc>) -> Result<u64> {
+        let _ = older_than;
+        Err(unsupported("sweep_failed"))
+    }
+
+    /// Per-pool numbers, sorted by pool name.
+    ///
+    /// Covers every pool that has jobs, is named in a stored task config, or has a stored
+    /// [`PoolState`]. The window is `now - window ..= now`: `added_in_window` counts jobs created
+    /// in it and `done_in_window` counts jobs in a finished status with a run that finished in
+    /// it.
+    ///
+    /// The default body loads every job and run and reads [`Self::get_pool_state`] per pool; it
+    /// only sees pools that have jobs.
+    ///
+    /// # Errors
+    ///
+    /// Returns storage errors from the methods it reads through.
+    async fn pool_stats(&self, window: chrono::Duration) -> Result<Vec<PoolStats>> {
+        let since = Utc::now() - window;
+        let jobs = self.list_jobs(None, 0, usize::MAX).await?;
+        let runs = self.list_runs(None, 0, usize::MAX).await?;
+        let mut stats = tally_pool_stats(&jobs, &runs, since);
+        for entry in stats.values_mut() {
+            entry.paused = self
+                .get_pool_state(&entry.pool)
+                .await?
+                .is_some_and(|s| s.paused);
+        }
+        Ok(stats.into_values().collect())
+    }
+
+    /// Pause or resume claims from `pool`, recording `actor_label` and the time.
+    ///
+    /// While a pool is paused, [`Self::try_claim_job`] and [`Self::pop_claim_from_pool`] skip
+    /// its jobs. Running jobs finish, and [`Self::enqueue_with_policies`] still accepts new jobs
+    /// into it. Returns the stored state.
+    ///
+    /// # Errors
+    ///
+    /// The default body returns a backend error: pausing needs storage the trait doesn't have.
+    async fn set_pool_paused(
+        &self,
+        pool: &str,
+        paused: bool,
+        actor_label: &str,
+    ) -> Result<PoolState> {
+        let _ = (pool, paused, actor_label);
+        Err(unsupported("set_pool_paused"))
+    }
+
+    /// Stored pause state for `pool`, or `None` when it was never set.
+    ///
+    /// # Errors
+    ///
+    /// Returns storage errors. The default body returns `Ok(None)`.
+    async fn get_pool_state(&self, pool: &str) -> Result<Option<PoolState>> {
+        let _ = pool;
+        Ok(None)
+    }
+
+    /// Delete the `queued` jobs in `pool` and return how many were removed. Running and
+    /// finished jobs stay.
+    ///
+    /// # Errors
+    ///
+    /// The default body returns a backend error: the trait has no delete method to build it on.
+    async fn purge_queued_in_pool(&self, pool: &str) -> Result<u64> {
+        let _ = pool;
+        Err(unsupported("purge_queued_in_pool"))
+    }
+
     // --- Leases (distributed workers) ---
     //
     // Required when multiple worker processes share one backend (`BOSON_LEASE_TTL_SECS` > 0).
@@ -319,6 +526,19 @@ pub trait QueueBackend: Send + Sync + Debug {
 
     /// Expired leases as `(lease_record_id, job_id)`.
     async fn expired_lease_job_pairs(&self) -> Result<Vec<(String, String)>>;
+}
+
+/// The one status a filter names, so default bodies can narrow [`QueueBackend::list_jobs`].
+fn single_job_status(filter: &JobFilter) -> Option<JobStatus> {
+    match filter.statuses.as_slice() {
+        [status] => Some(*status),
+        _ => None,
+    }
+}
+
+/// Error for an admin method an engine doesn't implement.
+fn unsupported(method: &str) -> BosonError {
+    BosonError::backend(format!("{method} is not supported by this queue backend"))
 }
 
 /// Resolve the default backend from the process-global [`QueueRouter`](crate::QueueRouter).

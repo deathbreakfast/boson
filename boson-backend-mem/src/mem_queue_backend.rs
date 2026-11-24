@@ -4,8 +4,8 @@ use std::sync::RwLock;
 
 use async_trait::async_trait;
 use boson_core::{
-    Job, JobEnqueueDisposition, JobKey, JobStatus, QueueBackend, Result, Run, RunKey, RunStatus,
-    TaskConfig, TaskRunStats,
+    Job, JobEnqueueDisposition, JobFilter, JobKey, JobStatus, PoolState, PoolStats, QueueBackend,
+    Result, Run, RunFilter, RunKey, RunStatus, TaskConfig, TaskRunStats,
 };
 use chrono::{DateTime, Utc};
 
@@ -100,12 +100,18 @@ impl QueueBackend for MemQueueBackend {
 
     async fn list_jobs_after(
         &self,
-        status_filter: Option<JobStatus>,
+        filter: &JobFilter,
         after: Option<&JobKey>,
         limit: usize,
     ) -> Result<Vec<Job>> {
         read(&self.inner, |inner| {
-            crate::jobs::list_jobs_after(inner, status_filter, after, limit)
+            crate::jobs::list_jobs_after(inner, filter, after, limit)
+        })
+    }
+
+    async fn count_jobs_matching(&self, filter: &JobFilter) -> Result<u64> {
+        read(&self.inner, |inner| {
+            crate::jobs::count_jobs_matching(inner, filter)
         })
     }
 
@@ -188,12 +194,18 @@ impl QueueBackend for MemQueueBackend {
 
     async fn list_runs_after(
         &self,
-        job_id_filter: Option<&str>,
+        filter: &RunFilter,
         after: Option<&RunKey>,
         limit: usize,
     ) -> Result<Vec<Run>> {
         read(&self.inner, |inner| {
-            crate::runs::list_runs_after(inner, job_id_filter, after, limit)
+            crate::runs::list_runs_after(inner, filter, after, limit)
+        })
+    }
+
+    async fn count_runs_matching(&self, filter: &RunFilter) -> Result<u64> {
+        read(&self.inner, |inner| {
+            crate::runs::count_runs_matching(inner, filter)
         })
     }
 
@@ -236,6 +248,45 @@ impl QueueBackend for MemQueueBackend {
     async fn upsert_task_config(&self, config: &TaskConfig) -> Result<()> {
         write(&self.inner, |inner| {
             crate::task_config::upsert_task_config(inner, config);
+        })
+    }
+
+    async fn drop_failed_job(&self, job_id: &str) -> Result<()> {
+        write_fallible(&self.inner, |inner| {
+            crate::jobs::drop_failed_job(inner, job_id)
+        })
+    }
+
+    async fn sweep_failed(&self, older_than: DateTime<Utc>) -> Result<u64> {
+        write(&self.inner, |inner| {
+            crate::jobs::sweep_failed(inner, older_than)
+        })
+    }
+
+    async fn pool_stats(&self, window: chrono::Duration) -> Result<Vec<PoolStats>> {
+        read(&self.inner, |inner| crate::pools::pool_stats(inner, window))
+    }
+
+    async fn set_pool_paused(
+        &self,
+        pool: &str,
+        paused: bool,
+        actor_label: &str,
+    ) -> Result<PoolState> {
+        write(&self.inner, |inner| {
+            crate::pools::set_pool_paused(inner, pool, paused, actor_label)
+        })
+    }
+
+    async fn get_pool_state(&self, pool: &str) -> Result<Option<PoolState>> {
+        read(&self.inner, |inner| {
+            crate::pools::get_pool_state(inner, pool)
+        })
+    }
+
+    async fn purge_queued_in_pool(&self, pool: &str) -> Result<u64> {
+        write(&self.inner, |inner| {
+            crate::jobs::purge_queued_in_pool(inner, pool)
         })
     }
 

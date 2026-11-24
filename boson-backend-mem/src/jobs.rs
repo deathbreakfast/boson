@@ -1,8 +1,10 @@
 //! Job persistence helpers for the in-memory backend.
 
 use boson_core::{
-    BosonError, IdempotencyMode, Job, JobEnqueueDisposition, JobKey, JobStatus, Result, TaskConfig,
+    BosonError, IdempotencyMode, Job, JobEnqueueDisposition, JobFilter, JobKey, JobStatus, Result,
+    TaskConfig,
 };
+use chrono::{DateTime, Utc};
 
 use crate::enqueue_rate::EnqueueRateLimiter;
 use crate::store::Inner;
@@ -105,14 +107,55 @@ pub fn list_jobs(
 /// [`QueueBackend::list_jobs_after`](boson_core::QueueBackend::list_jobs_after)).
 pub fn list_jobs_after(
     inner: &Inner,
-    status_filter: Option<JobStatus>,
+    filter: &JobFilter,
     after: Option<&JobKey>,
     limit: usize,
 ) -> Vec<Job> {
-    boson_core::page_jobs_after(inner.jobs.values(), status_filter, after, limit)
+    boson_core::page_jobs_after(inner.jobs.values(), filter, after, limit)
         .into_iter()
         .cloned()
         .collect()
+}
+
+/// Count jobs matching a filter.
+pub fn count_jobs_matching(inner: &Inner, filter: &JobFilter) -> u64 {
+    let count = inner.jobs.values().filter(|j| filter.matches(j)).count();
+    u64::try_from(count).unwrap_or(u64::MAX)
+}
+
+/// Set `dropped_at` on a failed job; a second drop is a no-op.
+pub fn drop_failed_job(inner: &mut Inner, job_id: &str) -> Result<()> {
+    let Some(job) = inner.jobs.get_mut(job_id) else {
+        return Err(BosonError::JobNotFound(job_id.to_string()));
+    };
+    if job.status != JobStatus::Failed {
+        return Err(BosonError::InvalidConfig(format!(
+            "job {job_id} is {}; only failed jobs can be dropped",
+            job.status
+        )));
+    }
+    if job.dropped_at.is_none() {
+        job.dropped_at = Some(Utc::now());
+    }
+    Ok(())
+}
+
+/// Remove failed jobs created before `older_than`.
+pub fn sweep_failed(inner: &mut Inner, older_than: DateTime<Utc>) -> u64 {
+    remove_jobs(inner, |j| {
+        j.status == JobStatus::Failed && j.created_at < older_than
+    })
+}
+
+/// Remove the queued jobs in one pool.
+pub fn purge_queued_in_pool(inner: &mut Inner, pool: &str) -> u64 {
+    remove_jobs(inner, |j| j.status == JobStatus::Queued && j.pool == pool)
+}
+
+fn remove_jobs(inner: &mut Inner, doomed: impl Fn(&Job) -> bool) -> u64 {
+    let before = inner.jobs.len();
+    inner.jobs.retain(|_, j| !doomed(j));
+    u64::try_from(before - inner.jobs.len()).unwrap_or(u64::MAX)
 }
 
 /// Cancel a job if still active.
@@ -128,8 +171,12 @@ pub fn cancel_job_if_active(inner: &mut Inner, job_id: &str) -> Result<()> {
 
 /// Atomically claim a queued job.
 pub fn try_claim_job(inner: &mut Inner, job_id: &str) -> Option<Job> {
+    let paused = inner
+        .jobs
+        .get(job_id)
+        .is_some_and(|j| inner.pool_paused(&j.pool));
     let job = inner.jobs.get_mut(job_id)?;
-    if job.status != JobStatus::Queued {
+    if job.status != JobStatus::Queued || paused {
         return None;
     }
     job.status = JobStatus::Running;
@@ -179,6 +226,9 @@ pub fn list_queued_for_pool_sorted(inner: &Inner, pool: &str, limit: usize) -> V
 
 /// Atomically claim the next queued job from a pool.
 pub fn pop_claim_from_pool(inner: &mut Inner, pool: &str) -> Option<Job> {
+    if inner.pool_paused(pool) {
+        return None;
+    }
     let next = list_queued_for_pool_sorted(inner, pool, 1)
         .into_iter()
         .next()?;

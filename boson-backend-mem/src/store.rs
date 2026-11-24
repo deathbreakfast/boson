@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-use boson_core::{Job, Run, TaskConfig};
+use boson_core::{Job, PoolState, Run, TaskConfig};
 use chrono::{DateTime, Utc};
 
 use crate::error::lock_err;
@@ -30,6 +30,15 @@ pub struct Inner {
     pub task_configs: HashMap<String, TaskConfig>,
     /// Leases keyed by lease id.
     pub leases: HashMap<String, LeaseRecord>,
+    /// Pool pause state keyed by pool name.
+    pub pool_states: HashMap<String, PoolState>,
+}
+
+impl Inner {
+    /// True when `pool` has a stored pause flag set.
+    pub fn pool_paused(&self, pool: &str) -> bool {
+        self.pool_states.get(pool).is_some_and(|s| s.paused)
+    }
 }
 
 impl Inner {

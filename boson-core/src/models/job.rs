@@ -58,6 +58,15 @@ pub struct Job {
     pub signature_hash: u64,
     /// Attempt number (1-based); incremented on retry.
     pub attempt: i32,
+    /// Id of the failed job this one retries, when it was made by
+    /// [`QueueBackend::retry_job`](crate::QueueBackend::retry_job).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub retried_from: Option<String>,
+    /// When an admin dropped this failed job with
+    /// [`QueueBackend::drop_failed_job`](crate::QueueBackend::drop_failed_job). Default list
+    /// filters leave dropped jobs out.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dropped_at: Option<DateTime<Utc>>,
 }
 
 impl Job {
@@ -84,6 +93,8 @@ impl Job {
             created_at: Utc::now(),
             signature_hash,
             attempt: 1,
+            retried_from: None,
+            dropped_at: None,
         }
     }
 }

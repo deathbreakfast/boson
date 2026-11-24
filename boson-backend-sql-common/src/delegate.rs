@@ -36,13 +36,18 @@ macro_rules! delegate_queue_backend {
 
             async fn list_jobs_after(
                 &self,
-                status_filter: Option<::boson_core::JobStatus>,
+                filter: &::boson_core::JobFilter,
                 after: Option<&::boson_core::JobKey>,
                 limit: usize,
             ) -> ::boson_core::Result<Vec<::boson_core::Job>> {
-                self.$inner
-                    .list_jobs_after(status_filter, after, limit)
-                    .await
+                self.$inner.list_jobs_after(filter, after, limit).await
+            }
+
+            async fn count_jobs_matching(
+                &self,
+                filter: &::boson_core::JobFilter,
+            ) -> ::boson_core::Result<u64> {
+                self.$inner.count_jobs_matching(filter).await
             }
 
             async fn cancel_job_if_active(&self, job_id: &str) -> ::boson_core::Result<()> {
@@ -123,13 +128,18 @@ macro_rules! delegate_queue_backend {
 
             async fn list_runs_after(
                 &self,
-                job_id_filter: Option<&str>,
+                filter: &::boson_core::RunFilter,
                 after: Option<&::boson_core::RunKey>,
                 limit: usize,
             ) -> ::boson_core::Result<Vec<::boson_core::Run>> {
-                self.$inner
-                    .list_runs_after(job_id_filter, after, limit)
-                    .await
+                self.$inner.list_runs_after(filter, after, limit).await
+            }
+
+            async fn count_runs_matching(
+                &self,
+                filter: &::boson_core::RunFilter,
+            ) -> ::boson_core::Result<u64> {
+                self.$inner.count_runs_matching(filter).await
             }
 
             async fn finish_run(
@@ -174,6 +184,52 @@ macro_rules! delegate_queue_backend {
                 config: &::boson_core::TaskConfig,
             ) -> ::boson_core::Result<()> {
                 self.$inner.upsert_task_config(config).await
+            }
+
+            async fn retry_job(
+                &self,
+                job_id: &str,
+                actor_json: $crate::__serde_json::Value,
+            ) -> ::boson_core::Result<String> {
+                self.$inner.retry_job(job_id, actor_json).await
+            }
+
+            async fn drop_failed_job(&self, job_id: &str) -> ::boson_core::Result<()> {
+                self.$inner.drop_failed_job(job_id).await
+            }
+
+            async fn sweep_failed(
+                &self,
+                older_than: ::chrono::DateTime<::chrono::Utc>,
+            ) -> ::boson_core::Result<u64> {
+                self.$inner.sweep_failed(older_than).await
+            }
+
+            async fn pool_stats(
+                &self,
+                window: ::chrono::Duration,
+            ) -> ::boson_core::Result<Vec<::boson_core::PoolStats>> {
+                self.$inner.pool_stats(window).await
+            }
+
+            async fn set_pool_paused(
+                &self,
+                pool: &str,
+                paused: bool,
+                actor_label: &str,
+            ) -> ::boson_core::Result<::boson_core::PoolState> {
+                self.$inner.set_pool_paused(pool, paused, actor_label).await
+            }
+
+            async fn get_pool_state(
+                &self,
+                pool: &str,
+            ) -> ::boson_core::Result<Option<::boson_core::PoolState>> {
+                self.$inner.get_pool_state(pool).await
+            }
+
+            async fn purge_queued_in_pool(&self, pool: &str) -> ::boson_core::Result<u64> {
+                self.$inner.purge_queued_in_pool(pool).await
             }
 
             async fn try_claim_run_lease(

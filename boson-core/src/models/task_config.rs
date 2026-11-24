@@ -42,7 +42,9 @@ impl IdempotencyMode {
 /// where `attempt` is the 1-based attempt number on the job.
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct RetryPolicy {
-    /// Maximum retry attempts after the first failure (`0` = no retries).
+    /// Total tries, including the first. The worker stops once the 1-based attempt number
+    /// reaches this value, so `1` (or `0`) means a single try with no retries and `3` means the
+    /// first try plus up to two retries.
     pub max_attempts: u32,
     /// Base delay in ms before the first retry.
     pub base_delay_ms: u64,

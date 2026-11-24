@@ -33,3 +33,8 @@ boson_testkit::backend_contract_suite!(
     "postgres",
     ignore = "requires BOSON_TEST_POSTGRES_URL — run with --include-ignored"
 );
+boson_testkit::backend_admin_contract_suite!(
+    fresh,
+    "postgres",
+    ignore = "requires BOSON_TEST_POSTGRES_URL — run with --include-ignored"
+);

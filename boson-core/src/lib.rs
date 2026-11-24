@@ -26,14 +26,14 @@ pub use actor_policy::{
     RejectExternalSystemActor,
 };
 pub use backend::{
-    default_backend_from_global, page_jobs_after, page_runs_after, JobEnqueueDisposition, JobKey,
-    QueueBackend, RunKey,
+    default_backend_from_global, page_jobs_after, page_runs_after, tally_pool_stats,
+    JobEnqueueDisposition, JobFilter, JobKey, QueueBackend, RunFilter, RunKey,
 };
 pub use error::{BosonError, IdentityError, Result};
 pub use identity::{ExecutionContext, ExecutionContextFactory, JsonExecutionContextFactory};
 pub use models::{
-    IdempotencyMode, Job, JobStatus, RateLimitPolicy, RetryPolicy, Run, RunStatus, TaskConfig,
-    TaskRunStats,
+    IdempotencyMode, Job, JobStatus, PoolState, PoolStats, RateLimitPolicy, RetryPolicy, Run,
+    RunStatus, TaskConfig, TaskRunStats, DEFAULT_FAILED_RETENTION,
 };
 pub use redact::{
     map_backend_connect_err, map_backend_connect_err_source, redact_credentials_in_text,
