@@ -212,6 +212,29 @@ impl Boson {
             .await
     }
 
+    /// Retry a failed job as `actor_json`, after checking the actor against the
+    /// [`ActorJsonPolicy`] for `trust`.
+    ///
+    /// Use [`EnqueueTrust::External`] on admin and HTTP surfaces and pass the session actor
+    /// (for example from Higgs), never an actor built from the request. See
+    /// [`QueueBackend::retry_job`] for what the new job carries.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if policy rejects the actor, the job is unknown or not `failed`, rate
+    /// limits apply, or the backend fails.
+    pub async fn retry_job(
+        &self,
+        job_id: &str,
+        actor_json: serde_json::Value,
+        trust: EnqueueTrust,
+    ) -> Result<String> {
+        if let Some(ref policy) = self.actor_policy {
+            policy.validate(trust, &actor_json)?;
+        }
+        self.backend.retry_job(job_id, actor_json).await
+    }
+
     /// Get a job by id.
     ///
     /// # Errors

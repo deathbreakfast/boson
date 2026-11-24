@@ -349,6 +349,10 @@ pub trait QueueBackend: Send + Sync + Debug {
     ///
     /// The default body works on every engine through the methods above.
     ///
+    /// This method stores `actor_json` as given and runs no actor policy. Admin and HTTP surfaces
+    /// should call `Boson::retry_job` with `EnqueueTrust::External`, which checks the actor first,
+    /// and pass only the session actor, never one built from the request.
+    ///
     /// # Errors
     ///
     /// [`BosonError::JobNotFound`] for an unknown id, [`BosonError::InvalidConfig`] when the job
