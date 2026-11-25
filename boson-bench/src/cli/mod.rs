@@ -1,5 +1,10 @@
 //! CLI argument definitions and dispatch for `boson-bench`.
 
+// clap's derived `Subcommand` impl for the big `Run` variant trips nightly clippy's
+// `large_unopt_stack_frames`. Derived impls don't inherit attributes from the enum, so the allow
+// sits on the module; stable clippy doesn't know the lint yet, hence `unknown_lints`.
+#![allow(unknown_lints, clippy::large_unopt_stack_frames)]
+
 mod bench_config;
 mod dispatch;
 mod hardware_cmd;
@@ -22,9 +27,6 @@ pub struct Cli {
 }
 
 /// Bench subcommands (see [`EXPERIMENTS.md`](../../EXPERIMENTS.md)).
-// clap's derived `from_arg_matches` trips nightly clippy's `large_unopt_stack_frames` (the big
-// `Run` variant); stable clippy doesn't know that lint yet, hence `unknown_lints`.
-#[allow(unknown_lints, clippy::large_unopt_stack_frames)]
 #[derive(Subcommand)]
 pub enum Command {
     /// List registered experiment IDs (see EXPERIMENTS.md).
