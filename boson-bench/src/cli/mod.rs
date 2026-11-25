@@ -22,6 +22,9 @@ pub struct Cli {
 }
 
 /// Bench subcommands (see [`EXPERIMENTS.md`](../../EXPERIMENTS.md)).
+// clap's derived `from_arg_matches` trips nightly clippy's `large_unopt_stack_frames` (the big
+// `Run` variant); stable clippy doesn't know that lint yet, hence `unknown_lints`.
+#[allow(unknown_lints, clippy::large_unopt_stack_frames)]
 #[derive(Subcommand)]
 pub enum Command {
     /// List registered experiment IDs (see EXPERIMENTS.md).
