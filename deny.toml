@@ -8,6 +8,8 @@ yanked = "warn"
 # webpki RUSTSEC-2026-* ignores removed after async-nats 0.49 → rustls-webpki 0.103.
 ignore = [
     { id = "RUSTSEC-2024-0436", reason = "unmaintained paste; transitive via broker SDKs" },
+    { id = "RUSTSEC-2026-0459", reason = "libsqlite3-sys 0.30 via sqlx-sqlite 0.8, fixed in 0.39 which sqlx 0.8 can't take; temporary until the sqlx bump (security:RUSTSEC-2026-0459)" },
+    { id = "RUSTSEC-2026-0543", reason = "chrono unmaintained, no fixed release; temporary until the fleet moves to jiff or time (security:RUSTSEC-2026-0543)" },
 ]
 
 [licenses]
