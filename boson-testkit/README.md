@@ -8,6 +8,7 @@ Shared matrix dimensions, scenario catalog, contract suite, and bootstrap fixtur
 - [`BootstrapSession`](src/bootstrap.rs) — install a [`MatrixSpec`](src/matrix.rs) backend + telemetry
 - [`correctness_catalog`](src/scenario/catalog.rs) — happy/sad scenarios for **all** storage backends
 - [`backend_contract_suite!`](src/macros.rs) — expand every `QueueBackend` contract for an adapter crate
+- [`backend_admin_contract_suite!`](src/macros.rs) — drop, sweep, pause, purge and pool stats checks, for engines that override those methods (mem, SQLite, Postgres)
 - [`matrix_scenario_suite!`](src/macros.rs) / [`matrix_smoke_suite!`](src/macros.rs) — emit `{scenario}_{backend}` tests
 
 Both e2e and bench run the **same** scenario definitions — e2e asserts correctness, bench records timings.

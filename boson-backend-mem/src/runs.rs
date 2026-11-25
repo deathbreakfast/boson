@@ -1,6 +1,6 @@
 //! Run persistence helpers for the in-memory backend.
 
-use boson_core::{Run, RunKey, RunStatus, TaskRunStats};
+use boson_core::{Run, RunFilter, RunKey, RunStatus, TaskRunStats};
 use chrono::{DateTime, Utc};
 
 use crate::store::Inner;
@@ -36,14 +36,20 @@ pub fn list_runs(
 /// [`QueueBackend::list_runs_after`](boson_core::QueueBackend::list_runs_after)).
 pub fn list_runs_after(
     inner: &Inner,
-    job_id_filter: Option<&str>,
+    filter: &RunFilter,
     after: Option<&RunKey>,
     limit: usize,
 ) -> Vec<Run> {
-    boson_core::page_runs_after(inner.runs.values(), job_id_filter, after, limit)
+    boson_core::page_runs_after(inner.runs.values(), filter, after, limit)
         .into_iter()
         .cloned()
         .collect()
+}
+
+/// Count runs matching a filter.
+pub fn count_runs_matching(inner: &Inner, filter: &RunFilter) -> u64 {
+    let count = inner.runs.values().filter(|r| filter.matches(r)).count();
+    u64::try_from(count).unwrap_or(u64::MAX)
 }
 
 /// Mark a run terminal with outcome fields.

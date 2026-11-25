@@ -175,6 +175,58 @@ async fn external_system_actor_rejected_no_job_row() {
     );
 }
 
+#[tokio::test]
+async fn external_retry_rejects_system_actor() {
+    let backend: Arc<dyn QueueBackend> = Arc::new(MemQueueBackend::new());
+    let mut registry = TaskRegistry::new();
+    register_task(&mut registry, "echo", echo_task_manual);
+    let (boson, _manual) = Boson::builder()
+        .queue_backend(Arc::clone(&backend))
+        .execution_context_factory(TestFactory)
+        .registry(Arc::new(registry))
+        .without_worker()
+        .build_manual()
+        .expect("build");
+
+    let job_id = boson
+        .enqueue(
+            "echo",
+            serde_json::json!({"user": "a"}),
+            serde_json::json!({}),
+            None,
+        )
+        .await
+        .expect("enqueue");
+    let mut job = backend.get_job(&job_id).await.unwrap().expect("job");
+    job.status = boson_core::JobStatus::Failed;
+    backend.upsert_job(&job).await.unwrap();
+
+    let err = boson
+        .retry_job(
+            &job_id,
+            serde_json::json!({"System": {"operation": "spoof"}}),
+            EnqueueTrust::External,
+        )
+        .await
+        .expect_err("must reject System on External");
+    assert!(
+        err.to_string().contains("System"),
+        "unexpected error: {err}"
+    );
+    assert_eq!(boson.list_jobs(None, 0, 100).await.unwrap().len(), 1);
+
+    let new_id = boson
+        .retry_job(
+            &job_id,
+            serde_json::json!({"user": "b"}),
+            EnqueueTrust::External,
+        )
+        .await
+        .expect("retry as a user");
+    let new = backend.get_job(&new_id).await.unwrap().expect("new job");
+    assert_eq!(new.retried_from.as_deref(), Some(job_id.as_str()));
+}
+
 fn leak_secret_fail_task(
     _ctx: Box<dyn ExecutionContext>,
     _params: serde_json::Value,

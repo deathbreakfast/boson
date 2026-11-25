@@ -1,13 +1,17 @@
 //! Job persistence for the SQL queue backend.
 
-use boson_core::{BosonError, Job, JobEnqueueDisposition, JobKey, JobStatus, Result, TaskConfig};
+use boson_core::{
+    BosonError, Job, JobEnqueueDisposition, JobFilter, JobKey, JobStatus, Result, TaskConfig,
+};
+use chrono::{DateTime, Utc};
 use sqlx::Row;
 
 use crate::enqueue_rate::EnqueueRateLimiter;
+use crate::filter_sql::{job_where, jobs_after_where};
 use crate::row::{job_status_to_str, job_to_binds, row_to_job};
 use crate::{
-    bind_sql, sql_execute, sql_fetch_all_map, sql_fetch_one_map, sql_fetch_optional_map,
-    SqlQueueBackend,
+    bind_all, bind_sql, sql_execute, sql_execute_count, sql_fetch_all_map, sql_fetch_one_map,
+    sql_fetch_optional_map, SqlQueueBackend,
 };
 
 impl SqlQueueBackend {
@@ -17,8 +21,8 @@ impl SqlQueueBackend {
             self.dialect,
             "INSERT INTO boson_job
              (job_id, task_name, actor_json, params_json, priority, pool, status,
-              idempotency_key, created_at, signature_hash, attempt)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              idempotency_key, created_at, signature_hash, attempt, retried_from, dropped_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
              ON CONFLICT (job_id) DO UPDATE SET
               task_name = excluded.task_name,
               actor_json = excluded.actor_json,
@@ -29,7 +33,9 @@ impl SqlQueueBackend {
               idempotency_key = excluded.idempotency_key,
               created_at = excluded.created_at,
               signature_hash = excluded.signature_hash,
-              attempt = excluded.attempt",
+              attempt = excluded.attempt,
+              retried_from = excluded.retried_from,
+              dropped_at = excluded.dropped_at",
         );
         sql_execute!(self, &sql, |q| {
             q.bind(&job.job_id)
@@ -43,6 +49,8 @@ impl SqlQueueBackend {
                 .bind(job.created_at)
                 .bind(i64::try_from(job.signature_hash).unwrap_or(i64::MAX))
                 .bind(job.attempt)
+                .bind(&job.retried_from)
+                .bind(job.dropped_at)
         })
     }
 
@@ -174,35 +182,71 @@ impl SqlQueueBackend {
 
     pub(crate) async fn list_jobs_after_impl(
         &self,
-        status_filter: Option<JobStatus>,
+        filter: &JobFilter,
         after: Option<&JobKey>,
         limit: usize,
     ) -> Result<Vec<Job>> {
+        let w = jobs_after_where(self.dialect, filter, after);
         let sql = bind_sql(
             self.dialect,
-            &jobs_after_sql(status_filter.is_some(), after.is_some()),
+            &format!(
+                "SELECT * FROM boson_job{} ORDER BY created_at ASC, job_id ASC LIMIT ?",
+                w.sql()
+            ),
         );
-        let status = status_filter.map(job_status_to_str);
         let limit = i64::try_from(limit).unwrap_or(i64::MAX);
-        sql_fetch_all_map!(
-            self,
-            &sql,
-            |q| {
-                let mut q = q;
-                if let Some(status) = status {
-                    q = q.bind(status);
-                }
-                if let Some(key) = after {
-                    q = q
-                        .bind(key.created_at)
-                        .bind(key.created_at)
-                        .bind(key.created_at)
-                        .bind(&key.id);
-                }
-                q.bind(limit)
-            },
-            |r| row_to_job(r)
-        )
+        sql_fetch_all_map!(self, &sql, |q| bind_all!(q, &w.binds).bind(limit), |r| {
+            row_to_job(r)
+        })
+    }
+
+    pub(crate) async fn count_jobs_matching_impl(&self, filter: &JobFilter) -> Result<u64> {
+        let w = job_where(self.dialect, filter);
+        let sql = bind_sql(
+            self.dialect,
+            &format!("SELECT COUNT(*) AS cnt FROM boson_job{}", w.sql()),
+        );
+        sql_fetch_one_map!(self, &sql, |q| bind_all!(q, &w.binds), |r| Ok(
+            u64::try_from(r.get::<i64, _>("cnt")).unwrap_or(u64::MAX)
+        ))
+    }
+
+    pub(crate) async fn drop_failed_job_impl(&self, job_id: &str) -> Result<()> {
+        let sql = bind_sql(
+            self.dialect,
+            "UPDATE boson_job SET dropped_at = ?
+             WHERE job_id = ? AND status = 'failed' AND dropped_at IS NULL",
+        );
+        let changed = sql_execute_count!(self, &sql, |q| q.bind(Utc::now()).bind(job_id))?;
+        if changed > 0 {
+            return Ok(());
+        }
+        match self.get_job_impl(job_id).await? {
+            None => Err(BosonError::JobNotFound(job_id.to_string())),
+            Some(job) if job.status != JobStatus::Failed => {
+                Err(BosonError::InvalidConfig(format!(
+                    "job {job_id} is {}; only failed jobs can be dropped",
+                    job.status
+                )))
+            }
+            Some(_) => Ok(()),
+        }
+    }
+
+    pub(crate) async fn sweep_failed_impl(&self, older_than: DateTime<Utc>) -> Result<u64> {
+        let sql = bind_sql(
+            self.dialect,
+            "DELETE FROM boson_job WHERE status = 'failed' AND created_at < ?",
+        );
+        sql_execute_count!(self, &sql, |q| q.bind(older_than))
+    }
+
+    pub(crate) async fn purge_queued_in_pool_impl(&self, pool: &str) -> Result<u64> {
+        let sql = bind_sql(
+            self.dialect,
+            "DELETE FROM boson_job WHERE pool = ? AND status = 'queued'",
+        );
+        sql_execute_count!(self, &sql, |q| q.bind(pool))
     }
 
     pub(crate) async fn cancel_job_if_active_impl(&self, job_id: &str) -> Result<()> {
@@ -223,6 +267,8 @@ impl SqlQueueBackend {
             self.dialect,
             "UPDATE boson_job SET status = 'running'
              WHERE job_id = ? AND status = 'queued'
+              AND NOT EXISTS (SELECT 1 FROM boson_pool_state ps
+                              WHERE ps.pool = boson_job.pool AND ps.paused = TRUE)
              RETURNING *",
         );
         sql_fetch_optional_map!(self, &sql, |q| q.bind(job_id), |r| row_to_job(&r))
@@ -310,47 +356,5 @@ impl SqlQueueBackend {
             )
             .unwrap_or(u64::MAX)))
         }
-    }
-}
-
-/// `SELECT` for [`SqlQueueBackend::list_jobs_after_impl`] with `?` placeholders.
-///
-/// Placeholder order: status (when filtered), then `created_at` three times and `job_id` (when a
-/// key is given), then the limit. The key predicate is spelled as an expanded `OR` instead of a
-/// row-value comparison so the same text runs on `SQLite` and Postgres. The redundant
-/// `created_at >= ?` bound lets the planner seek into `boson_job_created_at_id` instead of
-/// scanning it from the start; that index also serves the order.
-fn jobs_after_sql(has_status: bool, has_after: bool) -> String {
-    let mut clauses = Vec::new();
-    if has_status {
-        clauses.push("status = ?");
-    }
-    if has_after {
-        clauses.push("created_at >= ? AND (created_at > ? OR (created_at = ? AND job_id > ?))");
-    }
-    let filter = if clauses.is_empty() {
-        String::new()
-    } else {
-        format!(" WHERE {}", clauses.join(" AND "))
-    };
-    format!("SELECT * FROM boson_job{filter} ORDER BY created_at ASC, job_id ASC LIMIT ?")
-}
-
-#[cfg(test)]
-mod tests {
-    use super::jobs_after_sql;
-
-    #[test]
-    fn jobs_after_sql_variants() {
-        assert_eq!(
-            jobs_after_sql(false, false),
-            "SELECT * FROM boson_job ORDER BY created_at ASC, job_id ASC LIMIT ?"
-        );
-        assert_eq!(
-            jobs_after_sql(true, true),
-            "SELECT * FROM boson_job WHERE status = ? AND \
-             created_at >= ? AND (created_at > ? OR (created_at = ? AND job_id > ?)) \
-             ORDER BY created_at ASC, job_id ASC LIMIT ?"
-        );
     }
 }

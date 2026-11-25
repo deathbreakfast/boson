@@ -337,9 +337,10 @@ pub mod prelude;
 pub use boson_core::{
     default_backend_from_global, default_http_enqueue_actor, map_backend_connect_err,
     redact_credentials_in_text, redact_endpoint, ActorJsonPolicy, BosonError, EnqueueTrust,
-    ExecutionContext, ExecutionContextFactory, IdentityError, Job, JobEnqueueDisposition, JobKey,
-    JobStatus, JsonExecutionContextFactory, QueueBackend, QueueRouter, RateLimitPolicy,
-    RejectExternalSystemActor, RetryPolicy, Run, RunKey, RunStatus, TaskConfig, TaskRunStats,
+    ExecutionContext, ExecutionContextFactory, IdentityError, Job, JobEnqueueDisposition,
+    JobFilter, JobKey, JobStatus, JsonExecutionContextFactory, PoolState, PoolStats, QueueBackend,
+    QueueRouter, RateLimitPolicy, RejectExternalSystemActor, RetryPolicy, Run, RunFilter, RunKey,
+    RunStatus, TaskConfig, TaskRunStats, DEFAULT_FAILED_RETENTION,
 };
 /// Background task handler — typed params, `send_with` enqueue, and link-time registration.
 ///

@@ -1,8 +1,9 @@
 //! Bootstrap SQL tables and indexes for the queue backend.
 
 use boson_core::Result;
+use sqlx::Row;
 
-use crate::{SqlDialect, SqlQueueBackend};
+use crate::{bind_sql, sql_fetch_one_map, SqlDialect, SqlQueueBackend};
 
 const JOB_TABLE: &str = r"
 CREATE TABLE IF NOT EXISTS boson_job (
@@ -16,7 +17,9 @@ CREATE TABLE IF NOT EXISTS boson_job (
     idempotency_key TEXT,
     created_at TIMESTAMPTZ NOT NULL,
     signature_hash BIGINT NOT NULL,
-    attempt INTEGER NOT NULL
+    attempt INTEGER NOT NULL,
+    retried_from TEXT,
+    dropped_at TIMESTAMPTZ
 )";
 
 const RUN_TABLE: &str = r"
@@ -41,6 +44,18 @@ CREATE TABLE IF NOT EXISTS boson_task_config (
     rate_limit_policy_json TEXT NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL
 )";
+
+const POOL_STATE_TABLE: &str = r"
+CREATE TABLE IF NOT EXISTS boson_pool_state (
+    pool TEXT PRIMARY KEY,
+    paused BOOLEAN NOT NULL,
+    changed_by TEXT,
+    changed_at TIMESTAMPTZ NOT NULL
+)";
+
+/// Columns added to `boson_job` after its first release, for databases created before them.
+const JOB_ADDED_COLUMNS: [(&str, &str); 2] =
+    [("retried_from", "TEXT"), ("dropped_at", "TIMESTAMPTZ")];
 
 const LEASE_TABLE: &str = r"
 CREATE TABLE IF NOT EXISTS boson_lease (
@@ -68,8 +83,17 @@ pub async fn ensure_schema(backend: &SqlQueueBackend) -> Result<()> {
 }
 
 async fn ensure_schema_tables(backend: &SqlQueueBackend) -> Result<()> {
-    for ddl in [JOB_TABLE, RUN_TABLE, TASK_CONFIG_TABLE, LEASE_TABLE] {
+    for ddl in [
+        JOB_TABLE,
+        RUN_TABLE,
+        TASK_CONFIG_TABLE,
+        POOL_STATE_TABLE,
+        LEASE_TABLE,
+    ] {
         backend.run_ddl(ddl).await?;
+    }
+    for (column, decl) in JOB_ADDED_COLUMNS {
+        ensure_column(backend, "boson_job", column, decl).await?;
     }
 
     backend
@@ -92,6 +116,11 @@ async fn ensure_schema_tables(backend: &SqlQueueBackend) -> Result<()> {
         .await?;
     backend
         .run_ddl(
+            "CREATE INDEX IF NOT EXISTS boson_job_status_created_at_id ON boson_job (status, created_at, job_id)",
+        )
+        .await?;
+    backend
+        .run_ddl(
             "CREATE UNIQUE INDEX IF NOT EXISTS boson_job_idempotency_active ON boson_job (idempotency_key) WHERE idempotency_key IS NOT NULL AND status IN ('queued', 'running')",
         )
         .await?;
@@ -110,6 +139,14 @@ async fn ensure_schema_tables(backend: &SqlQueueBackend) -> Result<()> {
             "CREATE INDEX IF NOT EXISTS boson_run_started_at_id ON boson_run (started_at, run_id)",
         )
         .await?;
+    backend
+        .run_ddl(
+            "CREATE INDEX IF NOT EXISTS boson_run_status_started_at_id ON boson_run (status, started_at, run_id)",
+        )
+        .await?;
+    backend
+        .run_ddl("CREATE INDEX IF NOT EXISTS boson_run_finished_at ON boson_run (finished_at)")
+        .await?;
 
     backend
         .run_ddl("CREATE UNIQUE INDEX IF NOT EXISTS boson_lease_job_id ON boson_lease (job_id)")
@@ -119,6 +156,39 @@ async fn ensure_schema_tables(backend: &SqlQueueBackend) -> Result<()> {
         .await?;
 
     Ok(())
+}
+
+/// Add `column` to `table` when an older database lacks it.
+async fn ensure_column(
+    backend: &SqlQueueBackend,
+    table: &str,
+    column: &str,
+    decl: &str,
+) -> Result<()> {
+    match backend.dialect() {
+        SqlDialect::Postgres => {
+            backend
+                .run_ddl(&format!(
+                    "ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {decl}"
+                ))
+                .await
+        }
+        SqlDialect::Sqlite => {
+            let sql = bind_sql(
+                backend.dialect(),
+                "SELECT COUNT(*) AS cnt FROM pragma_table_info(?) WHERE name = ?",
+            );
+            let present = sql_fetch_one_map!(backend, &sql, |q| q.bind(table).bind(column), |r| {
+                Ok::<bool, boson_core::BosonError>(r.get::<i64, _>("cnt") > 0)
+            })?;
+            if present {
+                return Ok(());
+            }
+            backend
+                .run_ddl(&format!("ALTER TABLE {table} ADD COLUMN {column} {decl}"))
+                .await
+        }
+    }
 }
 
 #[cfg(test)]
@@ -134,5 +204,41 @@ mod tests {
         let b2 = SqlQueueBackend::connect_sqlite(&url).await.unwrap();
         drop(b1);
         drop(b2);
+    }
+
+    #[tokio::test]
+    async fn old_job_table_gains_new_columns() {
+        use boson_core::QueueBackend;
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("old.db");
+        let url = format!("sqlite://{}?mode=rwc", path.display());
+        {
+            let pool = sqlx::SqlitePool::connect(&url).await.unwrap();
+            sqlx::query(
+                "CREATE TABLE boson_job (
+                    job_id TEXT PRIMARY KEY, task_name TEXT NOT NULL, actor_json TEXT NOT NULL,
+                    params_json TEXT NOT NULL, priority INTEGER NOT NULL, pool TEXT NOT NULL,
+                    status TEXT NOT NULL, idempotency_key TEXT, created_at TIMESTAMPTZ NOT NULL,
+                    signature_hash BIGINT NOT NULL, attempt INTEGER NOT NULL)",
+            )
+            .execute(&pool)
+            .await
+            .unwrap();
+            pool.close().await;
+        }
+        let b = SqlQueueBackend::connect_sqlite(&url).await.unwrap();
+        let job = boson_core::Job::new(
+            "t",
+            serde_json::json!({}),
+            serde_json::json!({}),
+            0,
+            "global",
+            0,
+            None,
+        );
+        b.upsert_job(&job).await.unwrap();
+        let loaded = b.get_job(&job.job_id).await.unwrap().unwrap();
+        assert!(loaded.retried_from.is_none() && loaded.dropped_at.is_none());
     }
 }

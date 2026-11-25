@@ -24,6 +24,31 @@ macro_rules! sql_execute {
 }
 
 #[macro_export]
+macro_rules! sql_execute_count {
+    ($backend:expr, $sql:expr, |$q:ident| $body:expr) => {{
+        let rows = match &$backend.pool {
+            $crate::SqlPool::Sqlite(pool) => {
+                let $q = sqlx::query($sql);
+                let $q = $body;
+                $q.execute(pool)
+                    .await
+                    .map_err(|e| $crate::error_map::map_err(&e))?
+                    .rows_affected()
+            }
+            $crate::SqlPool::Postgres(pool) => {
+                let $q = sqlx::query($sql);
+                let $q = $body;
+                $q.execute(pool)
+                    .await
+                    .map_err(|e| $crate::error_map::map_err(&e))?
+                    .rows_affected()
+            }
+        };
+        Ok::<u64, boson_core::BosonError>(rows)
+    }};
+}
+
+#[macro_export]
 macro_rules! sql_fetch_optional_map {
     ($backend:expr, $sql:expr, |$q:ident| $bind:expr, |$row:ident| $map:expr) => {{
         match &$backend.pool {

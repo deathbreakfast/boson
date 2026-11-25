@@ -19,6 +19,7 @@ mod error;
 mod jobs;
 mod leases;
 mod mem_queue_backend;
+mod pools;
 mod runs;
 mod store;
 mod task_config;

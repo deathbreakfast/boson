@@ -520,22 +520,6 @@ impl QueueBackend for NatsWorkQueueBackend {
         Ok(jobs.into_iter().skip(offset).take(limit).collect())
     }
 
-    async fn list_jobs_after(
-        &self,
-        status_filter: Option<JobStatus>,
-        after: Option<&boson_core::JobKey>,
-        limit: usize,
-    ) -> Result<Vec<Job>> {
-        // NATS KV has no index in this order: load the matching jobs and page them in Rust.
-        let jobs = self.list_jobs(status_filter, 0, usize::MAX).await?;
-        Ok(boson_core::page_jobs_after(
-            jobs,
-            status_filter,
-            after,
-            limit,
-        ))
-    }
-
     async fn cancel_job_if_active(&self, job_id: &str) -> Result<()> {
         let Some(mut job) = self.load_job(job_id).await? else {
             return Err(BosonError::JobNotFound(job_id.to_string()));
@@ -713,23 +697,6 @@ impl QueueBackend for NatsWorkQueueBackend {
         }
         runs.sort_by_key(|r| r.started_at);
         Ok(runs.into_iter().skip(offset).take(limit).collect())
-    }
-
-    async fn list_runs_after(
-        &self,
-        job_id_filter: Option<&str>,
-        after: Option<&boson_core::RunKey>,
-        limit: usize,
-    ) -> Result<Vec<Run>> {
-        // NATS KV has no index in this order: load the matching runs and page them in Rust.
-        // Newest first as the trait documents, although `list_runs` here is oldest first.
-        let runs = self.list_runs(job_id_filter, 0, usize::MAX).await?;
-        Ok(boson_core::page_runs_after(
-            runs,
-            job_id_filter,
-            after,
-            limit,
-        ))
     }
 
     async fn finish_run(

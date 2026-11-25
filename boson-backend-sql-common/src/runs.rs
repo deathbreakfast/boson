@@ -1,12 +1,13 @@
 //! Run persistence for the SQL queue backend.
 
-use boson_core::{Result, Run, RunKey, RunStatus, TaskRunStats};
+use boson_core::{Result, Run, RunFilter, RunKey, RunStatus, TaskRunStats};
 use chrono::{DateTime, Utc};
 use sqlx::Row;
 
+use crate::filter_sql::{run_where, runs_after_where};
 use crate::row::{row_to_run, run_status_to_str};
 use crate::{
-    bind_sql, sql_execute, sql_fetch_all_map, sql_fetch_one_map, sql_fetch_optional_map,
+    bind_all, bind_sql, sql_execute, sql_fetch_all_map, sql_fetch_one_map, sql_fetch_optional_map,
     SqlQueueBackend,
 };
 
@@ -84,34 +85,33 @@ impl SqlQueueBackend {
 
     pub(crate) async fn list_runs_after_impl(
         &self,
-        job_id_filter: Option<&str>,
+        filter: &RunFilter,
         after: Option<&RunKey>,
         limit: usize,
     ) -> Result<Vec<Run>> {
+        let w = runs_after_where(self.dialect, filter, after);
         let sql = bind_sql(
             self.dialect,
-            &runs_after_sql(job_id_filter.is_some(), after.is_some()),
+            &format!(
+                "SELECT * FROM boson_run{} ORDER BY started_at DESC, run_id DESC LIMIT ?",
+                w.sql()
+            ),
         );
         let limit = i64::try_from(limit).unwrap_or(i64::MAX);
-        sql_fetch_all_map!(
-            self,
-            &sql,
-            |q| {
-                let mut q = q;
-                if let Some(job_id) = job_id_filter {
-                    q = q.bind(job_id);
-                }
-                if let Some(key) = after {
-                    q = q
-                        .bind(key.started_at)
-                        .bind(key.started_at)
-                        .bind(key.started_at)
-                        .bind(&key.id);
-                }
-                q.bind(limit)
-            },
-            |r| row_to_run(r)
-        )
+        sql_fetch_all_map!(self, &sql, |q| bind_all!(q, &w.binds).bind(limit), |r| {
+            row_to_run(r)
+        })
+    }
+
+    pub(crate) async fn count_runs_matching_impl(&self, filter: &RunFilter) -> Result<u64> {
+        let w = run_where(self.dialect, filter);
+        let sql = bind_sql(
+            self.dialect,
+            &format!("SELECT COUNT(*) AS cnt FROM boson_run{}", w.sql()),
+        );
+        sql_fetch_one_map!(self, &sql, |q| bind_all!(q, &w.binds), |r| Ok(
+            u64::try_from(r.get::<i64, _>("cnt")).unwrap_or(u64::MAX)
+        ))
     }
 
     pub(crate) async fn finish_run_impl(
@@ -191,47 +191,5 @@ impl SqlQueueBackend {
             runs_total,
             success_count,
         })
-    }
-}
-
-/// `SELECT` for [`SqlQueueBackend::list_runs_after_impl`] with `?` placeholders.
-///
-/// Placeholder order: job id (when filtered), then `started_at` three times and `run_id` (when a
-/// key is given), then the limit. The key predicate is spelled as an expanded `OR` instead of a
-/// row-value comparison so the same text runs on `SQLite` and Postgres. The redundant
-/// `started_at <= ?` bound lets the planner seek into `boson_run_started_at_id` instead of
-/// scanning it from the start; that index also serves the order (scanned backward).
-fn runs_after_sql(has_job_id: bool, has_after: bool) -> String {
-    let mut clauses = Vec::new();
-    if has_job_id {
-        clauses.push("job_id = ?");
-    }
-    if has_after {
-        clauses.push("started_at <= ? AND (started_at < ? OR (started_at = ? AND run_id < ?))");
-    }
-    let filter = if clauses.is_empty() {
-        String::new()
-    } else {
-        format!(" WHERE {}", clauses.join(" AND "))
-    };
-    format!("SELECT * FROM boson_run{filter} ORDER BY started_at DESC, run_id DESC LIMIT ?")
-}
-
-#[cfg(test)]
-mod tests {
-    use super::runs_after_sql;
-
-    #[test]
-    fn runs_after_sql_variants() {
-        assert_eq!(
-            runs_after_sql(false, false),
-            "SELECT * FROM boson_run ORDER BY started_at DESC, run_id DESC LIMIT ?"
-        );
-        assert_eq!(
-            runs_after_sql(true, true),
-            "SELECT * FROM boson_run WHERE job_id = ? AND \
-             started_at <= ? AND (started_at < ? OR (started_at = ? AND run_id < ?)) \
-             ORDER BY started_at DESC, run_id DESC LIMIT ?"
-        );
     }
 }

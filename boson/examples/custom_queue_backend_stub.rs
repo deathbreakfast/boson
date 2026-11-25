@@ -92,13 +92,15 @@ impl QueueBackend for AuditingQueueBackend {
 
     async fn list_jobs_after(
         &self,
-        status_filter: Option<JobStatus>,
+        filter: &boson_core::JobFilter,
         after: Option<&boson_core::JobKey>,
         limit: usize,
     ) -> Result<Vec<Job>> {
-        self.inner
-            .list_jobs_after(status_filter, after, limit)
-            .await
+        self.inner.list_jobs_after(filter, after, limit).await
+    }
+
+    async fn count_jobs_matching(&self, filter: &boson_core::JobFilter) -> Result<u64> {
+        self.inner.count_jobs_matching(filter).await
     }
 
     async fn cancel_job_if_active(&self, job_id: &str) -> Result<()> {
@@ -160,13 +162,15 @@ impl QueueBackend for AuditingQueueBackend {
 
     async fn list_runs_after(
         &self,
-        job_id_filter: Option<&str>,
+        filter: &boson_core::RunFilter,
         after: Option<&boson_core::RunKey>,
         limit: usize,
     ) -> Result<Vec<Run>> {
-        self.inner
-            .list_runs_after(job_id_filter, after, limit)
-            .await
+        self.inner.list_runs_after(filter, after, limit).await
+    }
+
+    async fn count_runs_matching(&self, filter: &boson_core::RunFilter) -> Result<u64> {
+        self.inner.count_runs_matching(filter).await
     }
 
     async fn finish_run(
@@ -199,6 +203,39 @@ impl QueueBackend for AuditingQueueBackend {
 
     async fn upsert_task_config(&self, config: &TaskConfig) -> Result<()> {
         self.inner.upsert_task_config(config).await
+    }
+
+    async fn retry_job(&self, job_id: &str, actor_json: serde_json::Value) -> Result<String> {
+        self.inner.retry_job(job_id, actor_json).await
+    }
+
+    async fn drop_failed_job(&self, job_id: &str) -> Result<()> {
+        self.inner.drop_failed_job(job_id).await
+    }
+
+    async fn sweep_failed(&self, older_than: DateTime<Utc>) -> Result<u64> {
+        self.inner.sweep_failed(older_than).await
+    }
+
+    async fn pool_stats(&self, window: chrono::Duration) -> Result<Vec<boson_core::PoolStats>> {
+        self.inner.pool_stats(window).await
+    }
+
+    async fn set_pool_paused(
+        &self,
+        pool: &str,
+        paused: bool,
+        actor_label: &str,
+    ) -> Result<boson_core::PoolState> {
+        self.inner.set_pool_paused(pool, paused, actor_label).await
+    }
+
+    async fn get_pool_state(&self, pool: &str) -> Result<Option<boson_core::PoolState>> {
+        self.inner.get_pool_state(pool).await
+    }
+
+    async fn purge_queued_in_pool(&self, pool: &str) -> Result<u64> {
+        self.inner.purge_queued_in_pool(pool).await
     }
 
     async fn try_claim_run_lease(

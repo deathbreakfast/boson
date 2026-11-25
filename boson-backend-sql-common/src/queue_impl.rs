@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use boson_core::{
-    Job, JobEnqueueDisposition, JobKey, JobStatus, QueueBackend, Result, Run, RunKey, RunStatus,
-    TaskConfig, TaskRunStats,
+    Job, JobEnqueueDisposition, JobFilter, JobKey, JobStatus, PoolState, PoolStats, QueueBackend,
+    Result, Run, RunFilter, RunKey, RunStatus, TaskConfig, TaskRunStats,
 };
 use chrono::{DateTime, Utc};
 
@@ -37,11 +37,15 @@ impl QueueBackend for SqlQueueBackend {
 
     async fn list_jobs_after(
         &self,
-        status_filter: Option<JobStatus>,
+        filter: &JobFilter,
         after: Option<&JobKey>,
         limit: usize,
     ) -> Result<Vec<Job>> {
-        self.list_jobs_after_impl(status_filter, after, limit).await
+        self.list_jobs_after_impl(filter, after, limit).await
+    }
+
+    async fn count_jobs_matching(&self, filter: &JobFilter) -> Result<u64> {
+        self.count_jobs_matching_impl(filter).await
     }
 
     async fn cancel_job_if_active(&self, job_id: &str) -> Result<()> {
@@ -99,11 +103,15 @@ impl QueueBackend for SqlQueueBackend {
 
     async fn list_runs_after(
         &self,
-        job_id_filter: Option<&str>,
+        filter: &RunFilter,
         after: Option<&RunKey>,
         limit: usize,
     ) -> Result<Vec<Run>> {
-        self.list_runs_after_impl(job_id_filter, after, limit).await
+        self.list_runs_after_impl(filter, after, limit).await
+    }
+
+    async fn count_runs_matching(&self, filter: &RunFilter) -> Result<u64> {
+        self.count_runs_matching_impl(filter).await
     }
 
     async fn finish_run(
@@ -135,6 +143,35 @@ impl QueueBackend for SqlQueueBackend {
 
     async fn upsert_task_config(&self, config: &TaskConfig) -> Result<()> {
         self.upsert_task_config_impl(config).await
+    }
+
+    async fn drop_failed_job(&self, job_id: &str) -> Result<()> {
+        self.drop_failed_job_impl(job_id).await
+    }
+
+    async fn sweep_failed(&self, older_than: DateTime<Utc>) -> Result<u64> {
+        self.sweep_failed_impl(older_than).await
+    }
+
+    async fn pool_stats(&self, window: chrono::Duration) -> Result<Vec<PoolStats>> {
+        self.pool_stats_impl(window).await
+    }
+
+    async fn set_pool_paused(
+        &self,
+        pool: &str,
+        paused: bool,
+        actor_label: &str,
+    ) -> Result<PoolState> {
+        self.set_pool_paused_impl(pool, paused, actor_label).await
+    }
+
+    async fn get_pool_state(&self, pool: &str) -> Result<Option<PoolState>> {
+        self.get_pool_state_impl(pool).await
+    }
+
+    async fn purge_queued_in_pool(&self, pool: &str) -> Result<u64> {
+        self.purge_queued_in_pool_impl(pool).await
     }
 
     async fn try_claim_run_lease(

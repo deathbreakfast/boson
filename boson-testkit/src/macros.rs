@@ -42,6 +42,9 @@ macro_rules! backend_contract_suite {
         $crate::__backend_contract_one!($setup, $label, reclaim_expired_lease_requeues_job);
         $crate::__backend_contract_one!($setup, $label, keyset_jobs_pages_in_order);
         $crate::__backend_contract_one!($setup, $label, keyset_runs_pages_in_order);
+        $crate::__backend_contract_one!($setup, $label, filtered_jobs_paging_10k);
+        $crate::__backend_contract_one!($setup, $label, filtered_runs_paging_and_count);
+        $crate::__backend_contract_one!($setup, $label, retry_failed_job);
     };
     ($setup:ident, $label:literal, ignore = $ignore_msg:literal) => {
         $crate::__backend_contract_one_ignored!(
@@ -110,6 +113,63 @@ macro_rules! backend_contract_suite {
             $ignore_msg,
             keyset_runs_pages_in_order
         );
+        $crate::__backend_contract_one_ignored!(
+            $setup,
+            $label,
+            $ignore_msg,
+            filtered_jobs_paging_10k
+        );
+        $crate::__backend_contract_one_ignored!(
+            $setup,
+            $label,
+            $ignore_msg,
+            filtered_runs_paging_and_count
+        );
+        $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, retry_failed_job);
+    };
+}
+
+/// Expand the admin [`backend_contract`](crate::backend_contract) checks (drop, sweep, pause,
+/// purge, pool stats) for an engine that overrides those methods.
+///
+/// Engines on the trait's default bodies (Redis, NATS, Scylla) return an error from sweep, pause
+/// and purge, so only mem, `SQLite` and Postgres run this suite. Arguments match
+/// [`backend_contract_suite!`].
+#[macro_export]
+macro_rules! backend_admin_contract_suite {
+    ($setup:ident, $label:literal) => {
+        $crate::__backend_contract_one!($setup, $label, drop_failed_job_hides_from_lists);
+        $crate::__backend_contract_one!($setup, $label, sweep_failed_removes_old_failed);
+        $crate::__backend_contract_one!($setup, $label, paused_pool_is_never_claimed);
+        $crate::__backend_contract_one!($setup, $label, purge_leaves_running_jobs);
+        $crate::__backend_contract_one!($setup, $label, pool_stats_counts);
+    };
+    ($setup:ident, $label:literal, ignore = $ignore_msg:literal) => {
+        $crate::__backend_contract_one_ignored!(
+            $setup,
+            $label,
+            $ignore_msg,
+            drop_failed_job_hides_from_lists
+        );
+        $crate::__backend_contract_one_ignored!(
+            $setup,
+            $label,
+            $ignore_msg,
+            sweep_failed_removes_old_failed
+        );
+        $crate::__backend_contract_one_ignored!(
+            $setup,
+            $label,
+            $ignore_msg,
+            paused_pool_is_never_claimed
+        );
+        $crate::__backend_contract_one_ignored!(
+            $setup,
+            $label,
+            $ignore_msg,
+            purge_leaves_running_jobs
+        );
+        $crate::__backend_contract_one_ignored!($setup, $label, $ignore_msg, pool_stats_counts);
     };
 }
 
